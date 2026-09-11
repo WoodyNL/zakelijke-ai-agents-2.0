@@ -32,19 +32,22 @@ export function SeoPage({
           <Link to="/" className="flex items-center gap-2">
             <BrandLogo />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Link
               to="/auth"
-              className="inline-flex h-9 items-center rounded-full border border-white/15 bg-white/10 px-4 text-[12px] font-semibold text-white hover:bg-white/20"
+              className="inline-flex h-9 items-center whitespace-nowrap rounded-full border border-white/15 bg-white/10 px-3 text-[12px] font-semibold text-white hover:bg-white/20 sm:px-4"
             >
-              Klantlogin
+              <span className="sm:hidden">Login</span>
+              <span className="hidden sm:inline">Klantlogin</span>
             </Link>
             <Link
               to="/"
-              className="inline-flex h-9 items-center rounded-full bg-brand px-4 text-[12px] font-semibold text-primary-foreground cta-lift"
+              hash="demo"
+              className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-brand px-3 text-[12px] font-semibold text-primary-foreground cta-lift sm:px-4"
               style={shadowBrand}
             >
-              Plan een demo
+              <span className="sm:hidden">Demo</span>
+              <span className="hidden sm:inline">Plan een demo</span>
             </Link>
           </div>
         </div>
@@ -66,6 +69,7 @@ export function SeoPage({
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
               to="/"
+              hash="demo"
               className="inline-flex h-12 items-center gap-2 rounded-full bg-brand px-7 text-[14px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >
@@ -131,6 +135,7 @@ export function SeoPage({
             </p>
             <Link
               to="/"
+              hash="demo"
               className="mt-6 inline-flex h-13 items-center gap-2 rounded-full bg-brand px-9 py-3.5 text-[15px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >

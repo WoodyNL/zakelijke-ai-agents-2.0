@@ -55,7 +55,7 @@ function ResetPassword() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-brand outline-none focus:border-indigo"
+                className="w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-brand outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/35"
               />
             </label>
             {error && <p className="text-[12px] font-medium text-destructive">{error}</p>}

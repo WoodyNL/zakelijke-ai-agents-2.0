@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const inputCls =
-  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo";
+  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo focus:ring-2 focus:ring-indigo/35";
 const btnCls =
   "rounded-full bg-brand px-4 py-2 text-[12px] font-semibold text-primary-foreground disabled:opacity-50";
 
@@ -133,7 +133,9 @@ function AdminPanel() {
             busy={busy}
             onSaveAgent={(payload) => run(() => saveAgentFn({ data: payload }), "Agent opgeslagen")}
             onDeleteAgent={(id) => run(() => deleteAgentFn({ data: { id } }), "Agent verwijderd")}
-            onSaveStat={(payload) => run(() => saveStatFn({ data: payload }), "Statistiek opgeslagen")}
+            onSaveStat={(payload) =>
+              run(() => saveStatFn({ data: payload }), "Statistiek opgeslagen")
+            }
           />
         ))}
         {clientsQuery.isLoading && <p className="text-[13px] text-ink/55">Laden…</p>}

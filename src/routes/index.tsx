@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { animate, useInView } from "framer-motion";
+import { Zap, ShieldCheck, TrendingUp, Rocket, Quote } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { HeroNetwork } from "@/components/hero-network";
 import { Reveal } from "@/hooks/use-reveal";
@@ -64,6 +66,66 @@ const PHASES = [
     ],
   },
 ];
+
+const USPS = [
+  {
+    icon: Zap,
+    badge: "bg-indigo text-white",
+    stat: "±40 sec",
+    title: "Razendsnelle reactie",
+    body: "Terwijl concurrenten nog een ticket aanmaken, heeft jouw agent de lead al beantwoord en gekwalificeerd.",
+  },
+  {
+    icon: TrendingUp,
+    badge: "bg-mint text-brand",
+    stat: "3×",
+    title: "Meer afspraken, minder ruis",
+    body: "Sales praat alleen nog met leads die al gekwalificeerd zijn. Minder tijd verspild, meer deals gesloten.",
+  },
+  {
+    icon: ShieldCheck,
+    badge: "bg-violet text-white",
+    stat: "0",
+    title: "Nooit een gemiste lead",
+    body: "Elke aanvraag krijgt een agent toegewezen — geen voicemail, geen weekend-gat, geen genegeerd bericht.",
+  },
+  {
+    icon: Rocket,
+    badge: "bg-indigo text-white",
+    stat: "1 dag",
+    title: "Live binnen een dag",
+    body: "Geen implementatietraject van maanden. Wij koppelen je tools en de agent draait deze week al.",
+  },
+];
+
+const STATS = [
+  { value: 40, prefix: "±", suffix: "s", label: "tot eerste reactie" },
+  { value: 3, prefix: "", suffix: "×", label: "sneller opgevolgd" },
+  { value: 0, prefix: "", suffix: "", label: "berichten gemist" },
+] as const;
+
+/** Telt op naar `value` zodra het cijfer in beeld komt; toont direct de eindwaarde bij reduced motion. */
+function AnimatedNumber({ value, duration = 1.4 }: { value: number; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(value);
+      return;
+    }
+    const controls = animate(0, value, {
+      duration,
+      ease: "easeOut",
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [inView, value, duration]);
+
+  return <span ref={ref}>{display}</span>;
+}
 
 const accent = (a: string) =>
   a === "mint"
@@ -329,6 +391,15 @@ function BookingModal({ open, onClose }: { open: boolean; onClose: () => void })
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -426,14 +497,14 @@ function BookingModal({ open, onClose }: { open: boolean; onClose: () => void })
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Je naam"
-                className="w-full rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[13px] text-ink outline-none placeholder:text-ink/40 focus:border-indigo"
+                className="w-full rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[13px] text-ink outline-none placeholder:text-ink/40 focus:border-indigo focus:ring-2 focus:ring-indigo/40"
               />
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
                 placeholder="Zakelijk e-mailadres"
-                className="w-full rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[13px] text-ink outline-none placeholder:text-ink/40 focus:border-indigo"
+                className="w-full rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[13px] text-ink outline-none placeholder:text-ink/40 focus:border-indigo focus:ring-2 focus:ring-indigo/40"
               />
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/50">
@@ -467,7 +538,7 @@ function BookingModal({ open, onClose }: { open: boolean; onClose: () => void })
                   onChange={(e) => setPhone(e.target.value)}
                   type="tel"
                   placeholder="Mobiel nummer (WhatsApp)"
-                  className="w-full rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[13px] text-ink outline-none placeholder:text-ink/40 focus:border-indigo animate-rise"
+                  className="w-full rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[13px] text-ink outline-none placeholder:text-ink/40 focus:border-indigo focus:ring-2 focus:ring-indigo/40 animate-rise"
                 />
               )}
             </div>
@@ -524,6 +595,13 @@ function Index() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const openBooking = () => setBookingOpen(true);
 
+  useEffect(() => {
+    if (window.location.hash === "#demo") {
+      setBookingOpen(true);
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, []);
+
   return (
     <div className="theme-dark surface-gradient min-h-screen w-full font-sans text-ink antialiased">
       <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 sm:py-8">
@@ -540,19 +618,21 @@ function Index() {
           <div className="flex items-center gap-2">
             <BrandLogo />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Link
               to="/auth"
-              className="inline-flex h-9 items-center rounded-full border border-white/15 bg-white/10 px-4 text-[12px] font-semibold tracking-tight text-white hover:bg-white/20"
+              className="inline-flex h-9 items-center whitespace-nowrap rounded-full border border-white/15 bg-white/10 px-3 text-[12px] font-semibold tracking-tight text-white hover:bg-white/20 sm:px-4"
             >
-              Klantlogin
+              <span className="sm:hidden">Login</span>
+              <span className="hidden sm:inline">Klantlogin</span>
             </Link>
             <button
               onClick={openBooking}
-              className="inline-flex h-9 items-center rounded-full bg-brand px-4 text-[12px] font-semibold tracking-tight text-primary-foreground cta-lift"
+              className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-brand px-3 text-[12px] font-semibold tracking-tight text-primary-foreground cta-lift sm:px-4"
               style={{ boxShadow: "0 10px 22px -8px oklch(0.2 0.04 285 / 0.67)" }}
             >
-              Plan een demo
+              <span className="sm:hidden">Demo</span>
+              <span className="hidden sm:inline">Plan een demo</span>
             </button>
           </div>
         </div>
@@ -566,58 +646,67 @@ function Index() {
           <AgentSection key={agent.headerName} agent={agent} index={i} />
         ))}
 
-        {/* Benefits + social proof */}
-        <Reveal as="section" className="mt-12 grid items-stretch gap-3 lg:grid-cols-[3fr_2fr]">
-          <div>
-            <h2 className="font-display text-[20px] font-bold tracking-tight text-brand">
-              Waarom teams onze agents draaien — van sales tot support
-            </h2>
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-3 lg:grid-cols-1">
-              {[
-                {
-                  dot: "bg-indigo",
-                  title: "Reactie in seconden",
-                  body: "Elke aanvraag krijgt direct een persoonlijke reactie — geen lead verstofft meer.",
-                },
-                {
-                  dot: "bg-mint",
-                  title: "Warme pipeline",
-                  body: "Alleen gekwalificeerde deals bereiken sales. Minder ruis, meer closing.",
-                },
-                {
-                  dot: "bg-violet",
-                  title: "Geen verlies",
-                  body: "Elke lead en elke klantvraag wordt gerouteerd en opgevolgd. Niets valt tussen wal en schip.",
-                },
-              ].map((b) => (
-                <div
-                  key={b.title}
-                  className="card-glass card-lift sheen flex items-start gap-3 rounded-3xl p-4"
-                >
-                  <span className={`mt-1 block size-2 shrink-0 rounded-full ${b.dot}`} />
-                  <div>
-                    <p className="font-display text-[13px] font-semibold text-brand">{b.title}</p>
-                    <p className="mt-1 text-[11px]/[1.55] text-ink/55">{b.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Mid-page CTA — vang bezoekers die hier al overtuigd zijn */}
+        <Reveal as="section" className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-4 sm:px-7">
+          <p className="font-display text-[14px] font-semibold text-brand sm:text-[15px]">
+            Wil je dit voor jouw sales of klantenservice zien?
+          </p>
+          <button
+            onClick={openBooking}
+            className="inline-flex h-10 shrink-0 items-center rounded-full bg-brand px-5 text-[13px] font-semibold tracking-tight text-primary-foreground cta-lift"
+            style={shadowBrand}
+          >
+            Plan een gratis demo
+          </button>
+        </Reveal>
 
-          <div className="card-glass-lg card-lift sheen flex flex-col justify-between rounded-3xl p-5">
-            <p className="font-display text-[16px]/[1.4] font-semibold text-brand lg:text-[19px]/[1.4]">
-              “Onze responstijd ging van dagen naar seconden. Sales praat nu alleen nog met leads
-              die er toe doen.”
-            </p>
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <p className="text-[12px] font-semibold text-brand">Lotte van Dijk</p>
-                <p className="text-[11px] text-ink/50">Head of Sales · B2B-software</p>
+        {/* Benefits + social proof — bento van harde, meetbare resultaten */}
+        <Reveal as="section" className="mt-14">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo">
+            // Resultaat
+          </p>
+          <h2 className="mt-2 font-display text-[24px] font-bold tracking-tight text-brand sm:text-[28px]">
+            Dit merk je binnen de eerste week
+          </h2>
+          <p className="mt-2 max-w-[52ch] text-[13px]/[1.6] text-ink/55">
+            Geen vage belofte over "efficiëntie" — een meetbaar verschil in reactietijd, pipeline
+            en omzet.
+          </p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
+            <div className="card-glass-lg card-lift sheen relative flex flex-col justify-between overflow-hidden rounded-3xl p-6 sm:col-span-2 lg:col-span-2 lg:row-span-2">
+              <Quote
+                aria-hidden="true"
+                strokeWidth={1}
+                className="pointer-events-none absolute -top-3 -right-2 size-24 text-brand/[0.06]"
+              />
+              <p className="relative font-display text-[18px]/[1.4] font-semibold text-brand sm:text-[22px]/[1.35]">
+                “Onze responstijd ging van dagen naar seconden. Sales praat nu alleen nog met
+                leads die er toe doen.”
+              </p>
+              <div className="relative mt-5 flex items-center justify-between">
+                <div>
+                  <p className="text-[12px] font-semibold text-brand">Lotte van Dijk</p>
+                  <p className="text-[11px] text-ink/50">Head of Sales · B2B-software</p>
+                </div>
+                <span className="rounded-full bg-mint/15 px-3 py-1.5 text-[11px] font-semibold text-brand">
+                  3× meer afspraken
+                </span>
               </div>
-              <span className="rounded-full bg-mint/15 px-3 py-1.5 text-[11px] font-semibold text-brand">
-                3× meer afspraken
-              </span>
             </div>
+
+            {USPS.map((u) => (
+              <div key={u.title} className="card-glass card-lift sheen flex flex-col rounded-3xl p-4">
+                <span className={`grid size-9 shrink-0 place-items-center rounded-2xl ${u.badge}`}>
+                  <u.icon aria-hidden="true" strokeWidth={2} className="size-[18px]" />
+                </span>
+                <p className="mt-3 font-display text-[20px] font-bold leading-none text-brand">
+                  {u.stat}
+                </p>
+                <p className="mt-1.5 text-[12.5px] font-semibold text-brand">{u.title}</p>
+                <p className="mt-1 text-[11px]/[1.55] text-ink/55">{u.body}</p>
+              </div>
+            ))}
           </div>
         </Reveal>
 
@@ -778,9 +867,9 @@ function Index() {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[10px]/[1.6] text-ink/40">
-            Extra leads of gesprekken boven je bundel: €1,00 per stuk. WhatsApp-gesprekskosten van
-            Meta rekenen we kosteloos door. Elke agent staat binnen een dag live — terwijl
+          <p className="mt-3 text-[11px]/[1.6] text-ink/55">
+            Extra leads of WhatsApp-gesprekken boven je bundel: €1,00 per stuk. WhatsApp-gesprekskosten
+            van Meta rekenen we kosteloos door. Elke agent staat binnen een dag live — terwijl
             vergelijkbare AI-agents €1.500+ setup en een jaarcontract vragen.
           </p>
         </Reveal>
@@ -825,46 +914,90 @@ function Index() {
           </div>
         </Reveal>
 
-        {/* Stats + final CTA */}
+        {/* Stats + final CTA — grand finale */}
         <Reveal
           as="section"
           id="cta"
-          className="card-glass sheen relative mt-10 overflow-hidden rounded-3xl px-6 py-12 text-center sm:px-12 sm:py-16"
+          className="relative mt-10 overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0a0f] px-6 py-14 text-center sm:px-12 sm:py-20"
         >
+          {/* grid-patroon, zelfde sfeer als de hero */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-[0.14]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,.14) 1px, transparent 1px)",
+              backgroundSize: "48px 48px",
+            }}
+          />
           <div className="pointer-events-none absolute inset-0 cta-aurora" />
-          <div className="relative mx-auto flex max-w-xl flex-col items-center">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-10 -left-16 size-72 rounded-full bg-indigo/30 blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-16 -bottom-10 size-80 rounded-full bg-violet/25 blur-3xl"
+          />
+
+          <div className="relative mx-auto flex max-w-2xl flex-col items-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-indigo/25 bg-indigo/10 px-3.5 py-1.5 text-[11px] font-semibold tracking-tight text-brand">
               <span className="h-1.5 w-1.5 rounded-full bg-mint animate-pulse-dot" />
               Live resultaten van onze agents
             </span>
 
-            <div className="mt-8 grid w-full grid-cols-3 gap-3 sm:gap-6">
-              {[
-                { v: "±40s", l: "tot eerste reactie" },
-                { v: "3×", l: "sneller opgevolgd" },
-                { v: "0", l: "berichten gemist" },
-              ].map((s) => (
-                <div key={s.l} className="stat-pop rounded-2xl border border-white/10 bg-white/5 px-3 py-4">
-                  <p className="font-display text-[26px] leading-none font-bold tracking-tight text-brand sm:text-[34px]">
-                    {s.v}
+            <div className="mt-9 grid w-full grid-cols-3 gap-3 sm:gap-6">
+              {STATS.map((s) => (
+                <div
+                  key={s.label}
+                  className="stat-pop rounded-2xl border border-white/10 bg-white/5 px-3 py-5 sm:py-6"
+                >
+                  <p className="font-display text-[30px] leading-none font-bold tracking-tight text-brand sm:text-[42px]">
+                    {s.prefix}
+                    <AnimatedNumber value={s.value} />
+                    {s.suffix}
                   </p>
-                  <p className="mt-1.5 text-[10px] leading-tight text-ink/50 sm:text-[11px]">{s.l}</p>
+                  <p className="mt-2 text-[10px] leading-tight text-ink/50 sm:text-[11px]">
+                    {s.label}
+                  </p>
                 </div>
               ))}
             </div>
 
-            <h2 className="mx-auto mt-10 max-w-[24ch] font-display text-[26px]/[1.15] font-bold tracking-tight text-brand sm:text-[34px]/[1.1]">
-              Zie in 30 minuten hoe de agents je sales én support overnemen.
+            <h2 className="mx-auto mt-10 max-w-[26ch] font-display text-[28px]/[1.15] font-bold tracking-tight text-brand sm:text-[40px]/[1.08]">
+              Zie in 30 minuten hoe de agents je{" "}
+              <span className="bg-gradient-to-r from-[#786eff] to-[#ae8ff7] bg-clip-text text-transparent">
+                sales én support
+              </span>{" "}
+              overnemen.
             </h2>
-            <button
-              onClick={openBooking}
-              className="sheen mt-7 inline-flex h-13 items-center gap-2 rounded-full bg-brand px-9 py-3.5 text-[15px] font-semibold tracking-tight text-primary-foreground cta-lift"
-              style={shadowBrand}
-            >
-              Plan een gratis demo
-              <span aria-hidden="true">→</span>
-            </button>
-            <p className="mt-3.5 text-[12px] text-ink/45">Vandaag geboekt, deze week live.</p>
+
+            <div className="relative mt-8">
+              <span
+                aria-hidden="true"
+                className="absolute -inset-2 rounded-full bg-gradient-to-r from-[#786eff] to-[#ae8ff7] opacity-40 blur-xl animate-pulse-dot"
+              />
+              <button
+                onClick={openBooking}
+                className="sheen relative inline-flex h-14 items-center gap-2 rounded-full bg-gradient-to-r from-[#786eff] to-[#ae8ff7] px-10 text-[15px] font-semibold tracking-tight text-white cta-lift"
+                style={{ boxShadow: "0 20px 45px -12px rgba(120,110,255,.85)" }}
+              >
+                Plan een gratis demo
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+            <p className="mt-4 text-[12px] text-ink/45">Vandaag geboekt, deze week live.</p>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+              {["Geen jaarcontract", "Live binnen 1 dag", "Nederlandse support"].map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-ink/60"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
           </div>
         </Reveal>
 

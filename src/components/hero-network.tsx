@@ -180,7 +180,7 @@ export function HeroNetwork({ onBook }: { onBook: () => void }) {
           <h1 className="mt-4 max-w-[19ch] font-display text-[34px]/[1.05] font-bold tracking-tight text-white sm:text-[50px]/[1.02]">
             Drie AI agents die je sales én klantenservice{" "}
             <span className="bg-gradient-to-r from-[#786eff] to-[#ae8ff7] bg-clip-text text-transparent">
-              draaien
+              overnemen
             </span>
             .
           </h1>

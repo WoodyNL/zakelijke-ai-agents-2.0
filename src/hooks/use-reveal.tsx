@@ -23,19 +23,38 @@ export function Reveal({
       setShown(true);
       return;
     }
+
+    const reveal = () => setShown(true);
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) {
-            setShown(true);
-            io.disconnect();
-          }
+          if (e.isIntersecting) reveal();
         }
       },
       { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
     );
     io.observe(el);
-    return () => io.disconnect();
+
+    // Fallback: a fast/momentum scroll can move an element from below the
+    // viewport to above it between two observer samples, so it never
+    // registers as intersecting and would otherwise stay hidden forever.
+    // Treat "already scrolled past" the same as "seen".
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        if (el.getBoundingClientRect().bottom <= 0) reveal();
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (

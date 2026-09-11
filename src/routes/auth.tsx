@@ -73,7 +73,7 @@ function AuthPage() {
     <div className="surface-gradient flex min-h-screen w-full items-center justify-center px-4 py-10 font-sans text-ink antialiased">
       <div className="w-full max-w-sm animate-rise">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <BrandLogo markClassName="size-9" textClassName="text-[17px]" />
+          <BrandLogo markClassName="size-9" textClassName="text-[17px]" hideTextOnMobile={false} />
         </Link>
 
         <div className="card-glass-lg rounded-3xl p-6">
@@ -157,7 +157,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo"
+        className="w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo focus:ring-2 focus:ring-indigo/35"
       />
     </label>
   );
