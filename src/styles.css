@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Cadence design system — Frosted Bento.
+ * Zakelijke AI Agents design system — Frosted Bento.
  * Light, airy glass bento over a soft indigo→mint gradient field.
  */
 
@@ -38,7 +38,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Cadence brand tokens */
+  /* Zakelijke AI Agents brand tokens */
   --color-brand: var(--brand);
   --color-ink: var(--ink);
   --color-indigo: var(--indigo);
@@ -111,8 +111,7 @@
   background:
     radial-gradient(60% 45% at 15% 0%, rgba(120, 110, 255, 0.16), transparent 70%),
     radial-gradient(55% 45% at 90% 20%, rgba(174, 143, 247, 0.12), transparent 70%),
-    radial-gradient(70% 50% at 50% 100%, rgba(90, 220, 190, 0.08), transparent 70%),
-    #0a0a0f !important;
+    radial-gradient(70% 50% at 50% 100%, rgba(90, 220, 190, 0.08), transparent 70%), #0a0a0f !important;
 }
 
 .theme-dark .card-glass,
@@ -141,7 +140,6 @@
     transparent 65%
   );
 }
-
 
 @layer base {
   * {
@@ -319,9 +317,21 @@
 
 @utility cta-aurora {
   background:
-    radial-gradient(60% 90% at 20% 0%, color-mix(in oklab, var(--color-indigo) 22%, transparent), transparent 70%),
-    radial-gradient(55% 85% at 85% 20%, color-mix(in oklab, var(--color-violet) 20%, transparent), transparent 70%),
-    radial-gradient(70% 90% at 50% 110%, color-mix(in oklab, var(--color-mint) 24%, transparent), transparent 70%);
+    radial-gradient(
+      60% 90% at 20% 0%,
+      color-mix(in oklab, var(--color-indigo) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 85% at 85% 20%,
+      color-mix(in oklab, var(--color-violet) 20%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 90% at 50% 110%,
+      color-mix(in oklab, var(--color-mint) 24%, transparent),
+      transparent 70%
+    );
   animation: aurora-drift 12s ease-in-out infinite alternate;
 }
 
