@@ -14,11 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AiAgentsAmsterdamRouteImport } from './routes/ai-agents-amsterdam'
 import { Route as AiKlantenserviceAutomatiserenRouteImport } from './routes/ai-klantenservice-automatiseren'
 import { Route as AiLeadOpvolgingRouteImport } from './routes/ai-lead-opvolging'
-import { Route as AiSalesAssistantRouteImport } from './routes/ai-sales-assistant'
-import { Route as AiVoorMkbAmsterdamRouteImport } from './routes/ai-voor-mkb-amsterdam'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as OverOnsRouteImport } from './routes/over-ons'
-import { Route as PrijzenRouteImport } from './routes/prijzen'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/whatsapp-follow-up-automatiseren'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
@@ -52,29 +48,9 @@ const AiLeadOpvolgingRoute = AiLeadOpvolgingRouteImport.update({
   path: '/ai-lead-opvolging',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AiSalesAssistantRoute = AiSalesAssistantRouteImport.update({
-  id: '/ai-sales-assistant',
-  path: '/ai-sales-assistant',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AiVoorMkbAmsterdamRoute = AiVoorMkbAmsterdamRouteImport.update({
-  id: '/ai-voor-mkb-amsterdam',
-  path: '/ai-voor-mkb-amsterdam',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OverOnsRoute = OverOnsRouteImport.update({
-  id: '/over-ons',
-  path: '/over-ons',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrijzenRoute = PrijzenRouteImport.update({
-  id: '/prijzen',
-  path: '/prijzen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -120,11 +96,7 @@ export interface FileRoutesByFullPath {
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
-  '/ai-sales-assistant': typeof AiSalesAssistantRoute
-  '/ai-voor-mkb-amsterdam': typeof AiVoorMkbAmsterdamRoute
   '/auth': typeof AuthRoute
-  '/over-ons': typeof OverOnsRoute
-  '/prijzen': typeof PrijzenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -138,11 +110,7 @@ export interface FileRoutesByTo {
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
-  '/ai-sales-assistant': typeof AiSalesAssistantRoute
-  '/ai-voor-mkb-amsterdam': typeof AiVoorMkbAmsterdamRoute
   '/auth': typeof AuthRoute
-  '/over-ons': typeof OverOnsRoute
-  '/prijzen': typeof PrijzenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -158,11 +126,7 @@ export interface FileRoutesById {
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
-  '/ai-sales-assistant': typeof AiSalesAssistantRoute
-  '/ai-voor-mkb-amsterdam': typeof AiVoorMkbAmsterdamRoute
   '/auth': typeof AuthRoute
-  '/over-ons': typeof OverOnsRoute
-  '/prijzen': typeof PrijzenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
@@ -178,11 +142,7 @@ export interface FileRouteTypes {
     | '/ai-agents-amsterdam'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
-    | '/ai-sales-assistant'
-    | '/ai-voor-mkb-amsterdam'
     | '/auth'
-    | '/over-ons'
-    | '/prijzen'
     | '/reset-password'
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
@@ -196,11 +156,7 @@ export interface FileRouteTypes {
     | '/ai-agents-amsterdam'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
-    | '/ai-sales-assistant'
-    | '/ai-voor-mkb-amsterdam'
     | '/auth'
-    | '/over-ons'
-    | '/prijzen'
     | '/reset-password'
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
@@ -215,11 +171,7 @@ export interface FileRouteTypes {
     | '/ai-agents-amsterdam'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
-    | '/ai-sales-assistant'
-    | '/ai-voor-mkb-amsterdam'
     | '/auth'
-    | '/over-ons'
-    | '/prijzen'
     | '/reset-password'
     | '/whatsapp-follow-up-automatiseren'
     | '/_authenticated/account'
@@ -235,11 +187,7 @@ export interface RootRouteChildren {
   AiAgentsAmsterdamRoute: typeof AiAgentsAmsterdamRoute
   AiKlantenserviceAutomatiserenRoute: typeof AiKlantenserviceAutomatiserenRoute
   AiLeadOpvolgingRoute: typeof AiLeadOpvolgingRoute
-  AiSalesAssistantRoute: typeof AiSalesAssistantRoute
-  AiVoorMkbAmsterdamRoute: typeof AiVoorMkbAmsterdamRoute
   AuthRoute: typeof AuthRoute
-  OverOnsRoute: typeof OverOnsRoute
-  PrijzenRoute: typeof PrijzenRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   WhatsappFollowUpAutomatiserenRoute: typeof WhatsappFollowUpAutomatiserenRoute
 }
@@ -281,39 +229,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiLeadOpvolgingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ai-sales-assistant': {
-      id: '/ai-sales-assistant'
-      path: '/ai-sales-assistant'
-      fullPath: '/ai-sales-assistant'
-      preLoaderRoute: typeof AiSalesAssistantRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ai-voor-mkb-amsterdam': {
-      id: '/ai-voor-mkb-amsterdam'
-      path: '/ai-voor-mkb-amsterdam'
-      fullPath: '/ai-voor-mkb-amsterdam'
-      preLoaderRoute: typeof AiVoorMkbAmsterdamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/over-ons': {
-      id: '/over-ons'
-      path: '/over-ons'
-      fullPath: '/over-ons'
-      preLoaderRoute: typeof OverOnsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/prijzen': {
-      id: '/prijzen'
-      path: '/prijzen'
-      fullPath: '/prijzen'
-      preLoaderRoute: typeof PrijzenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -393,11 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiAgentsAmsterdamRoute: AiAgentsAmsterdamRoute,
   AiKlantenserviceAutomatiserenRoute: AiKlantenserviceAutomatiserenRoute,
   AiLeadOpvolgingRoute: AiLeadOpvolgingRoute,
-  AiSalesAssistantRoute: AiSalesAssistantRoute,
-  AiVoorMkbAmsterdamRoute: AiVoorMkbAmsterdamRoute,
   AuthRoute: AuthRoute,
-  OverOnsRoute: OverOnsRoute,
-  PrijzenRoute: PrijzenRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   WhatsappFollowUpAutomatiserenRoute: WhatsappFollowUpAutomatiserenRoute,
 }

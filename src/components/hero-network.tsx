@@ -89,7 +89,7 @@ function edgePoint(box: Box, px: number, py: number, gap: number) {
 }
 
 /** Donkere hero met netwerk-diagram; elk kanaal rondt zijn eigen vijf taken af. */
-export function HeroNetwork({ onBook }: { onBook: () => void }) {
+export function HeroNetwork() {
   const [active, setActive] = React.useState(0);
   const canvasRef = React.useRef<HTMLDivElement>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
@@ -177,30 +177,22 @@ export function HeroNetwork({ onBook }: { onBook: () => void }) {
       <div className="relative grid gap-8 px-5 py-10 sm:px-10 sm:py-14 lg:grid-cols-2 lg:items-center lg:gap-6">
         {/* Copy */}
         <div className="min-w-0">
-          <h1 className="mt-4 max-w-[19ch] font-display text-[34px]/[1.05] font-bold tracking-tight text-white sm:text-[50px]/[1.02]">
-            Drie AI agents die je sales én klantenservice{" "}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ae8ff7]">
+            Zo ziet het eruit
+          </p>
+          <p className="mt-4 max-w-[19ch] font-display text-[26px]/[1.15] font-bold tracking-tight text-white sm:text-[34px]/[1.1]">
+            Eén brein, alle{" "}
             <span className="bg-gradient-to-r from-[#786eff] to-[#ae8ff7] bg-clip-text text-transparent">
-              overnemen
+              kanalen
             </span>
             .
-          </h1>
-          <p className="mt-4 max-w-[50ch] text-[14px]/[1.6] text-white/55 sm:text-[16px]">
-            Onze agents kwalificeren je leads, schrijven antwoorden op klantvragen en volgen op via
-            e-mail en WhatsApp — automatisch, 24/7. Zie in 30 minuten hoe het werkt.
           </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              onClick={onBook}
-              className="cta-lift inline-flex h-12 items-center rounded-full bg-gradient-to-r from-[#786eff] to-[#ae8ff7] px-6 text-[14px] font-semibold tracking-tight text-white"
-              style={{ boxShadow: "0 16px 34px -12px rgba(120,110,255,.75)" }}
-            >
-              Plan een gratis demo
-            </button>
-            <span className="text-[11px] font-medium text-white/40">
-              30 min · geen verplichtingen · direct inzicht
-            </span>
-          </div>
+          <p className="mt-4 max-w-[50ch] text-[14px]/[1.6] text-white/55 sm:text-[16px]">
+            E-mail, klantenservice, CRM en planning lopen door dezelfde automatisering. Elke taak
+            wordt afgevinkt en vastgelegd, dag en nacht.
+          </p>
         </div>
+
 
         {/* Netwerk-canvas */}
         <div ref={canvasRef} className="relative h-[300px] w-full min-w-0 md:h-[480px]">

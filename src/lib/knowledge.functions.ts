@@ -40,7 +40,7 @@ export const listKnowledge = createServerFn({ method: "GET" })
 
 export const saveKnowledge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -74,7 +74,7 @@ export const saveKnowledge = createServerFn({ method: "POST" })
 
 export const deleteKnowledge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as Ctx);
     const { error } = await context.supabase.from("knowledge_items").delete().eq("id", data.id);

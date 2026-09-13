@@ -11,6 +11,7 @@ import {
   adminDeleteAgent,
   adminSaveStat,
 } from "@/lib/dashboard.functions";
+import { listLeadRequests } from "@/lib/leads.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const inputCls =
-  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo focus:ring-2 focus:ring-indigo/35";
+  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo";
 const btnCls =
   "rounded-full bg-brand px-4 py-2 text-[12px] font-semibold text-primary-foreground disabled:opacity-50";
 
@@ -125,6 +126,8 @@ function AdminPanel() {
         </button>
       </section>
 
+      <LeadRequests enabled={meQuery.data?.isAdmin === true} />
+
       <div className="mt-4 space-y-4">
         {clients.map((c: any) => (
           <ClientBlock
@@ -133,14 +136,71 @@ function AdminPanel() {
             busy={busy}
             onSaveAgent={(payload) => run(() => saveAgentFn({ data: payload }), "Agent opgeslagen")}
             onDeleteAgent={(id) => run(() => deleteAgentFn({ data: { id } }), "Agent verwijderd")}
-            onSaveStat={(payload) =>
-              run(() => saveStatFn({ data: payload }), "Statistiek opgeslagen")
-            }
+            onSaveStat={(payload) => run(() => saveStatFn({ data: payload }), "Statistiek opgeslagen")}
           />
         ))}
         {clientsQuery.isLoading && <p className="text-[13px] text-ink/55">Laden…</p>}
       </div>
     </DashboardShell>
+  );
+}
+
+function LeadRequests({ enabled }: { enabled: boolean }) {
+  const listFn = useServerFn(listLeadRequests);
+  const { data, isLoading } = useQuery({
+    queryKey: ["lead-requests"],
+    queryFn: () => listFn(),
+    enabled,
+  });
+  const leads = data ?? [];
+
+  return (
+    <section className="card-glass-lg mt-4 rounded-3xl p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-display text-[15px] font-semibold text-brand">Aanvragen</p>
+        <p className="text-[12px] text-ink/50">{leads.length} totaal</p>
+      </div>
+
+      {isLoading && <p className="mt-3 text-[13px] text-ink/55">Laden…</p>}
+      {!isLoading && leads.length === 0 && (
+        <p className="mt-3 text-[13px] text-ink/55">Nog geen aanvragen binnengekomen.</p>
+      )}
+
+      <div className="mt-3 space-y-2">
+        {leads.map((l) => (
+          <div key={l.id} className="rounded-2xl border border-white/60 bg-white/50 p-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-[13px] font-semibold text-brand">
+                {l.name} — {l.company}
+              </p>
+              <p className="text-[11px] text-ink/50">
+                {new Date(l.created_at).toLocaleString("nl-NL", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </p>
+            </div>
+            <p className="mt-1 text-[12px] text-ink/60">
+              <a href={`mailto:${l.email}`} className="text-indigo">
+                {l.email}
+              </a>
+              {l.phone ? (
+                <>
+                  {" · "}
+                  <a href={`tel:${l.phone.replace(/\s/g, "")}`} className="text-indigo">
+                    {l.phone}
+                  </a>
+                </>
+              ) : null}
+              {l.stage ? ` · ${l.stage}` : ""}
+            </p>
+            {l.message && (
+              <p className="mt-2 whitespace-pre-line text-[12px] text-ink/70">{l.message}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

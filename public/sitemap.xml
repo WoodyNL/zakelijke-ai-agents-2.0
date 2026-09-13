@@ -1,39 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://zakelijkeaiagents.nl/</loc>
+    <loc>https://zakelijke-ai-agents.lovable.app/</loc>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://zakelijkeaiagents.nl/ai-agents-amsterdam</loc>
+    <loc>https://zakelijke-ai-agents.lovable.app/ai-agents-amsterdam</loc>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://zakelijkeaiagents.nl/ai-voor-mkb-amsterdam</loc>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/prijzen</loc>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/ai-sales-assistant</loc>
+    <loc>https://zakelijke-ai-agents.lovable.app/ai-lead-opvolging</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zakelijkeaiagents.nl/ai-lead-opvolging</loc>
+    <loc>https://zakelijke-ai-agents.lovable.app/whatsapp-follow-up-automatiseren</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zakelijkeaiagents.nl/whatsapp-follow-up-automatiseren</loc>
+    <loc>https://zakelijke-ai-agents.lovable.app/ai-klantenservice-automatiseren</loc>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/ai-klantenservice-automatiseren</loc>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/over-ons</loc>
-    <priority>0.6</priority>
   </url>
 </urlset>

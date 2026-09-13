@@ -20,10 +20,6 @@ dist-ssr
 .wrangler/
 .dev.vars
 
-# Environment variables
-.env
-.env.local
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://zakelijkeaiagents.nl/sitemap.xml
+Sitemap: https://zakelijke-ai-agents.lovable.app/sitemap.xml

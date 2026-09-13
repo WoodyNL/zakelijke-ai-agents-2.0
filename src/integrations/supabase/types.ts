@@ -132,6 +132,39 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_requests: {
+        Row: {
+          company: string
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          stage: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          stage?: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          stage?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

@@ -26,15 +26,15 @@ export function DashboardShell({
   return (
     <div className="surface-gradient min-h-screen w-full font-sans text-ink antialiased">
       <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
-        <header className="flex flex-wrap items-center justify-between gap-y-2 animate-rise">
+        <header className="flex items-center justify-between animate-rise">
           <Link to="/dashboard" className="flex items-center gap-2">
             <BrandLogo />
           </Link>
-          <nav className="flex flex-wrap items-center justify-end gap-1.5 text-[12px] font-medium sm:gap-2">
+          <nav className="flex items-center gap-2 text-[12px] font-medium">
             {isAdmin && (
               <Link
                 to="/admin"
-                className="rounded-full border border-white/60 bg-white/60 px-3 py-2 text-brand hover:bg-white/80 sm:px-3.5"
+                className="rounded-full border border-white/60 bg-white/60 px-3.5 py-2 text-brand hover:bg-white/80"
               >
                 Beheer
               </Link>
@@ -42,21 +42,21 @@ export function DashboardShell({
             {isAdmin && (
               <Link
                 to="/knowledge"
-                className="rounded-full border border-white/60 bg-white/60 px-3 py-2 text-brand hover:bg-white/80 sm:px-3.5"
+                className="rounded-full border border-white/60 bg-white/60 px-3.5 py-2 text-brand hover:bg-white/80"
               >
                 Kennis
               </Link>
             )}
             <Link
               to="/account"
-              className="rounded-full border border-white/60 bg-white/60 px-3 py-2 text-brand hover:bg-white/80 sm:px-3.5"
+              className="rounded-full border border-white/60 bg-white/60 px-3.5 py-2 text-brand hover:bg-white/80"
             >
               Account
             </Link>
             {userName && <span className="hidden text-ink/55 sm:inline">{userName}</span>}
             <button
               onClick={signOut}
-              className="rounded-full bg-brand px-3 py-2 text-primary-foreground sm:px-3.5"
+              className="rounded-full bg-brand px-3.5 py-2 text-primary-foreground"
               style={{ boxShadow: "0 12px 26px -12px oklch(0.2 0.04 285 / 0.8)" }}
             >
               Uitloggen

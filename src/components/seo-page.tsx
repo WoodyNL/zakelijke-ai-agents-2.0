@@ -32,22 +32,20 @@ export function SeoPage({
           <Link to="/" className="flex items-center gap-2">
             <BrandLogo />
           </Link>
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-2">
             <Link
               to="/auth"
-              className="inline-flex h-9 items-center whitespace-nowrap rounded-full border border-white/15 bg-white/10 px-3 text-[12px] font-semibold text-white hover:bg-white/20 sm:px-4"
+              className="inline-flex h-9 items-center rounded-full border border-white/15 bg-white/10 px-4 text-[12px] font-semibold text-white hover:bg-white/20"
             >
-              <span className="sm:hidden">Login</span>
-              <span className="hidden sm:inline">Klantlogin</span>
+              Klantlogin
             </Link>
             <Link
               to="/"
-              hash="demo"
-              className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-brand px-3 text-[12px] font-semibold text-primary-foreground cta-lift sm:px-4"
+              hash="contact"
+              className="inline-flex h-9 items-center rounded-full bg-brand px-4 text-[12px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >
-              <span className="sm:hidden">Demo</span>
-              <span className="hidden sm:inline">Plan een demo</span>
+              Plan een demo
             </Link>
           </div>
         </div>
@@ -69,12 +67,18 @@ export function SeoPage({
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
               to="/"
-              hash="demo"
+              hash="contact"
               className="inline-flex h-12 items-center gap-2 rounded-full bg-brand px-7 text-[14px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >
               Plan een gratis demo
               <span aria-hidden="true">→</span>
+            </Link>
+            <Link
+              to="/"
+              className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 text-[13px] font-semibold text-ink/80 hover:bg-white/10 hover:text-ink"
+            >
+              <span aria-hidden="true">←</span> Terug naar home
             </Link>
             <span className="text-[12px] text-ink/45">
               Online of persoonlijk bij je op kantoor in Amsterdam.
@@ -135,7 +139,7 @@ export function SeoPage({
             </p>
             <Link
               to="/"
-              hash="demo"
+              hash="contact"
               className="mt-6 inline-flex h-13 items-center gap-2 rounded-full bg-brand px-9 py-3.5 text-[15px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >
@@ -152,13 +156,9 @@ export function SeoPage({
           </h2>
           <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
             <SeoLink to="/ai-agents-amsterdam" label="AI agents in Amsterdam" />
-            <SeoLink to="/ai-voor-mkb-amsterdam" label="AI voor het MKB in Amsterdam" />
-            <SeoLink to="/ai-sales-assistant" label="AI Sales Assistant" />
             <SeoLink to="/ai-lead-opvolging" label="AI lead opvolging" />
             <SeoLink to="/whatsapp-follow-up-automatiseren" label="WhatsApp follow-up automatiseren" />
             <SeoLink to="/ai-klantenservice-automatiseren" label="AI klantenservice automatiseren" />
-            <SeoLink to="/prijzen" label="Prijzen" />
-            <SeoLink to="/over-ons" label="Over ons" />
           </div>
         </Reveal>
 

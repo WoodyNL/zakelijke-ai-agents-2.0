@@ -64,7 +64,7 @@ export const listAgents = createServerFn({ method: "GET" })
 
 export const getAgent = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ agentId: z.string().uuid(), days: z.number().int().min(0).max(3650) }).parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -105,7 +105,7 @@ export const adminListClients = createServerFn({ method: "GET" })
 
 export const adminCreateClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         name: z.string().min(1),
@@ -133,7 +133,7 @@ export const adminCreateClient = createServerFn({ method: "POST" })
 
 export const adminSaveAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -165,7 +165,7 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
 
 export const adminDeleteAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as Ctx);
     const { error } = await context.supabase.from("agents").delete().eq("id", data.id);
@@ -175,7 +175,7 @@ export const adminDeleteAgent = createServerFn({ method: "POST" })
 
 export const adminSaveStat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         agentId: z.string().uuid(),

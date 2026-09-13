@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Zakelijke AI Agents design system — Frosted Bento.
+ * Cadence design system — Frosted Bento.
  * Light, airy glass bento over a soft indigo→mint gradient field.
  */
 
@@ -38,13 +38,15 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Zakelijke AI Agents brand tokens */
+  /* Cadence brand tokens */
   --color-brand: var(--brand);
   --color-ink: var(--ink);
   --color-indigo: var(--indigo);
   --color-mint: var(--mint);
   --color-violet: var(--violet);
+  --color-warn: var(--warn);
   --color-glass: var(--glass);
+
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Inter", ui-sans-serif, sans-serif;
@@ -83,8 +85,27 @@
   --indigo: oklch(0.63 0.22 281);
   --mint: oklch(0.77 0.14 163);
   --violet: oklch(0.72 0.15 296);
+  --warn: oklch(0.7 0.16 25);
   --glass: oklch(1 0 0);
 }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@utility section-tinted {
+  background-color: rgba(255, 255, 255, 0.025);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 
 /* Donker thema voor de landingspagina (zelfde sfeer als de hero/header). */
 .theme-dark {
@@ -111,7 +132,8 @@
   background:
     radial-gradient(60% 45% at 15% 0%, rgba(120, 110, 255, 0.16), transparent 70%),
     radial-gradient(55% 45% at 90% 20%, rgba(174, 143, 247, 0.12), transparent 70%),
-    radial-gradient(70% 50% at 50% 100%, rgba(90, 220, 190, 0.08), transparent 70%), #0a0a0f !important;
+    radial-gradient(70% 50% at 50% 100%, rgba(90, 220, 190, 0.08), transparent 70%),
+    #0a0a0f !important;
 }
 
 .theme-dark .card-glass,
@@ -140,6 +162,7 @@
     transparent 65%
   );
 }
+
 
 @layer base {
   * {
@@ -200,12 +223,30 @@
   }
 }
 
+@keyframes word-swap {
+  0% {
+    opacity: 0;
+    transform: translateY(0.55em);
+    filter: blur(8px);
+  }
+  45%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
 @utility animate-pulse-dot {
   animation: pulse-dot 2.4s ease-in-out infinite;
 }
 
 @utility animate-rise {
   animation: rise-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-word-swap {
+  animation: word-swap 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* --- Motion & interaction layer -------------------------------------- */
@@ -317,21 +358,9 @@
 
 @utility cta-aurora {
   background:
-    radial-gradient(
-      60% 90% at 20% 0%,
-      color-mix(in oklab, var(--color-indigo) 22%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      55% 85% at 85% 20%,
-      color-mix(in oklab, var(--color-violet) 20%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      70% 90% at 50% 110%,
-      color-mix(in oklab, var(--color-mint) 24%, transparent),
-      transparent 70%
-    );
+    radial-gradient(60% 90% at 20% 0%, color-mix(in oklab, var(--color-indigo) 22%, transparent), transparent 70%),
+    radial-gradient(55% 85% at 85% 20%, color-mix(in oklab, var(--color-violet) 20%, transparent), transparent 70%),
+    radial-gradient(70% 90% at 50% 110%, color-mix(in oklab, var(--color-mint) 24%, transparent), transparent 70%);
   animation: aurora-drift 12s ease-in-out infinite alternate;
 }
 

@@ -10,8 +10,7 @@ export const Route = createFileRoute("/auth")({
       { title: "Inloggen — Zakelijke AI Agents klantportaal" },
       {
         name: "description",
-        content:
-          "Log in op het Zakelijke AI Agents klantportaal en bekijk de prestaties van je AI-agents.",
+        content: "Log in op het Zakelijke AI Agents klantportaal en bekijk de prestaties van je AI-agents.",
       },
       { property: "og:title", content: "Inloggen — Zakelijke AI Agents klantportaal" },
       {
@@ -26,11 +25,12 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type Mode = "login" | "forgot";
+type Mode = "login" | "signup" | "forgot";
 
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -53,13 +53,25 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         navigate({ to: "/dashboard", replace: true });
+      } else if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { name },
+          },
+        });
+        if (error) throw error;
+        setInfo("Account aangemaakt. Je kunt direct inloggen.");
+        setMode("login");
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw error;
         setInfo(
-          "Als dit adres bij ons bekend is, ontvang je binnen enkele minuten een herstel-link. Controleer ook je spam-map.",
+          "Als dit adres bij ons bekend is, ontvang je binnen enkele minuten een herstel-link. Controleer ook je spam-map."
         );
       }
     } catch (err) {
@@ -73,20 +85,25 @@ function AuthPage() {
     <div className="surface-gradient flex min-h-screen w-full items-center justify-center px-4 py-10 font-sans text-ink antialiased">
       <div className="w-full max-w-sm animate-rise">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <BrandLogo markClassName="size-9" textClassName="text-[17px]" hideTextOnMobile={false} />
+          <BrandLogo markClassName="size-9" textClassName="text-[17px]" />
         </Link>
 
         <div className="card-glass-lg rounded-3xl p-6">
           <h1 className="font-display text-[20px] font-bold text-brand">
             {mode === "login" && "Klantportaal"}
+            {mode === "signup" && "Account aanmaken"}
             {mode === "forgot" && "Wachtwoord vergeten"}
           </h1>
           <p className="mt-1.5 text-[12px]/[1.6] text-ink/55">
             {mode === "login" && "Log in om de prestaties van je AI-agents te bekijken."}
+            {mode === "signup" && "Maak je account aan met e-mail en wachtwoord."}
             {mode === "forgot" && "Vul je e-mailadres in, dan sturen we een herstel-link."}
           </p>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-3">
+            {mode === "signup" && (
+              <Field label="Naam" value={name} onChange={setName} type="text" placeholder="Bedrijfsnaam" />
+            )}
             <Field
               label="E-mailadres"
               value={email}
@@ -113,11 +130,17 @@ function AuthPage() {
               className="mt-1 w-full rounded-full bg-brand px-6 py-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
               style={{ boxShadow: "0 12px 26px -12px oklch(0.2 0.04 285 / 0.8)" }}
             >
-              {busy ? "Bezig…" : mode === "login" ? "Inloggen" : "Stuur herstel-link"}
+              {busy
+                ? "Bezig…"
+                : mode === "login"
+                  ? "Inloggen"
+                  : mode === "signup"
+                    ? "Account aanmaken"
+                    : "Stuur herstel-link"}
             </button>
           </form>
 
-          <div className="mt-4 flex justify-end text-[12px] text-ink/55">
+          <div className="mt-4 flex flex-wrap justify-between gap-2 text-[12px] text-ink/55">
             {mode !== "forgot" ? (
               <button onClick={() => setMode("forgot")} className="hover:text-indigo">
                 Wachtwoord vergeten?
@@ -127,6 +150,15 @@ function AuthPage() {
                 Terug naar inloggen
               </button>
             )}
+            {mode === "login" ? (
+              <button onClick={() => setMode("signup")} className="hover:text-indigo">
+                Account aanmaken
+              </button>
+            ) : mode === "signup" ? (
+              <button onClick={() => setMode("login")} className="hover:text-indigo">
+                Ik heb al een account
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -157,7 +189,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo focus:ring-2 focus:ring-indigo/35"
+        className="w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo"
       />
     </label>
   );

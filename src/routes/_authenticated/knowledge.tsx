@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
 });
 
 const inputCls =
-  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo focus:ring-2 focus:ring-indigo/35";
+  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo";
 const btnCls =
   "rounded-full bg-brand px-4 py-2 text-[12px] font-semibold text-primary-foreground disabled:opacity-50";
 const ghostBtnCls =

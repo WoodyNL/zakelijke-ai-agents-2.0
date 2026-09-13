@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/account")({
 });
 
 const inputClass =
-  "mt-1.5 w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink/35 focus:border-indigo/50 focus:ring-2 focus:ring-indigo/35";
+  "mt-1.5 w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink/35 focus:border-indigo/50";
 
 function AccountPage() {
   const me = useServerFn(getMe);
