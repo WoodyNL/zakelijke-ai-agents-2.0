@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { animate, useInView } from "framer-motion";
 import { Zap, Lock, LayoutDashboard, Ban, Quote } from "lucide-react";
@@ -7,6 +8,7 @@ import { HeroNetwork } from "@/components/hero-network";
 import { PricingTiers } from "@/components/pricing-tiers";
 import { faqJsonLd } from "@/components/seo-page";
 import { Reveal } from "@/hooks/use-reveal";
+import { submitBooking } from "@/lib/booking.functions";
 import { absoluteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
@@ -402,6 +404,7 @@ function nextDays(count: number) {
 }
 
 function BookingModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const submitBookingFn = useServerFn(submitBooking);
   const [step, setStep] = useState(0);
   const [day, setDay] = useState<number | null>(null);
   const [time, setTime] = useState<string | null>(null);
@@ -409,6 +412,8 @@ function BookingModal({ open, onClose }: { open: boolean; onClose: () => void })
   const [email, setEmail] = useState("");
   const [channel, setChannel] = useState<"email" | "whatsapp">("email");
   const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const days = nextDays(7);
 
   useEffect(() => {
@@ -420,6 +425,8 @@ function BookingModal({ open, onClose }: { open: boolean; onClose: () => void })
       setEmail("");
       setChannel("email");
       setPhone("");
+      setBusy(false);
+      setError(null);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -428,6 +435,29 @@ function BookingModal({ open, onClose }: { open: boolean; onClose: () => void })
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  async function confirmBooking() {
+    if (day === null || !time) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await submitBookingFn({
+        data: {
+          day: `${days[day]?.label} ${days[day]?.date}`,
+          time,
+          name,
+          email,
+          channel,
+          phone: channel === "whatsapp" ? phone : undefined,
+        },
+      });
+      setStep(2);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Er ging iets mis. Probeer het nog eens.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -580,24 +610,29 @@ function BookingModal({ open, onClose }: { open: boolean; onClose: () => void })
                 />
               )}
             </div>
+            {error && (
+              <p className="mt-3 text-[12px] font-medium text-destructive animate-rise">{error}</p>
+            )}
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => setStep(0)}
-                className="rounded-full border border-ink/10 px-5 py-3 text-[13px] font-semibold text-ink"
+                disabled={busy}
+                className="rounded-full border border-ink/10 px-5 py-3 text-[13px] font-semibold text-ink disabled:opacity-30"
               >
                 Terug
               </button>
               <button
                 disabled={
+                  busy ||
                   !name.trim() ||
                   !email.includes("@") ||
                   (channel === "whatsapp" && phone.trim().length < 8)
                 }
-                onClick={() => setStep(2)}
+                onClick={confirmBooking}
                 className="flex-1 rounded-full bg-brand py-3 text-[13px] font-semibold text-primary-foreground transition-opacity disabled:opacity-30"
                 style={shadowBrand}
               >
-                Bevestig afspraak
+                {busy ? "Bezig…" : "Bevestig afspraak"}
               </button>
             </div>
           </div>
