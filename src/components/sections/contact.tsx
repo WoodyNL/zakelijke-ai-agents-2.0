@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Check as CheckIcon } from "lucide-react";
 import * as React from "react";
@@ -8,6 +9,19 @@ import { submitLeadRequest } from "@/lib/leads.functions";
 import { Container, Section, shadowBrand } from "./ui";
 
 type Errors = Partial<Record<"name" | "company" | "email" | "form", string>>;
+
+const SEO_LINKS = [
+  { to: "/ai-scan", label: "AI-scan" },
+  { to: "/ai-consultancy-mkb", label: "AI-consultancy & strategie" },
+  { to: "/ai-automatisering-op-maat", label: "Maatwerk AI-automatisering" },
+  { to: "/ai-project-vastgelopen", label: "AI-project vastgelopen?" },
+  { to: "/ai-voor-het-mkb-amsterdam", label: "AI voor het MKB in Amsterdam" },
+  { to: "/ai-agents-amsterdam", label: "AI agents in Amsterdam" },
+  { to: "/ai-lead-opvolging", label: "AI-leadopvolging" },
+  { to: "/ai-klantenservice-automatiseren", label: "AI-klantenservice" },
+  { to: "/whatsapp-follow-up-automatiseren", label: "WhatsApp follow-up" },
+  { to: "/blog/waarom-ai-pilots-mislukken", label: "Waarom AI-pilots mislukken" },
+] as const;
 
 const fieldClass =
   "h-12 w-full rounded-2xl border border-white/15 bg-white/5 px-4 text-[14px] text-ink placeholder:text-ink/35 outline-none transition focus:border-violet/60 focus:ring-2 focus:ring-violet/30";
@@ -236,6 +250,19 @@ export function SiteFooter() {
               </li>
             </ul>
           </div>
+        </div>
+
+        <div className="mt-10 border-t border-white/10 pt-6">
+          <p className="text-[12px] font-semibold uppercase tracking-wide text-ink/70">Meer lezen</p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {SEO_LINKS.map((l) => (
+              <li key={l.to}>
+                <Link to={l.to} className="text-[13px] text-ink/55 hover:text-ink">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6">
