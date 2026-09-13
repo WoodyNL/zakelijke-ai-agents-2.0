@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { organizationJsonLd } from "../lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -77,16 +78,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Zakelijke AI Agents — AI agents voor sales & support" },
+      { title: "AI-agency voor het MKB | Zakelijke AI Agents" },
       {
         name: "description",
         content:
-          "Onze AI agents kwalificeren elke website-lead automatisch. Sales krijgt alleen warme leads.",
+          "AI-scan, projectondersteuning en maatwerk AI-automatiseringen voor het MKB. Wij zijn het verschil tussen een AI-experiment en iets dat blijft draaien.",
       },
-      { property: "og:title", content: "Zakelijke AI Agents — AI agents voor sales & support" },
+      { property: "og:title", content: "AI-agency voor het MKB | Zakelijke AI Agents" },
       {
         property: "og:description",
-        content: "Elke lead gekwalificeerd, gereageerd en geboekt — automatisch.",
+        content:
+          "95% van de AI-pilots levert nooit een euro op. Wij bouwen AI-automatiseringen die dat wel doen.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -104,6 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
+    scripts: [{ type: "application/ld+json", children: organizationJsonLd() }],
   }),
   shellComponent: RootShell,
   component: RootComponent,

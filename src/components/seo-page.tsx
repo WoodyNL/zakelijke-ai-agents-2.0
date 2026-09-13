@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Reveal } from "@/hooks/use-reveal";
+import { SITE } from "@/content/site";
 
 const shadowBrand = { boxShadow: "0 12px 26px -12px oklch(0.2 0.04 285 / 0.8)" } as const;
 
@@ -42,10 +43,10 @@ export function SeoPage({
             <Link
               to="/"
               hash="contact"
-              className="inline-flex h-9 items-center rounded-full bg-brand px-4 text-[12px] font-semibold text-primary-foreground cta-lift"
+              className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-brand px-4 text-[12px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >
-              Plan een demo
+              {SITE.ctaPrimary}
             </Link>
           </div>
         </div>
@@ -71,7 +72,7 @@ export function SeoPage({
               className="inline-flex h-12 items-center gap-2 rounded-full bg-brand px-7 text-[14px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >
-              Plan een gratis demo
+              {SITE.ctaPrimary}
               <span aria-hidden="true">→</span>
             </Link>
             <Link
@@ -143,22 +144,28 @@ export function SeoPage({
               className="mt-6 inline-flex h-13 items-center gap-2 rounded-full bg-brand px-9 py-3.5 text-[15px] font-semibold text-primary-foreground cta-lift"
               style={shadowBrand}
             >
-              Plan een gratis demo
+              {SITE.ctaPrimary}
               <span aria-hidden="true">→</span>
             </Link>
-            <p className="mt-3 text-[12px] text-ink/45">Vandaag geboekt, deze week live.</p>
+            <p className="mt-3 text-[12px] text-ink/45">Reactie binnen één werkdag.</p>
           </div>
         </Reveal>
 
         <Reveal as="section" className="mt-10">
           <h2 className="font-display text-[16px] font-bold tracking-tight text-brand">
-            Meer over onze AI agents
+            Meer over Zakelijke AI Agents
           </h2>
           <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
+            <SeoLink to="/ai-scan" label="AI-scan" />
+            <SeoLink to="/ai-voor-het-mkb-amsterdam" label="AI voor het MKB in Amsterdam" />
+            <SeoLink to="/ai-automatisering-op-maat" label="Maatwerk AI-automatisering" />
+            <SeoLink to="/ai-project-vastgelopen" label="AI-project vastgelopen?" />
+            <SeoLink to="/ai-consultancy-mkb" label="AI-consultancy & strategie" />
             <SeoLink to="/ai-agents-amsterdam" label="AI agents in Amsterdam" />
             <SeoLink to="/ai-lead-opvolging" label="AI lead opvolging" />
             <SeoLink to="/whatsapp-follow-up-automatiseren" label="WhatsApp follow-up automatiseren" />
             <SeoLink to="/ai-klantenservice-automatiseren" label="AI klantenservice automatiseren" />
+            <SeoLink to="/blog/waarom-ai-pilots-mislukken" label="Waarom AI-pilots mislukken" />
           </div>
         </Reveal>
 

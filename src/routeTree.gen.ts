@@ -12,8 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AiAgentsAmsterdamRouteImport } from './routes/ai-agents-amsterdam'
+import { Route as AiAutomatiseringOpMaatRouteImport } from './routes/ai-automatisering-op-maat'
+import { Route as AiConsultancyMkbRouteImport } from './routes/ai-consultancy-mkb'
 import { Route as AiKlantenserviceAutomatiserenRouteImport } from './routes/ai-klantenservice-automatiseren'
 import { Route as AiLeadOpvolgingRouteImport } from './routes/ai-lead-opvolging'
+import { Route as AiProjectVastgelopenRouteImport } from './routes/ai-project-vastgelopen'
+import { Route as AiScanRouteImport } from './routes/ai-scan'
+import { Route as AiVoorHetMkbAmsterdamRouteImport } from './routes/ai-voor-het-mkb-amsterdam'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/whatsapp-follow-up-automatiseren'
@@ -21,6 +26,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as BlogWaaromAiPilotsMislukkenRouteImport } from './routes/blog/waarom-ai-pilots-mislukken'
 import { Route as AuthenticatedAgentsAgentIdRouteImport } from './routes/_authenticated/agents.$agentId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -37,6 +43,16 @@ const AiAgentsAmsterdamRoute = AiAgentsAmsterdamRouteImport.update({
   path: '/ai-agents-amsterdam',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiAutomatiseringOpMaatRoute = AiAutomatiseringOpMaatRouteImport.update({
+  id: '/ai-automatisering-op-maat',
+  path: '/ai-automatisering-op-maat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiConsultancyMkbRoute = AiConsultancyMkbRouteImport.update({
+  id: '/ai-consultancy-mkb',
+  path: '/ai-consultancy-mkb',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AiKlantenserviceAutomatiserenRoute =
   AiKlantenserviceAutomatiserenRouteImport.update({
     id: '/ai-klantenservice-automatiseren',
@@ -46,6 +62,21 @@ const AiKlantenserviceAutomatiserenRoute =
 const AiLeadOpvolgingRoute = AiLeadOpvolgingRouteImport.update({
   id: '/ai-lead-opvolging',
   path: '/ai-lead-opvolging',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiProjectVastgelopenRoute = AiProjectVastgelopenRouteImport.update({
+  id: '/ai-project-vastgelopen',
+  path: '/ai-project-vastgelopen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiScanRoute = AiScanRouteImport.update({
+  id: '/ai-scan',
+  path: '/ai-scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiVoorHetMkbAmsterdamRoute = AiVoorHetMkbAmsterdamRouteImport.update({
+  id: '/ai-voor-het-mkb-amsterdam',
+  path: '/ai-voor-het-mkb-amsterdam',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -84,6 +115,12 @@ const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BlogWaaromAiPilotsMislukkenRoute =
+  BlogWaaromAiPilotsMislukkenRouteImport.update({
+    id: '/blog/waarom-ai-pilots-mislukken',
+    path: '/blog/waarom-ai-pilots-mislukken',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAgentsAgentIdRoute =
   AuthenticatedAgentsAgentIdRouteImport.update({
     id: '/agents/$agentId',
@@ -94,8 +131,13 @@ const AuthenticatedAgentsAgentIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
+  '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
+  '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
+  '/ai-project-vastgelopen': typeof AiProjectVastgelopenRoute
+  '/ai-scan': typeof AiScanRoute
+  '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
@@ -103,13 +145,19 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
+  '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
+  '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
+  '/ai-project-vastgelopen': typeof AiProjectVastgelopenRoute
+  '/ai-scan': typeof AiScanRoute
+  '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
@@ -117,6 +165,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
 }
 export interface FileRoutesById {
@@ -124,8 +173,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
+  '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
+  '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
+  '/ai-project-vastgelopen': typeof AiProjectVastgelopenRoute
+  '/ai-scan': typeof AiScanRoute
+  '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
@@ -133,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/_authenticated/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
 }
 export interface FileRouteTypes {
@@ -140,8 +195,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/ai-agents-amsterdam'
+    | '/ai-automatisering-op-maat'
+    | '/ai-consultancy-mkb'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
+    | '/ai-project-vastgelopen'
+    | '/ai-scan'
+    | '/ai-voor-het-mkb-amsterdam'
     | '/auth'
     | '/reset-password'
     | '/whatsapp-follow-up-automatiseren'
@@ -149,13 +209,19 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/knowledge'
+    | '/blog/waarom-ai-pilots-mislukken'
     | '/agents/$agentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/ai-agents-amsterdam'
+    | '/ai-automatisering-op-maat'
+    | '/ai-consultancy-mkb'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
+    | '/ai-project-vastgelopen'
+    | '/ai-scan'
+    | '/ai-voor-het-mkb-amsterdam'
     | '/auth'
     | '/reset-password'
     | '/whatsapp-follow-up-automatiseren'
@@ -163,14 +229,20 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/knowledge'
+    | '/blog/waarom-ai-pilots-mislukken'
     | '/agents/$agentId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/ai-agents-amsterdam'
+    | '/ai-automatisering-op-maat'
+    | '/ai-consultancy-mkb'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
+    | '/ai-project-vastgelopen'
+    | '/ai-scan'
+    | '/ai-voor-het-mkb-amsterdam'
     | '/auth'
     | '/reset-password'
     | '/whatsapp-follow-up-automatiseren'
@@ -178,6 +250,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
+    | '/blog/waarom-ai-pilots-mislukken'
     | '/_authenticated/agents/$agentId'
   fileRoutesById: FileRoutesById
 }
@@ -185,11 +258,17 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AiAgentsAmsterdamRoute: typeof AiAgentsAmsterdamRoute
+  AiAutomatiseringOpMaatRoute: typeof AiAutomatiseringOpMaatRoute
+  AiConsultancyMkbRoute: typeof AiConsultancyMkbRoute
   AiKlantenserviceAutomatiserenRoute: typeof AiKlantenserviceAutomatiserenRoute
   AiLeadOpvolgingRoute: typeof AiLeadOpvolgingRoute
+  AiProjectVastgelopenRoute: typeof AiProjectVastgelopenRoute
+  AiScanRoute: typeof AiScanRoute
+  AiVoorHetMkbAmsterdamRoute: typeof AiVoorHetMkbAmsterdamRoute
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   WhatsappFollowUpAutomatiserenRoute: typeof WhatsappFollowUpAutomatiserenRoute
+  BlogWaaromAiPilotsMislukkenRoute: typeof BlogWaaromAiPilotsMislukkenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -215,6 +294,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiAgentsAmsterdamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai-automatisering-op-maat': {
+      id: '/ai-automatisering-op-maat'
+      path: '/ai-automatisering-op-maat'
+      fullPath: '/ai-automatisering-op-maat'
+      preLoaderRoute: typeof AiAutomatiseringOpMaatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-consultancy-mkb': {
+      id: '/ai-consultancy-mkb'
+      path: '/ai-consultancy-mkb'
+      fullPath: '/ai-consultancy-mkb'
+      preLoaderRoute: typeof AiConsultancyMkbRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ai-klantenservice-automatiseren': {
       id: '/ai-klantenservice-automatiseren'
       path: '/ai-klantenservice-automatiseren'
@@ -227,6 +320,27 @@ declare module '@tanstack/react-router' {
       path: '/ai-lead-opvolging'
       fullPath: '/ai-lead-opvolging'
       preLoaderRoute: typeof AiLeadOpvolgingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-project-vastgelopen': {
+      id: '/ai-project-vastgelopen'
+      path: '/ai-project-vastgelopen'
+      fullPath: '/ai-project-vastgelopen'
+      preLoaderRoute: typeof AiProjectVastgelopenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-scan': {
+      id: '/ai-scan'
+      path: '/ai-scan'
+      fullPath: '/ai-scan'
+      preLoaderRoute: typeof AiScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-voor-het-mkb-amsterdam': {
+      id: '/ai-voor-het-mkb-amsterdam'
+      path: '/ai-voor-het-mkb-amsterdam'
+      fullPath: '/ai-voor-het-mkb-amsterdam'
+      preLoaderRoute: typeof AiVoorHetMkbAmsterdamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -278,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/blog/waarom-ai-pilots-mislukken': {
+      id: '/blog/waarom-ai-pilots-mislukken'
+      path: '/blog/waarom-ai-pilots-mislukken'
+      fullPath: '/blog/waarom-ai-pilots-mislukken'
+      preLoaderRoute: typeof BlogWaaromAiPilotsMislukkenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/agents/$agentId': {
       id: '/_authenticated/agents/$agentId'
       path: '/agents/$agentId'
@@ -311,11 +432,17 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AiAgentsAmsterdamRoute: AiAgentsAmsterdamRoute,
+  AiAutomatiseringOpMaatRoute: AiAutomatiseringOpMaatRoute,
+  AiConsultancyMkbRoute: AiConsultancyMkbRoute,
   AiKlantenserviceAutomatiserenRoute: AiKlantenserviceAutomatiserenRoute,
   AiLeadOpvolgingRoute: AiLeadOpvolgingRoute,
+  AiProjectVastgelopenRoute: AiProjectVastgelopenRoute,
+  AiScanRoute: AiScanRoute,
+  AiVoorHetMkbAmsterdamRoute: AiVoorHetMkbAmsterdamRoute,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   WhatsappFollowUpAutomatiserenRoute: WhatsappFollowUpAutomatiserenRoute,
+  BlogWaaromAiPilotsMislukkenRoute: BlogWaaromAiPilotsMislukkenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

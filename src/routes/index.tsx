@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AgentsSection, PricingSection } from "@/components/sections/agents-pricing";
 import { ChatbotSection } from "@/components/sections/chatbot";
 import { ContactSection, SiteFooter } from "@/components/sections/contact";
@@ -14,7 +15,7 @@ import { FAQ, SITE } from "@/content/site";
 const TITLE = "AI-agency voor het MKB | Zakelijke AI Agents";
 const DESCRIPTION =
   "95% van de AI-pilots levert niets op. Wij zorgen dat het bij jou wél werkt: AI-scan, consultancy, projectondersteuning en maatwerk automatiseringen voor het Nederlandse mkb.";
-const URL = "https://zakelijke-ai-agents.lovable.app/";
+const URL = "https://zakelijkeaiagents.nl/";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -62,6 +63,12 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  useEffect(() => {
+    if (!window.location.hash) return;
+    const el = document.querySelector(window.location.hash);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   return (
     <div className="theme-dark surface-gradient min-h-screen w-full overflow-x-hidden font-sans text-ink antialiased">
       <SiteHeader />
@@ -78,7 +85,6 @@ function Index() {
         <ChatbotSection />
         <PricingSection />
         <GovernanceSection />
-        
         <PersonSection />
         <FaqSection />
         <ContactSection />
