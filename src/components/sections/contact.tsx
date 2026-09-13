@@ -242,6 +242,11 @@ export function SiteFooter() {
                   {SITE.phone}
                 </a>
               </li>
+              <li>
+                <a href={`mailto:${SITE.email}`} className="hover:text-ink">
+                  {SITE.email}
+                </a>
+              </li>
               <li>KvK {SITE.kvk}</li>
               <li>
                 <a href="#contact" className="hover:text-ink">

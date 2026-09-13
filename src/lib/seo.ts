@@ -12,6 +12,7 @@ export function organizationJsonLd() {
     "@type": "Organization",
     name: "Zakelijke AI Agents",
     url: SITE_URL,
+    email: "wouter@zakelijkeaiagents.nl",
     areaServed: {
       "@type": "City",
       name: "Amsterdam",

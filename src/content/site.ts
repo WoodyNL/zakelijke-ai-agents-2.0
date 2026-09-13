@@ -8,7 +8,7 @@ export const SITE = {
   tagline: "AI-agency voor het MKB",
   scanPrice: "€1.450",
   person: "Wouter Ransijn",
-  email: "",
+  email: "wouter@zakelijkeaiagents.nl",
   phone: "+31 6 14486257",
   kvk: "64493423",
   ctaPrimary: "Plan een gratis AI-verkenning",

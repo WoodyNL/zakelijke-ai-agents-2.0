@@ -42,6 +42,7 @@ export const Route = createFileRoute("/")({
           url: URL,
           areaServed: "NL",
           telephone: SITE.phone,
+          email: SITE.email,
           serviceType: ["AI-consultancy", "AI-automatisering", "AI-implementatie"],
         }),
       },
