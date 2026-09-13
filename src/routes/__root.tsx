@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { organizationJsonLd } from "../lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -104,6 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
+    scripts: [{ type: "application/ld+json", children: organizationJsonLd() }],
   }),
   shellComponent: RootShell,
   component: RootComponent,

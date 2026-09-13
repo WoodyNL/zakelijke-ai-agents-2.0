@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
+import { absoluteUrl } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/whatsapp-follow-up-automatiseren")({
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/whatsapp-follow-up-automatiseren" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/whatsapp-follow-up-automatiseren") }],
     scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,

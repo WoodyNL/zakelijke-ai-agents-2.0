@@ -152,9 +152,13 @@ export function SeoPage({
           </h2>
           <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
             <SeoLink to="/ai-agents-amsterdam" label="AI agents in Amsterdam" />
+            <SeoLink to="/ai-voor-mkb-amsterdam" label="AI voor het MKB in Amsterdam" />
+            <SeoLink to="/ai-sales-assistant" label="AI Sales Assistant" />
             <SeoLink to="/ai-lead-opvolging" label="AI lead opvolging" />
             <SeoLink to="/whatsapp-follow-up-automatiseren" label="WhatsApp follow-up automatiseren" />
             <SeoLink to="/ai-klantenservice-automatiseren" label="AI klantenservice automatiseren" />
+            <SeoLink to="/prijzen" label="Prijzen" />
+            <SeoLink to="/over-ons" label="Over ons" />
           </div>
         </Reveal>
 

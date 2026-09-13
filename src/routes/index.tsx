@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { animate, useInView } from "framer-motion";
-import { Zap, ShieldCheck, TrendingUp, Rocket, Quote } from "lucide-react";
+import { Zap, Lock, LayoutDashboard, Ban, Quote } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { HeroNetwork } from "@/components/hero-network";
+import { PricingTiers } from "@/components/pricing-tiers";
+import { faqJsonLd } from "@/components/seo-page";
 import { Reveal } from "@/hooks/use-reveal";
+import { absoluteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,7 +27,11 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-    scripts: [{ src: "https://studio.pickaxe.co/api/embed/bundle.js", defer: true }],
+    links: [{ rel: "canonical", href: absoluteUrl("/") }],
+    scripts: [
+      { src: "https://studio.pickaxe.co/api/embed/bundle.js", defer: true },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
+    ],
   }),
   component: Index,
 });
@@ -70,31 +77,35 @@ const PHASES = [
 const USPS = [
   {
     icon: Zap,
+    bar: "bg-indigo",
     badge: "bg-indigo text-white",
     stat: "±40 sec",
     title: "Razendsnelle reactie",
     body: "Terwijl concurrenten nog een ticket aanmaken, heeft jouw agent de lead al beantwoord en gekwalificeerd.",
   },
   {
-    icon: TrendingUp,
-    badge: "bg-mint text-brand",
-    stat: "3×",
-    title: "Meer afspraken, minder ruis",
-    body: "Sales praat alleen nog met leads die al gekwalificeerd zijn. Minder tijd verspild, meer deals gesloten.",
-  },
-  {
-    icon: ShieldCheck,
+    icon: Lock,
+    bar: "bg-violet",
     badge: "bg-violet text-white",
-    stat: "0",
-    title: "Nooit een gemiste lead",
-    body: "Elke aanvraag krijgt een agent toegewezen — geen voicemail, geen weekend-gat, geen genegeerd bericht.",
+    stat: "100% controle",
+    title: "Jij houdt de touwtjes in handen",
+    body: "De Inbox Draft Assistant verstuurt nooit iets zonder jouw akkoord. Jij bepaalt wat automatisch mag — wij niet.",
   },
   {
-    icon: Rocket,
+    icon: LayoutDashboard,
+    bar: "bg-mint",
+    badge: "bg-mint text-brand",
+    stat: "Realtime",
+    title: "Eigen dashboard, geen black box",
+    body: "Per agent zie je status, uitgevoerde acties en een trendgrafiek in je eigen portaal — inzicht, geen giswerk.",
+  },
+  {
+    icon: Ban,
+    bar: "bg-indigo",
     badge: "bg-indigo text-white",
-    stat: "1 dag",
-    title: "Live binnen een dag",
-    body: "Geen implementatietraject van maanden. Wij koppelen je tools en de agent draait deze week al.",
+    stat: "3 mnd",
+    title: "Geen jaarcontract",
+    body: "Daarna gewoon maandelijks opzegbaar. Vergelijkbare AI-platforms binden je vrijwel altijd een heel jaar vast.",
   },
 ];
 
@@ -103,6 +114,33 @@ const STATS = [
   { value: 3, prefix: "", suffix: "×", label: "sneller opgevolgd" },
   { value: 0, prefix: "", suffix: "", label: "berichten gemist" },
 ] as const;
+
+const FAQS = [
+  {
+    q: "Welke agents leveren jullie?",
+    a: "Drie: de AI Sales Assistant (leads kwalificeren en afspraken boeken), de Inbox Draft Assistant (concept-reacties op sales- én klantvragen) en de WhatsApp Follow-up Agent (automatische opvolging met menselijke overname).",
+  },
+  {
+    q: "Zijn de agents alleen voor sales?",
+    a: "Nee. Dezelfde agents werken ook voor klantenservice: veelgestelde klantvragen beantwoorden, verzoeken routeren naar de juiste afdeling en klanten op de hoogte houden via e-mail of WhatsApp.",
+  },
+  {
+    q: "Hoe snel staat een agent live?",
+    a: "Binnen een dag per agent. We koppelen je formulier, inbox, CRM en agenda — geen technisch team nodig.",
+  },
+  {
+    q: "Stuurt de Inbox Draft Assistant zelfstandig mails?",
+    a: "Nee, niet in het begin. Elke reactie staat als concept klaar; jij keurt goed en verstuurt. Zo bouw je vertrouwen op in de kwaliteit.",
+  },
+  {
+    q: "Wat gebeurt er bij twijfelgevallen of complexe vragen?",
+    a: "Die worden automatisch aan een medewerker aangeboden — via e-mail of WhatsApp, jij bepaalt de regels. Simpelere follow-up en klantvragen lopen automatisch door.",
+  },
+  {
+    q: "Zit ik vast aan een contract?",
+    a: "Nee. Na een minimum van 3 maanden zeg je maandelijks op met één maand opzegtermijn. Ter vergelijking: vergelijkbare AI-agentplatforms vragen vrijwel altijd een jaarcontract.",
+  },
+];
 
 /** Telt op naar `value` zodra het cijfer in beeld komt; toont direct de eindwaarde bij reduced motion. */
 function AnimatedNumber({ value, duration = 1.4 }: { value: number; duration?: number }) {
@@ -660,17 +698,17 @@ function Index() {
           </button>
         </Reveal>
 
-        {/* Benefits + social proof — bento van harde, meetbare resultaten */}
+        {/* Benefits + social proof — bento met wat ons écht onderscheidt */}
         <Reveal as="section" className="mt-14">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo">
-            // Resultaat
+            // Waarom Zakelijke AI Agents
           </p>
           <h2 className="mt-2 font-display text-[24px] font-bold tracking-tight text-brand sm:text-[28px]">
-            Dit merk je binnen de eerste week
+            Snel, transparant en zonder risico
           </h2>
           <p className="mt-2 max-w-[52ch] text-[13px]/[1.6] text-ink/55">
-            Geen vage belofte over "efficiëntie" — een meetbaar verschil in reactietijd, pipeline
-            en omzet.
+            Niet zomaar een AI-tool — de controle blijft bij jou, resultaten zie je live, en je zit
+            nergens jarenlang aan vast.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
@@ -681,8 +719,8 @@ function Index() {
                 className="pointer-events-none absolute -top-3 -right-2 size-24 text-brand/[0.06]"
               />
               <p className="relative font-display text-[18px]/[1.4] font-semibold text-brand sm:text-[22px]/[1.35]">
-                “Onze responstijd ging van dagen naar seconden. Sales praat nu alleen nog met
-                leads die er toe doen.”
+                “Onze responstijd ging van dagen naar seconden. Sales praat nu alleen nog met leads
+                die er toe doen.”
               </p>
               <div className="relative mt-5 flex items-center justify-between">
                 <div>
@@ -696,14 +734,20 @@ function Index() {
             </div>
 
             {USPS.map((u) => (
-              <div key={u.title} className="card-glass card-lift sheen flex flex-col rounded-3xl p-4">
+              <div
+                key={u.title}
+                className="card-glass card-lift sheen relative flex flex-col overflow-hidden rounded-3xl p-4"
+              >
+                <span className={`absolute inset-x-0 top-0 h-1 ${u.bar}`} />
                 <span className={`grid size-9 shrink-0 place-items-center rounded-2xl ${u.badge}`}>
                   <u.icon aria-hidden="true" strokeWidth={2} className="size-[18px]" />
                 </span>
-                <p className="mt-3 font-display text-[20px] font-bold leading-none text-brand">
+                <p
+                  className={`mt-3 text-[11px] font-bold uppercase tracking-[0.08em] ${u.bar.replace("bg-", "text-")}`}
+                >
                   {u.stat}
                 </p>
-                <p className="mt-1.5 text-[12.5px] font-semibold text-brand">{u.title}</p>
+                <p className="mt-1 text-[13px] font-semibold text-brand">{u.title}</p>
                 <p className="mt-1 text-[11px]/[1.55] text-ink/55">{u.body}</p>
               </div>
             ))}
@@ -784,89 +828,7 @@ function Index() {
               3 maanden minimum, daarna maandelijks opzegbaar · prijzen ex. btw
             </p>
           </div>
-          <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
-            {[
-              {
-                name: "Start",
-                setup: "€795",
-                monthly: "€495",
-                tagline: "Je eerste agent, deze week live",
-                features: [
-                  "1 AI agent naar keuze",
-                  "1 kanaal (e-mail of WhatsApp)",
-                  "Tot 300 leads per maand",
-                  "Koppeling met je formulier of inbox",
-                ],
-                highlight: false,
-              },
-              {
-                name: "Groei",
-                setup: "€1.295",
-                monthly: "€895",
-                tagline: "Meest gekozen — beste prijs per agent",
-                features: [
-                  "2 AI agents: Sales + WhatsApp Follow-up",
-                  "CRM- en agendakoppeling inbegrepen",
-                  "Tot 750 leads per maand",
-                  "Persoonlijke opvolging op beide kanalen",
-                ],
-                highlight: true,
-              },
-              {
-                name: "Compleet",
-                setup: "€1.795",
-                monthly: "€1.395",
-                tagline: "Alle agents, alle kanalen, 24/7",
-                features: [
-                  "Alle 3 agents inbegrepen",
-                  "Onbeperkte kanalen, 2.000+ leads p/m",
-                  "Priority support",
-                  "Kwartaalreview van je strategie",
-                ],
-                highlight: false,
-              },
-            ].map((t) => (
-              <div
-                key={t.name}
-                className={
-                  t.highlight
-                    ? "card-glass-lg card-lift relative rounded-3xl p-4 ring-1 ring-indigo/40"
-                    : "card-glass card-lift sheen rounded-3xl p-4"
-                }
-              >
-                {t.highlight && (
-                  <span className="absolute -top-2.5 right-4 rounded-full bg-indigo px-2.5 py-1 text-[10px] font-semibold text-white">
-                    Aanbevolen
-                  </span>
-                )}
-                <p className="font-display text-[14px] font-semibold text-brand">{t.name}</p>
-                <p className="mt-2 font-display text-[24px] leading-none font-bold text-brand">
-                  {t.monthly}
-                  <span className="text-[11px] font-medium text-ink/45">/mnd</span>
-                </p>
-                <p className="mt-1 text-[10px] text-ink/45">+ {t.setup} eenmalige setup</p>
-                <p className="mt-2 text-[11px] font-medium text-ink/60">{t.tagline}</p>
-                <ul className="mt-3 space-y-1.5">
-                  {t.features.map((f) => (
-                    <li key={f} className="flex items-start gap-1.5 text-[11px]/[1.5] text-ink/55">
-                      <span className="mt-1 block size-1 shrink-0 rounded-full bg-mint" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={openBooking}
-                  className={
-                    t.highlight
-                      ? "mt-4 inline-flex h-9 w-full items-center justify-center rounded-full bg-brand text-[12px] font-semibold text-primary-foreground cta-lift"
-                      : "mt-4 inline-flex h-9 w-full items-center justify-center rounded-full border border-white/15 bg-white/5 text-[12px] font-semibold text-brand hover:bg-white/10"
-                  }
-                >
-                  Plan een demo
-                </button>
-              </div>
-            ))}
-          </div>
+          <PricingTiers onBook={openBooking} />
           <p className="mt-3 text-[11px]/[1.6] text-ink/55">
             Extra leads of WhatsApp-gesprekken boven je bundel: €1,00 per stuk. WhatsApp-gesprekskosten
             van Meta rekenen we kosteloos door. Elke agent staat binnen een dag live — terwijl
@@ -880,32 +842,7 @@ function Index() {
             Veelgestelde vragen
           </h2>
           <div className="mt-4 grid gap-2.5 lg:grid-cols-2">
-            {[
-              {
-                q: "Welke agents leveren jullie?",
-                a: "Drie: de AI Sales Assistant (leads kwalificeren en afspraken boeken), de Inbox Draft Assistant (concept-reacties op sales- én klantvragen) en de WhatsApp Follow-up Agent (automatische opvolging met menselijke overname).",
-              },
-              {
-                q: "Zijn de agents alleen voor sales?",
-                a: "Nee. Dezelfde agents werken ook voor klantenservice: veelgestelde klantvragen beantwoorden, verzoeken routeren naar de juiste afdeling en klanten op de hoogte houden via e-mail of WhatsApp.",
-              },
-              {
-                q: "Hoe snel staat een agent live?",
-                a: "Binnen een dag per agent. We koppelen je formulier, inbox, CRM en agenda — geen technisch team nodig.",
-              },
-              {
-                q: "Stuurt de Inbox Draft Assistant zelfstandig mails?",
-                a: "Nee, niet in het begin. Elke reactie staat als concept klaar; jij keurt goed en verstuurt. Zo bouw je vertrouwen op in de kwaliteit.",
-              },
-              {
-                q: "Wat gebeurt er bij twijfelgevallen of complexe vragen?",
-                a: "Die worden automatisch aan een medewerker aangeboden — via e-mail of WhatsApp, jij bepaalt de regels. Simpelere follow-up en klantvragen lopen automatisch door.",
-              },
-              {
-                q: "Zit ik vast aan een contract?",
-                a: "Nee. Na een minimum van 3 maanden zeg je maandelijks op met één maand opzegtermijn. Ter vergelijking: vergelijkbare AI-agentplatforms vragen vrijwel altijd een jaarcontract.",
-              },
-            ].map((f) => (
+            {FAQS.map((f) => (
               <div key={f.q} className="card-glass card-lift rounded-2xl px-4 py-3.5">
                 <p className="text-[13px] font-semibold text-brand">{f.q}</p>
                 <p className="mt-1.5 text-[12px]/[1.55] text-ink/55">{f.a}</p>
@@ -1021,6 +958,12 @@ function Index() {
             <Link to="/ai-agents-amsterdam" className="hover:text-ink/80">
               AI agents Amsterdam
             </Link>
+            <Link to="/ai-voor-mkb-amsterdam" className="hover:text-ink/80">
+              AI voor het MKB in Amsterdam
+            </Link>
+            <Link to="/ai-sales-assistant" className="hover:text-ink/80">
+              AI Sales Assistant
+            </Link>
             <Link to="/ai-lead-opvolging" className="hover:text-ink/80">
               AI lead opvolging
             </Link>
@@ -1029,6 +972,12 @@ function Index() {
             </Link>
             <Link to="/ai-klantenservice-automatiseren" className="hover:text-ink/80">
               AI klantenservice automatiseren
+            </Link>
+            <Link to="/prijzen" className="hover:text-ink/80">
+              Prijzen
+            </Link>
+            <Link to="/over-ons" className="hover:text-ink/80">
+              Over ons
             </Link>
           </nav>
           <div className="mt-3 flex items-center justify-between">

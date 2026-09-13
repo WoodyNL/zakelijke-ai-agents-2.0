@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
+import { absoluteUrl } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/ai-klantenservice-automatiseren")({
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/ai-klantenservice-automatiseren" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/ai-klantenservice-automatiseren") }],
     scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
