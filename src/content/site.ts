@@ -3,8 +3,6 @@
  * Pas hier aan; de secties lezen hieruit.
  */
 
-export const FORM_ENDPOINT = "REPLACE_ME";
-
 export const SITE = {
   name: "Zakelijke AI Agents",
   tagline: "AI-agency voor het MKB",
