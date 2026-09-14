@@ -60,7 +60,10 @@ export function ContactSection() {
     try {
       await submit({ data: values });
       setSent(true);
-    } catch {
+    } catch (err) {
+      // De echte serverfout is nodig om een storing te kunnen herleiden; de
+      // bezoeker krijgt een nette boodschap met een directe uitwijkmogelijkheid.
+      console.error("Contactformulier: versturen mislukt", err);
       setErrors({ form: "Versturen is niet gelukt. Probeer het nog eens of mail ons direct." });
     } finally {
       setSending(false);
@@ -162,7 +165,14 @@ export function ContactSection() {
                   />
                 </Field>
 
-                {errors.form && <p className="text-[12px] text-warn">{errors.form}</p>}
+                {errors.form && (
+                  <p role="alert" className="text-[12px]/[1.6] text-warn">
+                    {errors.form}{" "}
+                    <a href={`mailto:${SITE.email}`} className="underline underline-offset-2">
+                      {SITE.email}
+                    </a>
+                  </p>
+                )}
 
                 <button
                   type="submit"

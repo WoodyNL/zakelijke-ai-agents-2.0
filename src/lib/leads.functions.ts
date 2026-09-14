@@ -9,18 +9,19 @@ function esc(v: string) {
   return v.replace(/[&<>]/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;"));
 }
 
-async function notifyByEmail(data: {
+type LeadData = {
   name: string;
   company: string;
   email: string;
   phone?: string;
   stage?: string;
   message?: string;
-}) {
+};
+
+async function notifyByEmail(data: LeadData) {
   const apiKey = process.env["RESEND_API_KEY"];
   if (!apiKey) {
-    console.warn("RESEND_API_KEY ontbreekt — geen melding verstuurd");
-    return;
+    throw new Error("RESEND_API_KEY ontbreekt");
   }
 
   const rows: Array<[string, string]> = [
@@ -55,8 +56,22 @@ async function notifyByEmail(data: {
   });
 
   if (!res.ok) {
-    console.error(`Resend melding mislukt [${res.status}]: ${await res.text()}`);
+    throw new Error(`Resend melding mislukt [${res.status}]: ${await res.text()}`);
   }
+}
+
+/** Slaat de aanvraag op in de database; gooit bij een fout zodat de aanroeper kan terugvallen op e-mail. */
+async function storeLead(data: LeadData) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.from("lead_requests").insert({
+    name: data.name,
+    company: data.company,
+    email: data.email,
+    phone: data.phone || null,
+    stage: data.stage ?? "",
+    message: data.message || null,
+  });
+  if (error) throw new Error(error.message);
 }
 
 const leadSchema = z.object({
@@ -73,29 +88,34 @@ export type LeadInput = z.input<typeof leadSchema>;
 export const submitLeadRequest = createServerFn({ method: "POST" })
   .validator((input: LeadInput) => leadSchema.parse(input))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Twee onafhankelijke kanalen: de database (voor het beheerpaneel) en de
+    // e-mailmelding. Eén aanvraag mag niet verloren gaan omdat één van beide
+    // niet geconfigureerd is, dus we proberen ze allebei en falen pas als
+    // geen van beide de aanvraag heeft vastgelegd.
+    const [stored, mailed] = await Promise.all([
+      storeLead(data).then(
+        () => true,
+        (err: unknown) => {
+          console.error("lead_requests insert mislukt:", err);
+          return false;
+        },
+      ),
+      notifyByEmail(data).then(
+        () => true,
+        (err: unknown) => {
+          console.error("lead notificatie mislukt:", err);
+          return false;
+        },
+      ),
+    ]);
 
-    const { error } = await supabaseAdmin.from("lead_requests").insert({
-      name: data.name,
-      company: data.company,
-      email: data.email,
-      phone: data.phone || null,
-      stage: data.stage ?? "",
-      message: data.message || null,
-    });
-
-    if (error) {
-      console.error("lead_requests insert failed", error.message);
-      throw new Error("Opslaan is niet gelukt");
+    if (!stored && !mailed) {
+      throw new Error(
+        "Aanvraag kon niet worden vastgelegd: zowel de database als de e-mailmelding faalden. Controleer SUPABASE_SERVICE_ROLE_KEY en RESEND_API_KEY.",
+      );
     }
 
-    try {
-      await notifyByEmail(data);
-    } catch (err) {
-      console.error("lead notificatie mislukt", err);
-    }
-
-    return { ok: true as const };
+    return { ok: true as const, stored, mailed };
   });
 
 export const listLeadRequests = createServerFn({ method: "GET" })
