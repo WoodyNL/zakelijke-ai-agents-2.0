@@ -20,12 +20,12 @@ export function FaqSection() {
                 <AccordionItem
                   key={f.q}
                   value={`item-${i}`}
-                  className="border-b border-white/10"
+                  className="group border-b border-white/10 px-3 transition-colors duration-200 hover:border-violet/30 hover:bg-white/[0.04] data-[state=open]:bg-white/[0.04]"
                 >
-                  <AccordionTrigger className="text-left font-display text-[15px] font-semibold text-brand hover:no-underline">
+                  <AccordionTrigger className="text-left font-display text-[15px] font-semibold text-brand transition-colors hover:no-underline group-hover:text-violet [&>svg]:text-ink/60 [&>svg]:transition-colors group-hover:[&>svg]:text-violet">
                     {f.q}
                   </AccordionTrigger>
-                  <AccordionContent className="text-[13px]/[1.75] text-ink/65">
+                  <AccordionContent className="text-[13.5px]/[1.8] text-ink/80">
                     {f.a}
                   </AccordionContent>
                 </AccordionItem>

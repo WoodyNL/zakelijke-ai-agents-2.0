@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import * as React from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { NAV, SITE } from "@/content/site";
-import { Container, shadowBrand } from "./ui";
+import { Container } from "./ui";
 
 export function SiteHeader() {
   const [open, setOpen] = React.useState(false);
@@ -18,33 +18,41 @@ export function SiteHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-colors duration-300 ${
-        scrolled ? "border-b border-white/10 backdrop-blur-md" : "border-b border-transparent"
+      className={`sticky top-0 z-50 border-b backdrop-blur-md transition-colors duration-300 ${
+        scrolled ? "border-white/12" : "border-white/[0.06]"
       }`}
-      style={scrolled ? { backgroundColor: "rgba(10,10,15,0.85)" } : undefined}
+      style={{ backgroundColor: scrolled ? "rgba(10,10,15,0.9)" : "rgba(10,10,15,0.55)" }}
     >
       <Container className="flex h-[72px] items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
           <BrandLogo />
-          <span className="hidden text-[11px] text-ink/45 sm:block">{SITE.tagline}</span>
+          <span className="hidden text-[11px] whitespace-nowrap text-ink/60 2xl:block">
+            {SITE.tagline}
+          </span>
         </Link>
 
-        <nav aria-label="Hoofdmenu" className="hidden items-center gap-6 lg:flex">
+        <nav aria-label="Hoofdmenu" className="hidden items-center gap-0.5 lg:flex">
           {NAV.map((n) => (
-            <a key={n.href} href={n.href} className="text-[13px] text-ink/65 hover:text-ink">
+            <a
+              key={n.href}
+              href={n.href}
+              className="nav-link px-2.5 py-2 text-[13px] font-medium whitespace-nowrap text-ink/80"
+            >
               {n.label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex">
-          <a href="#ai-scan" className="text-[13px] font-semibold text-ink/70 hover:text-ink">
+        <div className="hidden items-center gap-2 lg:flex">
+          <a
+            href="#ai-scan"
+            className="nav-link px-2.5 py-2 text-[13px] font-semibold whitespace-nowrap text-ink/85"
+          >
             AI-scan
           </a>
           <a
             href="#contact"
-            className="inline-flex h-10 items-center rounded-full bg-brand px-5 text-[13px] font-semibold text-primary-foreground cta-lift"
-            style={shadowBrand}
+            className="cta-dark inline-flex h-11 items-center whitespace-nowrap rounded-full px-6 text-[13px] font-semibold text-white"
           >
             {SITE.ctaPrimary}
           </a>
@@ -69,7 +77,7 @@ export function SiteHeader() {
                 key={n.href}
                 href={n.href}
                 onClick={() => setOpen(false)}
-                className="rounded-xl px-3 py-3 text-[14px] text-ink/75 hover:bg-white/5 hover:text-ink"
+                className="rounded-xl px-3 py-3 text-[14px] text-ink/85 transition-colors hover:bg-white/8 hover:text-ink"
               >
                 {n.label}
               </a>
@@ -77,15 +85,14 @@ export function SiteHeader() {
             <a
               href="#ai-scan"
               onClick={() => setOpen(false)}
-              className="rounded-xl px-3 py-3 text-[14px] text-ink/75 hover:bg-white/5 hover:text-ink"
+              className="rounded-xl px-3 py-3 text-[14px] font-semibold text-ink/85 transition-colors hover:bg-white/8 hover:text-ink"
             >
               AI-scan
             </a>
             <a
               href="#contact"
               onClick={() => setOpen(false)}
-              className="mt-2 inline-flex h-12 items-center justify-center rounded-full bg-brand px-6 text-[14px] font-semibold text-primary-foreground"
-              style={shadowBrand}
+              className="cta-dark mt-2 inline-flex h-12 items-center justify-center rounded-full px-6 text-[14px] font-semibold text-white"
             >
               {SITE.ctaPrimary}
             </a>

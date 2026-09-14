@@ -56,11 +56,11 @@ export function H2({ id, children }: { id?: string; children: React.ReactNode })
 }
 
 export function Lead({ children }: { children: React.ReactNode }) {
-  return <p className="mt-4 max-w-[68ch] text-[15px]/[1.75] text-ink/65">{children}</p>;
+  return <p className="mt-4 max-w-[68ch] text-[15px]/[1.75] text-ink/75">{children}</p>;
 }
 
 export function Source({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-[11px]/[1.5] text-ink/40">{children}</p>;
+  return <p className="mt-2 text-[11.5px]/[1.5] text-ink/55">{children}</p>;
 }
 
 export function Check({ className = "" }: { className?: string }) {

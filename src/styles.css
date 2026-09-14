@@ -356,6 +356,80 @@ html {
   }
 }
 
+/*
+ * Donkere primaire CTA. Trekt aandacht met een violette gloed en een glans die
+ * periodiek overloopt, in plaats van met een vlakke witte pil.
+ */
+@utility cta-dark {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(145deg, rgba(38, 34, 66, 0.98), rgba(13, 13, 21, 0.98));
+  border: 1px solid rgba(174, 143, 247, 0.45);
+  box-shadow:
+    0 10px 30px -12px rgba(120, 110, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      110deg,
+      transparent 42%,
+      rgba(255, 255, 255, 0.24) 50%,
+      transparent 58%
+    );
+    transform: translateX(-130%);
+    animation: cta-shimmer 5s ease-in-out infinite;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(145deg, rgba(52, 45, 92, 0.98), rgba(18, 17, 30, 0.98));
+    border-color: rgba(174, 143, 247, 0.9);
+    box-shadow:
+      0 18px 42px -14px rgba(120, 110, 255, 0.85),
+      0 0 0 3px rgba(120, 110, 255, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@keyframes cta-shimmer {
+  0%,
+  55% {
+    transform: translateX(-130%);
+  }
+  85%,
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+/* Navigatielink met leesbare rustkleur en een duidelijke hover-pil. */
+@utility nav-link {
+  position: relative;
+  border-radius: 9999px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--color-ink);
+  }
+}
+
 @utility cta-aurora {
   background:
     radial-gradient(60% 90% at 20% 0%, color-mix(in oklab, var(--color-indigo) 22%, transparent), transparent 70%),
@@ -390,6 +464,11 @@ html {
   .reveal {
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .cta-dark::after {
+    animation: none;
+    opacity: 0;
   }
 }
 

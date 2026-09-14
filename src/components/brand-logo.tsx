@@ -22,7 +22,9 @@ export function BrandLogo({
   return (
     <>
       <BrandMark className={markClassName} />
-      <span className={`font-display ${textClassName} font-semibold tracking-tight`}>
+      <span
+        className={`font-display ${textClassName} font-semibold tracking-tight whitespace-nowrap`}
+      >
         Zakelijke AI Agents
       </span>
     </>
