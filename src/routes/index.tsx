@@ -10,7 +10,8 @@ import { ProblemSection, ReasonsSection } from "@/components/sections/problem";
 import { BranchesSection, ScanSection } from "@/components/sections/scan";
 import { MethodSection, ServicesSection } from "@/components/sections/services";
 import { SiteHeader } from "@/components/sections/site-header";
-import { FAQ, SITE } from "@/content/site";
+import { FAQ, PRICING, SITE } from "@/content/site";
+import { offerCatalogJsonLd } from "@/lib/seo";
 
 const TITLE = "AI-agency voor het MKB | Zakelijke AI Agents";
 const DESCRIPTION =
@@ -45,6 +46,10 @@ export const Route = createFileRoute("/")({
           email: SITE.email,
           serviceType: ["AI-consultancy", "AI-automatisering", "AI-implementatie"],
         }),
+      },
+      {
+        type: "application/ld+json",
+        children: offerCatalogJsonLd(PRICING.cards),
       },
       {
         type: "application/ld+json",

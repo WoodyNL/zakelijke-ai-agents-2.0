@@ -21,7 +21,7 @@ const FAQS = [
   },
   {
     q: "Wat kost WhatsApp-opvolging?",
-    a: "De agent valt binnen onze pakketten vanaf €495 per maand. WhatsApp-gesprekskosten van Meta rekenen we door tegen kostprijs als aparte regel.",
+    a: "€795 eenmalig plus €495 per maand voor één agent op WhatsApp, tot 300 gesprekken per maand. De berichtkosten van Meta belasten we één op één door als aparte regel.",
   },
   {
     q: "Kan de agent ook klantvragen op WhatsApp beantwoorden?",

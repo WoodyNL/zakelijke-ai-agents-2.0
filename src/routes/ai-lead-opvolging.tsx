@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: "Wat kost lead opvolging met een AI agent?",
-    a: "Vanaf €795 inrichting en €495 per maand voor één agent en één kanaal, tot 300 leads per maand.",
+    a: "€795 eenmalige inrichting en €495 per maand voor één agent op één kanaal, tot 300 leads per maand. Een extra agent kost €395 per maand. Boven de fair-use-grens rekenen we €1,00 per extra lead.",
   },
 ];
 

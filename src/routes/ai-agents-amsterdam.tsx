@@ -21,7 +21,7 @@ const FAQS = [
   },
   {
     q: "Wat kost het?",
-    a: "Vanaf €795 eenmalige inrichting en €495 per maand voor één agent. De pakketten Groei en Compleet staan met alle voorwaarden op de homepage.",
+    a: "Een kant-en-klare agent kost €795 eenmalig plus €495 per maand voor één agent op één kanaal; elke extra agent €395 per maand. Wil je een heel proces herontworpen in plaats van één agent, dan zit je in een AI-traject vanaf €4.500. Alle tarieven staan met de voorwaarden op de homepage.",
   },
   {
     q: "In welke talen werkt de agent?",

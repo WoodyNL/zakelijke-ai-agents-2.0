@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: "Wat kost een agent of maatwerkautomatisering?",
-    a: "De kant-en-klare agents vallen binnen onze pakketten vanaf €795 eenmalig plus €495 per maand voor één agent op één kanaal. Maatwerk gaat op project- of dagdeelbasis; dat bespreken we in de gratis verkenning.",
+    a: "Een kant-en-klare agent kost €795 eenmalig plus €495 per maand voor één agent op één kanaal. Maatwerk loopt via een AI-traject: vanaf €4.500 eenmalig plus €395 per maand beheer, met een vaste prijs die na de scan wordt bepaald. Losse expertise gaat per dagdeel à €695.",
   },
 ];
 

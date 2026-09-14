@@ -9,7 +9,7 @@ const FAQS = [
   },
   {
     q: "Wat kost AI-consultancy als we alleen advies willen?",
-    a: "Dan blijft het bij de AI-scan (€1.450 eenmalig). Je krijgt het rapport en de roadmap en kunt daar zelf mee verder, of ermee naar een andere partij. Grotere consultancy-trajecten gaan op dagdeel- of projectbasis, dat bespreken we in de gratis verkenning.",
+    a: "Dan blijft het bij de AI-scan (€1.450 eenmalig). Je krijgt het rapport en de roadmap en kunt daar zelf mee verder, of ermee naar een andere partij. Wil je losse expertise, dan rekenen we €695 per dagdeel of €1.195 per dag. Voor doorlopende begeleiding is er AI-partner à €2.450 per maand.",
   },
   {
     q: "We hebben al meerdere AI-tools. Kunnen jullie daar orde in scheppen?",
