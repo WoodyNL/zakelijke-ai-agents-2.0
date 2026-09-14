@@ -1,7 +1,7 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-browser";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,

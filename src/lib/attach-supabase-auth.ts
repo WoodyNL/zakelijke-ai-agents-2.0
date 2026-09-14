@@ -15,7 +15,7 @@ export const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
   let token: string | undefined;
 
   try {
-    const { supabase } = await import("@/integrations/supabase/client");
+    const { supabase } = await import("@/lib/supabase-browser");
     const { data } = await supabase.auth.getSession();
     token = data.session?.access_token;
   } catch (err) {

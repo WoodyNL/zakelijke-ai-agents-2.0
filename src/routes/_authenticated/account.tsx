@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe } from "@/lib/dashboard.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-browser";
 
 export const Route = createFileRoute("/_authenticated/account")({
   head: () => ({
