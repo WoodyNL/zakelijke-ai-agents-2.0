@@ -11,6 +11,7 @@ import { Container, Section, shadowBrand } from "./ui";
 type Errors = Partial<Record<"name" | "company" | "email" | "form", string>>;
 
 const SEO_LINKS = [
+  { to: "/tarieven", label: "Tarieven" },
   { to: "/ai-scan", label: "AI-scan" },
   { to: "/ai-consultancy-mkb", label: "AI-consultancy & strategie" },
   { to: "/ai-automatisering-op-maat", label: "Maatwerk AI-automatisering" },

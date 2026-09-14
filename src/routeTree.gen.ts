@@ -21,6 +21,7 @@ import { Route as AiScanRouteImport } from './routes/ai-scan'
 import { Route as AiVoorHetMkbAmsterdamRouteImport } from './routes/ai-voor-het-mkb-amsterdam'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TarievenRouteImport } from './routes/tarieven'
 import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/whatsapp-follow-up-automatiseren'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -89,6 +90,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TarievenRoute = TarievenRouteImport.update({
+  id: '/tarieven',
+  path: '/tarieven',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WhatsappFollowUpAutomatiserenRoute =
   WhatsappFollowUpAutomatiserenRouteImport.update({
     id: '/whatsapp-follow-up-automatiseren',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tarieven': typeof TarievenRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tarieven': typeof TarievenRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tarieven': typeof TarievenRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/ai-voor-het-mkb-amsterdam'
     | '/auth'
     | '/reset-password'
+    | '/tarieven'
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
     | '/admin'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/ai-voor-het-mkb-amsterdam'
     | '/auth'
     | '/reset-password'
+    | '/tarieven'
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
     | '/admin'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/ai-voor-het-mkb-amsterdam'
     | '/auth'
     | '/reset-password'
+    | '/tarieven'
     | '/whatsapp-follow-up-automatiseren'
     | '/_authenticated/account'
     | '/_authenticated/admin'
@@ -267,6 +279,7 @@ export interface RootRouteChildren {
   AiVoorHetMkbAmsterdamRoute: typeof AiVoorHetMkbAmsterdamRoute
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TarievenRoute: typeof TarievenRoute
   WhatsappFollowUpAutomatiserenRoute: typeof WhatsappFollowUpAutomatiserenRoute
   BlogWaaromAiPilotsMislukkenRoute: typeof BlogWaaromAiPilotsMislukkenRoute
 }
@@ -357,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tarieven': {
+      id: '/tarieven'
+      path: '/tarieven'
+      fullPath: '/tarieven'
+      preLoaderRoute: typeof TarievenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/whatsapp-follow-up-automatiseren': {
       id: '/whatsapp-follow-up-automatiseren'
       path: '/whatsapp-follow-up-automatiseren'
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiVoorHetMkbAmsterdamRoute: AiVoorHetMkbAmsterdamRoute,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TarievenRoute: TarievenRoute,
   WhatsappFollowUpAutomatiserenRoute: WhatsappFollowUpAutomatiserenRoute,
   BlogWaaromAiPilotsMislukkenRoute: BlogWaaromAiPilotsMislukkenRoute,
 }

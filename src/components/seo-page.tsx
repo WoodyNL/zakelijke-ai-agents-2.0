@@ -156,6 +156,7 @@ export function SeoPage({
             Meer over Zakelijke AI Agents
           </h2>
           <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
+            <SeoLink to="/tarieven" label="Tarieven" />
             <SeoLink to="/ai-scan" label="AI-scan" />
             <SeoLink to="/ai-voor-het-mkb-amsterdam" label="AI voor het MKB in Amsterdam" />
             <SeoLink to="/ai-automatisering-op-maat" label="Maatwerk AI-automatisering" />
