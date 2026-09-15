@@ -21,7 +21,12 @@ export type LeadData = {
   agentId?: string;
 };
 
-export async function notifyByEmail(data: LeadData) {
+/**
+ * Stuurt de melding. Het doeladres komt van de agent: een lead uit de chat van
+ * een klant hoort bij die klant te belanden, niet bij ons. Zonder adres valt
+ * het terug op ons eigen adres, wat klopt voor de eigen website.
+ */
+export async function notifyByEmail(data: LeadData, naarAdres?: string) {
   const apiKey = process.env["RESEND_API_KEY"];
   if (!apiKey) {
     throw new Error("RESEND_API_KEY ontbreekt");
@@ -51,7 +56,7 @@ export async function notifyByEmail(data: LeadData) {
     },
     body: JSON.stringify({
       from: NOTIFY_FROM,
-      to: [NOTIFY_TO],
+      to: [naarAdres || NOTIFY_TO],
       reply_to: data.email,
       subject: `Nieuwe aanvraag: ${data.name} (${data.company})`,
       html,

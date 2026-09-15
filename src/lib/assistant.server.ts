@@ -29,56 +29,141 @@ type KennisItem = { category: string; title: string; question: string | null; co
  */
 export const EIGEN_AGENT_SLUG = "website-assistent";
 
-function supabaseRest() {
+export type AgentConfig = {
+  id: string;
+  name: string;
+  welcome_text: string | null;
+  tone: string | null;
+  model: string;
+  capture_leads: boolean;
+  allowed_domains: string[];
+  rate_limit_per_hour: number;
+};
+
+function supabaseRest(serviceRole = false) {
   const url = process.env["SUPABASE_URL"];
-  const key =
-    process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"];
-  if (!url || !key) throw new Error("Supabase-omgevingsvariabelen ontbreken");
-  return { url, headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" } };
+  const key = serviceRole
+    ? process.env["SUPABASE_SERVICE_ROLE_KEY"]
+    : (process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"]);
+  if (!url || !key) return null;
+  return {
+    url,
+    headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+  };
 }
 
 /**
- * Zoekt het interne id van een agent op via zijn publieke slug. De RPC geeft
- * alleen iets terug als die agent op live staat, en verklapt verder niets over
- * de agents-tabel. Het resultaat wordt gecachet omdat een slug zelden van
- * eigenaar wisselt en dit anders bij elke vraag een extra rondje kost.
+ * De publieke instellingen van een agent. Alles hierin is van buitenaf toch
+ * waarneembaar zodra de agent draait, dus het mag langs de publieke sleutel.
+ * Kort gecachet: instellingen wijzigen zelden, en anders kost elke vraag een
+ * extra rondje naar de database.
  */
-const agentCache = new Map<string, string>();
+const configCache = new Map<string, { config: AgentConfig; tot: number }>();
+const CACHE_MS = 60_000;
 
-export async function zoekAgent(slug: string): Promise<string> {
-  const bekend = agentCache.get(slug);
-  if (bekend) return bekend;
+export async function haalAgent(slug: string): Promise<AgentConfig> {
+  const bekend = configCache.get(slug);
+  if (bekend && bekend.tot > Date.now()) return bekend.config;
 
-  const { url, headers } = supabaseRest();
-  const res = await fetch(`${url}/rest/v1/rpc/resolve_live_agent`, {
+  const rest = supabaseRest();
+  if (!rest) throw new Error("Supabase-omgevingsvariabelen ontbreken");
+
+  const res = await fetch(`${rest.url}/rest/v1/rpc/agent_public_config`, {
     method: "POST",
-    headers,
+    headers: rest.headers,
     body: JSON.stringify({ _slug: slug }),
   });
-  if (!res.ok) throw new Error(`Agent opzoeken mislukt [${res.status}]`);
+  if (!res.ok) throw new Error(`Agent ophalen mislukt [${res.status}]`);
 
-  const id = (await res.json()) as string | null;
-  if (!id) throw new Error(`Geen live agent met slug "${slug}"`);
+  const rijen = (await res.json()) as AgentConfig[];
+  const config = rijen[0];
+  if (!config) throw new Error(`Geen live agent met slug "${slug}"`);
 
-  agentCache.set(slug, id);
-  return id;
+  configCache.set(slug, { config, tot: Date.now() + CACHE_MS });
+  return config;
 }
 
 /**
- * Haalt de actieve kennisitems van één agent op met de publieke sleutel. Sinds
- * fase 0 filtert RLS mee op agent én op status live, dus dit kan nooit de
- * kennis van een andere klant opleveren, ook niet als de filter hieronder ooit
- * vergeten wordt. Beide lagen staan er bewust: de filter voor de juiste
- * uitkomst, RLS voor de garantie.
+ * De gevoelige instellingen: waar leads naartoe gaan en de maatwerkinstructies
+ * van een klant. Die blijven achter de service-role en zijn daarom lokaal niet
+ * beschikbaar, waar alleen de publieke sleutel staat. Lokaal val je terug op de
+ * standaarden, wat prima is: ze doen er pas toe zodra er echte klanten zijn.
+ */
+export async function haalPrivateConfig(agentId: string) {
+  const rest = supabaseRest(true);
+  if (!rest) return { notify_email: null, extra_instructions: null };
+
+  const res = await fetch(
+    `${rest.url}/rest/v1/agents?select=notify_email,extra_instructions&id=eq.${encodeURIComponent(agentId)}`,
+    { headers: rest.headers },
+  );
+  if (!res.ok) return { notify_email: null, extra_instructions: null };
+
+  const rijen = (await res.json()) as Array<{
+    notify_email: string | null;
+    extra_instructions: string | null;
+  }>;
+  return rijen[0] ?? { notify_email: null, extra_instructions: null };
+}
+
+/**
+ * Mag deze agent op dit domein draaien? Een lege lijst betekent overal, en is
+ * alleen bedoeld voor een agent die nog wordt opgezet. Zonder deze controle kan
+ * iedereen die het embed-script kopieert een agent op jouw rekening laten
+ * draaien.
+ */
+export function domeinToegestaan(config: AgentConfig, origin: string | null): boolean {
+  if (config.allowed_domains.length === 0) return true;
+  if (!origin) return false;
+
+  let host: string;
+  try {
+    host = new URL(origin).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+
+  return config.allowed_domains.some((toegestaan) => {
+    const d = toegestaan.trim().toLowerCase();
+    return host === d || host.endsWith(`.${d}`);
+  });
+}
+
+/** Hoogt de teller op en zegt of dit verzoek nog binnen de uurgrens valt. */
+export async function binnenLimiet(agentId: string): Promise<boolean> {
+  const rest = supabaseRest();
+  if (!rest) return true;
+
+  const res = await fetch(`${rest.url}/rest/v1/rpc/claim_agent_request`, {
+    method: "POST",
+    headers: rest.headers,
+    body: JSON.stringify({ _agent_id: agentId }),
+  });
+  // Faalt de telling zelf, dan laten we het verzoek door: een kapotte teller
+  // mag geen werkende assistent stilleggen. De uitgave blijft begrensd door het
+  // maandplafond op het Anthropic-account.
+  if (!res.ok) {
+    console.warn("assistent: verbruik tellen mislukt", res.status);
+    return true;
+  }
+  return (await res.json()) === true;
+}
+
+/**
+ * Haalt de actieve kennisitems van één agent op. De filter hieronder zorgt voor
+ * de juiste uitkomst; RLS zorgt voor de garantie dat dit nooit de kennis van een
+ * andere klant kan opleveren. Beide lagen staan er bewust.
  */
 export async function haalKennis(agentId: string): Promise<KennisItem[]> {
-  const { url, headers } = supabaseRest();
+  const rest = supabaseRest();
+  if (!rest) throw new Error("Supabase-omgevingsvariabelen ontbreken");
+
   const res = await fetch(
-    `${url}/rest/v1/knowledge_items` +
+    `${rest.url}/rest/v1/knowledge_items` +
       `?select=category,title,question,content` +
       `&agent_id=eq.${encodeURIComponent(agentId)}` +
       `&is_active=eq.true&order=category,sort_order&limit=500`,
-    { headers },
+    { headers: rest.headers },
   );
   if (!res.ok) throw new Error(`Kennisbank ophalen mislukt [${res.status}]`);
   return (await res.json()) as KennisItem[];
@@ -142,7 +227,13 @@ function rekenhulp() {
     .join("\n");
 }
 
-export function bouwSysteemprompt(items: KennisItem[]) {
+export function bouwSysteemprompt(
+  items: KennisItem[],
+  config?: AgentConfig,
+  extraInstructies?: string | null,
+) {
+  const toon = config?.tone ? `\n\nExtra over de toon voor deze agent: ${config.tone}` : "";
+  const extra = extraInstructies ? `\n\n## Aanvullende instructies\n${extraInstructies}` : "";
   return `Je bent de website-assistent van ${SITE.name}, een AI-agency uit Amsterdam voor het Nederlandse mkb. Je praat met bezoekers van zakelijkeaiagents.nl.
 
 ## Hoe je praat
@@ -186,7 +277,7 @@ Dring niet aan. Vraagt iemand alleen iets op, laat hem dan gewoon iets opvragen.
 ${kennisAlsTekst(items)}
 
 ## Als laatste
-Kom je er samen niet uit, verwijs dan naar het contactformulier op de pagina of naar ${SITE.email}. De gratis AI-verkenning van 30 minuten is altijd een goede volgende stap: vrijblijvend, en ze zeggen eerlijk of AI iets oplevert.`;
+Kom je er samen niet uit, verwijs dan naar het contactformulier op de pagina of naar ${SITE.email}. De gratis AI-verkenning van 30 minuten is altijd een goede volgende stap: vrijblijvend, en ze zeggen eerlijk of AI iets oplevert.${toon}${extra}`;
 }
 
 export const LEAD_TOOL = {
@@ -219,7 +310,11 @@ type ToolInvoer = {
 };
 
 /** Zet de gegevens uit het gereedschap om naar een lead en legt hem vast. */
-export async function verwerkLead(invoer: ToolInvoer, agentId: string) {
+export async function verwerkLead(
+  invoer: ToolInvoer,
+  agentId: string,
+  notifyEmail?: string | null,
+) {
   const { storeLead, notifyByEmail } = await import("./leads.server");
   const data: LeadData = {
     name: invoer.naam,
@@ -239,7 +334,7 @@ export async function verwerkLead(invoer: ToolInvoer, agentId: string) {
         return false;
       },
     ),
-    notifyByEmail(data).then(
+    notifyByEmail(data, notifyEmail ?? undefined).then(
       () => true,
       (err: unknown) => {
         console.error("assistent: leadmelding mislukt:", err);
@@ -266,7 +361,11 @@ type AnthropicAntwoord = {
   };
 };
 
-async function roepClaude(systeem: string, berichten: unknown[]): Promise<AnthropicAntwoord> {
+async function roepClaude(
+  systeem: string,
+  berichten: unknown[],
+  config: AgentConfig,
+): Promise<AnthropicAntwoord> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY ontbreekt");
 
@@ -278,7 +377,7 @@ async function roepClaude(systeem: string, berichten: unknown[]): Promise<Anthro
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: config.model || MODEL,
       max_tokens: MAX_TOKENS,
       // De hele kennisbank zit in de systeemprompt en is bij elke vraag
       // identiek. Met cache_control betaal je die maar één keer vol; daarna
@@ -286,7 +385,7 @@ async function roepClaude(systeem: string, berichten: unknown[]): Promise<Anthro
       // gelezen tegen een fractie van de prijs. Dat scheelt het meeste bij een
       // gesprek van meerdere beurten, precies wat hier gebeurt.
       system: [{ type: "text", text: systeem, cache_control: { type: "ephemeral" } }],
-      tools: [LEAD_TOOL],
+      tools: config.capture_leads ? [LEAD_TOOL] : [],
       messages: berichten,
     }),
   });
@@ -317,18 +416,36 @@ function zonderStreepjes(tekst: string) {
  * daarom vraagt, en haalt daarna het afsluitende bericht op. Meer dan één
  * gereedschapsronde is hier niet nodig — er is maar één gereedschap.
  */
-export async function beantwoord(berichten: ChatBericht[], slug = EIGEN_AGENT_SLUG) {
-  const agentId = await zoekAgent(slug);
-  const kennis = await haalKennis(agentId);
-  const systeem = bouwSysteemprompt(kennis);
+export async function beantwoord(
+  berichten: ChatBericht[],
+  slug = EIGEN_AGENT_SLUG,
+  origin: string | null = null,
+) {
+  const config = await haalAgent(slug);
+
+  if (!domeinToegestaan(config, origin)) {
+    throw new Error(`Agent "${slug}" mag niet draaien op ${origin ?? "een onbekend domein"}`);
+  }
+
+  if (!(await binnenLimiet(config.id))) {
+    return {
+      tekst:
+        "Het is nu erg druk met vragen. Probeer het over een uurtje nog eens, of stuur je vraag per e-mail.",
+      leadVastgelegd: false,
+      verbruik: { input_tokens: 0, output_tokens: 0 },
+    };
+  }
+
+  const [kennis, prive] = await Promise.all([haalKennis(config.id), haalPrivateConfig(config.id)]);
+  const systeem = bouwSysteemprompt(kennis, config, prive.extra_instructions);
 
   const verloop: unknown[] = berichten.map((b) => ({ role: b.role, content: b.content }));
-  let antwoord = await roepClaude(systeem, verloop);
+  let antwoord = await roepClaude(systeem, verloop, config);
   let leadVastgelegd = false;
 
   const toolBlok = antwoord.content.find((b) => b.type === "tool_use");
   if (toolBlok && toolBlok.type === "tool_use") {
-    const resultaat = await verwerkLead(toolBlok.input as ToolInvoer, agentId);
+    const resultaat = await verwerkLead(toolBlok.input as ToolInvoer, config.id, prive.notify_email);
     leadVastgelegd = resultaat.gelukt;
 
     verloop.push({ role: "assistant", content: antwoord.content });
@@ -339,14 +456,14 @@ export async function beantwoord(berichten: ChatBericht[], slug = EIGEN_AGENT_SL
           type: "tool_result",
           tool_use_id: toolBlok.id,
           content: resultaat.gelukt
-            ? "Gelukt. De gegevens zijn doorgegeven; er wordt binnen één werkdag contact opgenomen."
+            ? "Gelukt. De gegevens zijn doorgegeven; er wordt binnen \u00e9\u00e9n werkdag contact opgenomen."
             : "Mislukt. Vraag de bezoeker om het contactformulier op de pagina te gebruiken of te mailen naar " +
               SITE.email,
         },
       ],
     });
 
-    antwoord = await roepClaude(systeem, verloop);
+    antwoord = await roepClaude(systeem, verloop, config);
   }
 
   const tekst = antwoord.content
@@ -356,7 +473,8 @@ export async function beantwoord(berichten: ChatBericht[], slug = EIGEN_AGENT_SL
     .trim();
 
   return {
-    tekst: zonderStreepjes(tekst) || "Sorry, daar kwam ik even niet uit. Stel je vraag gerust anders.",
+    tekst:
+      zonderStreepjes(tekst) || "Sorry, daar kwam ik even niet uit. Stel je vraag gerust anders.",
     leadVastgelegd,
     verbruik: antwoord.usage,
   };
