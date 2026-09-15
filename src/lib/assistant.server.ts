@@ -247,6 +247,21 @@ async function roepClaude(systeem: string, berichten: unknown[]): Promise<Anthro
 }
 
 /**
+ * Haalt gedachtestreepjes uit het antwoord. De promptregel hierover wordt
+ * onbetrouwbaar opgevolgd: bij het testen kwamen ze steeds terug zodra een zin
+ * zich ervoor leende. Een taalmodel vragen iets te laten is zwakker dan het
+ * daarna gewoon weghalen, dus doen we dat hier.
+ */
+function zonderStreepjes(tekst: string) {
+  return tekst
+    .replace(/\s+[\u2014\u2013]\s+/g, ", ")
+    .replace(/\s*[\u2014\u2013]\s*/g, ", ")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*([.!?])/g, "$1");
+}
+
+/**
  * Voert één beurt uit: vraagt Claude om een antwoord, legt een lead vast als hij
  * daarom vraagt, en haalt daarna het afsluitende bericht op. Meer dan één
  * gereedschapsronde is hier niet nodig — er is maar één gereedschap.
@@ -289,7 +304,7 @@ export async function beantwoord(berichten: ChatBericht[]) {
     .trim();
 
   return {
-    tekst: tekst || "Sorry, daar kwam ik even niet uit. Stel je vraag gerust anders.",
+    tekst: zonderStreepjes(tekst) || "Sorry, daar kwam ik even niet uit. Stel je vraag gerust anders.",
     leadVastgelegd,
     verbruik: antwoord.usage,
   };
