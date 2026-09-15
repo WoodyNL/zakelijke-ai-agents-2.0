@@ -17,6 +17,8 @@ export type LeadData = {
   phone?: string;
   stage?: string;
   message?: string;
+  /** Alleen gevuld bij een lead uit een chat; het contactformulier heeft geen agent. */
+  agentId?: string;
 };
 
 export async function notifyByEmail(data: LeadData) {
@@ -64,6 +66,9 @@ export async function notifyByEmail(data: LeadData) {
 /** Slaat de aanvraag op in de database; gooit bij een fout zodat de aanroeper kan terugvallen op e-mail. */
 export async function storeLead(data: LeadData) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // De cast is tijdelijk: src/integrations/supabase/types.ts wordt gegenereerd
+  // uit de live database, en agent_id bestaat daar pas nadat de fase 0-migratie
+  // is gedraaid. Zodra Lovable de types opnieuw genereert kan deze cast weg.
   const { error } = await supabaseAdmin.from("lead_requests").insert({
     name: data.name,
     company: data.company,
@@ -71,7 +76,8 @@ export async function storeLead(data: LeadData) {
     phone: data.phone || null,
     stage: data.stage ?? "",
     message: data.message || null,
-  });
+    agent_id: data.agentId ?? null,
+  } as never);
   if (error) throw new Error(error.message);
 }
 
