@@ -19,7 +19,7 @@ export function ChatbotSection() {
       <Container>
         <Reveal>
           <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-            <Eyebrow>Praat met onze agent</Eyebrow>
+            <Eyebrow>Praat met onze AI Agent</Eyebrow>
             <H2 id="chat-titel">Probeer het zelf, stel een vraag</H2>
             <Lead>
               Deze assistent is er precies zo een als wij bouwen, live op onze eigen site. Hij kent

@@ -61,6 +61,7 @@ export type Database = {
           metric_label: string
           name: string
           score_label: string
+          slug: string | null
           status: Database["public"]["Enums"]["agent_status"]
         }
         Insert: {
@@ -71,6 +72,7 @@ export type Database = {
           metric_label?: string
           name: string
           score_label?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["agent_status"]
         }
         Update: {
@@ -81,6 +83,7 @@ export type Database = {
           metric_label?: string
           name?: string
           score_label?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["agent_status"]
         }
         Relationships: [
@@ -95,6 +98,7 @@ export type Database = {
       }
       knowledge_items: {
         Row: {
+          agent_id: string
           category: string
           content: string
           created_at: string
@@ -107,6 +111,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agent_id: string
           category?: string
           content?: string
           created_at?: string
@@ -119,6 +124,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agent_id?: string
           category?: string
           content?: string
           created_at?: string
@@ -130,10 +136,19 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_items_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_requests: {
         Row: {
+          agent_id: string | null
           company: string
           created_at: string
           email: string
@@ -144,6 +159,7 @@ export type Database = {
           stage: string
         }
         Insert: {
+          agent_id?: string | null
           company: string
           created_at?: string
           email: string
@@ -154,6 +170,7 @@ export type Database = {
           stage?: string
         }
         Update: {
+          agent_id?: string | null
           company?: string
           created_at?: string
           email?: string
@@ -163,7 +180,15 @@ export type Database = {
           phone?: string | null
           stage?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lead_requests_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -209,7 +234,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      resolve_live_agent: { Args: { _slug: string }; Returns: string }
     }
     Enums: {
       agent_status: "live" | "paused" | "setup"

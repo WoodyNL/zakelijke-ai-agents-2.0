@@ -27,58 +27,15 @@ type KennisItem = { category: string; title: string; question: string | null; co
  * sleutel niet beschikbaar is voor lokale ontwikkeling. Valt terug op de
  * service-role als de publieke sleutel in een omgeving ontbreekt.
  */
-export const EIGEN_AGENT_SLUG = "website-assistent";
-
-function supabaseRest() {
+export async function haalKennis(): Promise<KennisItem[]> {
   const url = process.env["SUPABASE_URL"];
   const key =
     process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"];
   if (!url || !key) throw new Error("Supabase-omgevingsvariabelen ontbreken");
-  return { url, headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" } };
-}
 
-/**
- * Zoekt het interne id van een agent op via zijn publieke slug. De RPC geeft
- * alleen iets terug als die agent op live staat, en verklapt verder niets over
- * de agents-tabel. Het resultaat wordt gecachet omdat een slug zelden van
- * eigenaar wisselt en dit anders bij elke vraag een extra rondje kost.
- */
-const agentCache = new Map<string, string>();
-
-export async function zoekAgent(slug: string): Promise<string> {
-  const bekend = agentCache.get(slug);
-  if (bekend) return bekend;
-
-  const { url, headers } = supabaseRest();
-  const res = await fetch(`${url}/rest/v1/rpc/resolve_live_agent`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ _slug: slug }),
-  });
-  if (!res.ok) throw new Error(`Agent opzoeken mislukt [${res.status}]`);
-
-  const id = (await res.json()) as string | null;
-  if (!id) throw new Error(`Geen live agent met slug "${slug}"`);
-
-  agentCache.set(slug, id);
-  return id;
-}
-
-/**
- * Haalt de actieve kennisitems van één agent op met de publieke sleutel. Sinds
- * fase 0 filtert RLS mee op agent én op status live, dus dit kan nooit de
- * kennis van een andere klant opleveren, ook niet als de filter hieronder ooit
- * vergeten wordt. Beide lagen staan er bewust: de filter voor de juiste
- * uitkomst, RLS voor de garantie.
- */
-export async function haalKennis(agentId: string): Promise<KennisItem[]> {
-  const { url, headers } = supabaseRest();
   const res = await fetch(
-    `${url}/rest/v1/knowledge_items` +
-      `?select=category,title,question,content` +
-      `&agent_id=eq.${encodeURIComponent(agentId)}` +
-      `&is_active=eq.true&order=category,sort_order&limit=500`,
-    { headers },
+    `${url}/rest/v1/knowledge_items?select=category,title,question,content&is_active=eq.true&order=category,sort_order&limit=500`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } },
   );
   if (!res.ok) throw new Error(`Kennisbank ophalen mislukt [${res.status}]`);
   return (await res.json()) as KennisItem[];
@@ -219,7 +176,7 @@ type ToolInvoer = {
 };
 
 /** Zet de gegevens uit het gereedschap om naar een lead en legt hem vast. */
-export async function verwerkLead(invoer: ToolInvoer, agentId: string) {
+export async function verwerkLead(invoer: ToolInvoer) {
   const { storeLead, notifyByEmail } = await import("./leads.server");
   const data: LeadData = {
     name: invoer.naam,
@@ -228,7 +185,6 @@ export async function verwerkLead(invoer: ToolInvoer, agentId: string) {
     phone: invoer.telefoon ?? "",
     stage: "Via de website-assistent",
     message: invoer.samenvatting ?? "",
-    agentId,
   };
 
   const [opgeslagen, gemaild] = await Promise.all([
@@ -317,9 +273,8 @@ function zonderStreepjes(tekst: string) {
  * daarom vraagt, en haalt daarna het afsluitende bericht op. Meer dan één
  * gereedschapsronde is hier niet nodig — er is maar één gereedschap.
  */
-export async function beantwoord(berichten: ChatBericht[], slug = EIGEN_AGENT_SLUG) {
-  const agentId = await zoekAgent(slug);
-  const kennis = await haalKennis(agentId);
+export async function beantwoord(berichten: ChatBericht[]) {
+  const kennis = await haalKennis();
   const systeem = bouwSysteemprompt(kennis);
 
   const verloop: unknown[] = berichten.map((b) => ({ role: b.role, content: b.content }));
@@ -328,7 +283,7 @@ export async function beantwoord(berichten: ChatBericht[], slug = EIGEN_AGENT_SL
 
   const toolBlok = antwoord.content.find((b) => b.type === "tool_use");
   if (toolBlok && toolBlok.type === "tool_use") {
-    const resultaat = await verwerkLead(toolBlok.input as ToolInvoer, agentId);
+    const resultaat = await verwerkLead(toolBlok.input as ToolInvoer);
     leadVastgelegd = resultaat.gelukt;
 
     verloop.push({ role: "assistant", content: antwoord.content });

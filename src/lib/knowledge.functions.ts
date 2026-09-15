@@ -32,7 +32,6 @@ export const listKnowledge = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("knowledge_items")
       .select("*")
-      .order("agent_id", { ascending: true })
       .order("category", { ascending: true })
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
@@ -52,21 +51,11 @@ export const saveKnowledge = createServerFn({ method: "POST" })
         tags: z.array(z.string()).default([]),
         sortOrder: z.number().int().default(0),
         isActive: z.boolean().default(true),
-        // Welke agent deze kennis toebehoort. Standaard onze eigen
-        // website-assistent, zodat het beheerscherm blijft werken zoals het
-        // was. Vanaf fase 2 kiest een klant hier zijn eigen agent.
-        agentSlug: z.string().min(1).default("website-assistent"),
       })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context as Ctx);
-
-    // agent_id is verplicht sinds fase 0. Bij een update laten we het veld met
-    // rust: kennis verhuist niet zomaar naar een andere agent.
-    const { zoekAgent } = await import("./assistant.server");
-    const agentId = await zoekAgent(data.agentSlug);
-
     const row = {
       category: data.category,
       title: data.title,
@@ -76,9 +65,25 @@ export const saveKnowledge = createServerFn({ method: "POST" })
       sort_order: data.sortOrder,
       is_active: data.isActive,
     };
-    const { error } = data.id
-      ? await context.supabase.from("knowledge_items").update(row).eq("id", data.id)
-      : await context.supabase.from("knowledge_items").insert({ ...row, agent_id: agentId } as never);
+    if (data.id) {
+      const { error } = await context.supabase
+        .from("knowledge_items")
+        .update(row)
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    }
+    // Nieuwe kennisitems horen bij onze eigen Website-assistent.
+    const { data: agent, error: agentError } = await context.supabase
+      .from("agents")
+      .select("id")
+      .eq("slug", "website-assistent")
+      .maybeSingle();
+    if (agentError) throw new Error(agentError.message);
+    if (!agent) throw new Error("Agent 'website-assistent' niet gevonden");
+    const { error } = await context.supabase
+      .from("knowledge_items")
+      .insert({ ...row, agent_id: agent.id as string });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
