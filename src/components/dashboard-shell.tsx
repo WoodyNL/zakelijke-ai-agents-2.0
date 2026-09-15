@@ -80,8 +80,9 @@ export function DashboardShell({
               <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </a>
             {userName && (
-              <span className="hidden max-w-[18ch] truncate text-[12.5px] text-ink/55 sm:inline">
-                {userName}
+              <span className="hidden items-center gap-2.5 sm:flex">
+                <span aria-hidden="true" className="h-4 w-px bg-white/12" />
+                <span className="max-w-[18ch] truncate text-[12.5px] text-ink/45">{userName}</span>
               </span>
             )}
             <button

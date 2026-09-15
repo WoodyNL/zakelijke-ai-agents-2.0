@@ -138,7 +138,7 @@ function Dashboard() {
                   <p className="font-display text-[15.5px] leading-tight font-semibold text-brand">
                     {a.name}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-[12.5px]/[1.55] text-ink/60">
+                  <p className="mt-1 line-clamp-2 min-h-[2.6em] text-[12.5px]/[1.55] text-ink/60">
                     {a.description}
                   </p>
                 </div>
@@ -165,7 +165,7 @@ function Dashboard() {
                 </div>
               </div>
 
-              <div className="mt-3 h-14">
+              <div className="mt-3 h-14 shrink-0">
                 {reeks.length > 1 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={reeks} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
@@ -191,7 +191,7 @@ function Dashboard() {
                 )}
               </div>
 
-              <span className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-ink/50 transition-colors group-hover:text-violet">
+              <span className="mt-auto inline-flex items-center gap-1 pt-3 text-[12px] font-semibold text-ink/50 transition-colors group-hover:text-violet">
                 Bekijk details
                 <ArrowRight
                   className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
