@@ -100,24 +100,66 @@ function Dashboard() {
       )}
 
       {!agentsQuery.isLoading && !agentsQuery.error && agents.length === 0 && (
-        <div className="card-glass-lg mt-7 rounded-3xl p-8 text-center sm:p-12">
-          <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet/15 text-violet">
-            <Sparkles className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <p className="mt-4 font-display text-[18px] font-semibold text-brand">
-            Er staat nog geen agent klaar
-          </p>
-          <p className="mx-auto mt-2 max-w-[46ch] text-[13px]/[1.7] text-ink/60">
-            Zodra je eerste agent is ingericht, zie je hier wat hij doet: hoeveel gesprekken hij
-            voert, hoe hij presteert, en welke aanvragen hij oplevert.
-          </p>
-          <a
-            href={`mailto:${SITE.email}`}
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-violet px-6 text-[13.5px] font-semibold text-white transition-colors hover:bg-violet/85"
-          >
-            Neem contact op
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </a>
+        <div className="card-glass-lg mt-7 rounded-3xl p-6 sm:p-9">
+          <div className="flex items-start gap-3.5">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet/15 text-violet">
+              <Sparkles className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="font-display text-[18px] font-semibold text-brand">
+                Je agent wordt ingericht
+              </p>
+              <p className="mt-1.5 max-w-[52ch] text-[13px]/[1.7] text-ink/60">
+                Hieronder zie je waar we staan. Zodra je agent live gaat, verandert dit scherm in
+                zijn resultaten.
+              </p>
+            </div>
+          </div>
+
+          {/* Genummerd omdat dit echt een volgorde is: elke stap wacht op de
+              vorige. Zonder die volgorde zou een opsomming volstaan. */}
+          <ol className="mt-7 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
+            {[
+              {
+                titel: "We richten je agent in",
+                tekst:
+                  "We vullen zijn kennisbank met jouw diensten, prijzen en veelgestelde vragen, en stemmen zijn toon af op hoe jij met klanten praat.",
+              },
+              {
+                titel: "Je krijgt een regel code voor je website",
+                tekst:
+                  "Eén regel die je plakt of door je websitebouwer laat plakken. Daarna staat de agent live op je eigen site.",
+              },
+              {
+                titel: "Hier zie je wat hij oplevert",
+                tekst:
+                  "Aantal gesprekken, hoe vaak hij het zelf afhandelt, en welke aanvragen hij binnenhaalt. Met een rapport dat je kunt downloaden.",
+              },
+            ].map((stap, i) => (
+              <li key={stap.titel} className="flex gap-4 bg-[#0e0e16] px-5 py-4">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-violet/35 bg-violet/12 font-mono text-[11px] font-semibold text-violet">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="text-[13.5px] font-semibold text-ink/90">{stap.titel}</p>
+                  <p className="mt-1 max-w-[62ch] text-[12.5px]/[1.65] text-ink/55">{stap.tekst}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <a
+              href={`mailto:${SITE.email}`}
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-violet px-6 text-[13.5px] font-semibold text-white transition-colors hover:bg-violet/85"
+            >
+              Stel een vraag
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+            <span className="text-[12px] text-ink/45">
+              Of bel {SITE.phone}. Reactie binnen één werkdag.
+            </span>
+          </div>
         </div>
       )}
 
