@@ -19,7 +19,17 @@ const VOORBEELDEN = [
 /** Maximale lengte per bericht; de server weigert alles daarboven. */
 const MAX_LENGTE = 1500;
 
-export function AssistantChat() {
+export function AssistantChat({
+  agent = "website-assistent",
+  welkom = BEGROETING,
+  volledigeHoogte = false,
+}: {
+  agent?: string;
+  /** Overschrijft de begroeting; komt bij een embed uit de agentinstellingen. */
+  welkom?: string;
+  /** In een embed vult de chat het hele venster in plaats van een vaste hoogte. */
+  volledigeHoogte?: boolean;
+}) {
   const vraag = useServerFn(vraagAssistent);
   const [berichten, setBerichten] = React.useState<Bericht[]>([]);
   const [invoer, setInvoer] = React.useState("");
@@ -46,7 +56,7 @@ export function AssistantChat() {
     setBezig(true);
 
     try {
-      const antwoord = await vraag({ data: { messages: nieuw } });
+      const antwoord = await vraag({ data: { messages: nieuw, agent } });
       setBerichten([...nieuw, { role: "assistant", content: antwoord.tekst }]);
       if (antwoord.leadVastgelegd) setLeadVastgelegd(true);
     } catch (err) {
@@ -76,7 +86,11 @@ export function AssistantChat() {
   const leeg = berichten.length === 0;
 
   return (
-    <div className="card-glass-lg flex h-[540px] flex-col overflow-hidden rounded-3xl sm:h-[600px]">
+    <div
+      className={`card-glass-lg flex flex-col overflow-hidden rounded-3xl ${
+        volledigeHoogte ? "h-[calc(100vh-1.5rem)]" : "h-[540px] sm:h-[600px]"
+      }`}
+    >
       <div className="flex items-center gap-3 border-b border-white/10 px-5 py-3.5">
         <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint/60" />
@@ -110,7 +124,7 @@ export function AssistantChat() {
         aria-live="polite"
         aria-label="Gesprek met de assistent"
       >
-        <Bubbel rol="assistant">{BEGROETING}</Bubbel>
+        <Bubbel rol="assistant">{welkom}</Bubbel>
 
         {berichten.map((b, i) => (
           <Bubbel key={i} rol={b.role}>
