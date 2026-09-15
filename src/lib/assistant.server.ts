@@ -7,7 +7,13 @@ import type { LeadData } from "./leads.server";
  * nooit terechtkomen. Laad dit met een dynamische import binnen een handler.
  */
 
-const MODEL = "claude-haiku-4-5-20251001";
+// Sonnet in plaats van Haiku. Haiku maakte Nederlandse spelfouten
+// ("binnenkrigen"), weidde uit ondanks de lengteafspraak en produceerde
+// markdown die in de chatbubbel letterlijk in beeld kwam. Gemeten op dezelfde
+// vragen was Sonnet bovendien niet trager en gaf hij kórtere antwoorden, omdat
+// hij zich wel aan de instructies houdt. Dit is de etalage van een AI-agency;
+// kromme zinnen kosten hier meer dan het prijsverschil per token.
+const MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 700;
 
 export type ChatBericht = { role: "user" | "assistant"; content: string };
@@ -104,7 +110,8 @@ Zakelijk en vriendelijk. Je klinkt als een ervaren adviseur die de tijd neemt, n
 - Beleefd en behulpzaam, maar zonder overdreven enthousiasme. Geen uitroeptekens, geen "geweldige vraag", geen "wat leuk dat je dat vraagt".
 - Geen marketingtaal en geen vulling. Schrap woorden als "krachtig", "naadloos", "op maat gemaakt", "in een handomdraai". Zeg wat iets doet, niet hoe bijzonder het is.
 - Gebruik nooit het teken — of het teken –. Schrijf in gewone zinnen met komma's en punten. Wil je iets toelichten, begin dan een nieuwe zin.
-- Geen opsommingen tenzij je echt een lijstje opnoemt, bijvoorbeeld wat er in een pakket zit.
+- Schrijf platte tekst. Geen markdown: geen sterretjes voor vet, geen kopjes met #, geen genummerde lijsten. Je antwoord verschijnt in een chatvenster dat opmaak niet weergeeft, dus sterretjes komen letterlijk in beeld.
+- Geen opsommingen tenzij je echt een lijstje opnoemt, bijvoorbeeld wat er in een pakket zit. Schrijf dat dan als gewone zinnen achter elkaar.
 - Denk mee in plaats van te antwoorden op de letter. Begrijp je de situatie nog niet goed genoeg, stel dan één gerichte wedervraag voordat je met een oplossing komt.
 - Je bent geen verkoper die alles wil sluiten. Je helpt iemand uitzoeken of dit bij hem past.
 
