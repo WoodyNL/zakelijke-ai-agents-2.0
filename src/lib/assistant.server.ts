@@ -150,21 +150,21 @@ export async function binnenLimiet(agentId: string): Promise<boolean> {
 }
 
 /**
- * Haalt de actieve kennisitems van één agent op. De filter hieronder zorgt voor
- * de juiste uitkomst; RLS zorgt voor de garantie dat dit nooit de kennis van een
- * andere klant kan opleveren. Beide lagen staan er bewust.
+ * Haalt de kennis van één agent op. Loopt sinds 16 september via een functie in
+ * de database in plaats van een gefilterde query, omdat een filter in een
+ * querystring door de aanroeper weggelaten kan worden. Nu bepaalt de database
+ * welke kennis bij welke agent hoort, en kan één aanroep nooit de kennis van
+ * meerdere klanten opleveren.
  */
-export async function haalKennis(agentId: string): Promise<KennisItem[]> {
+export async function haalKennis(slug: string): Promise<KennisItem[]> {
   const rest = supabaseRest();
   if (!rest) throw new Error("Supabase-omgevingsvariabelen ontbreken");
 
-  const res = await fetch(
-    `${rest.url}/rest/v1/knowledge_items` +
-      `?select=category,title,question,content` +
-      `&agent_id=eq.${encodeURIComponent(agentId)}` +
-      `&is_active=eq.true&order=category,sort_order&limit=500`,
-    { headers: rest.headers },
-  );
+  const res = await fetch(`${rest.url}/rest/v1/rpc/agent_knowledge`, {
+    method: "POST",
+    headers: rest.headers,
+    body: JSON.stringify({ _slug: slug }),
+  });
   if (!res.ok) throw new Error(`Kennisbank ophalen mislukt [${res.status}]`);
   return (await res.json()) as KennisItem[];
 }
@@ -436,7 +436,7 @@ export async function beantwoord(
     };
   }
 
-  const [kennis, prive] = await Promise.all([haalKennis(config.id), haalPrivateConfig(config.id)]);
+  const [kennis, prive] = await Promise.all([haalKennis(slug), haalPrivateConfig(config.id)]);
   const systeem = bouwSysteemprompt(kennis, config, prive.extra_instructions);
 
   const verloop: unknown[] = berichten.map((b) => ({ role: b.role, content: b.content }));

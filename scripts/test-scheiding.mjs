@@ -39,28 +39,22 @@ function meld(geslaagd, naam, detail = "") {
 
 console.log("\nLektest scheiding per klant\n" + "=".repeat(52));
 
-// --- 1. Kennis is gekoppeld aan een agent -----------------------------------
-console.log("\nKennisbank");
-const kennis = await (await rest("knowledge_items?select=id,agent_id,is_active&limit=1000")).json();
+// --- 1. Rechtstreeks lezen van de kennisbank is dicht ----------------------
+console.log("Kennisbank");
+const direct = await (await rest("knowledge_items?select=id,agent_id,title&limit=1000")).json();
+const directDicht = !Array.isArray(direct) || direct.length === 0;
+meld(
+  directDicht,
+  "een bezoeker kan de kennisbank niet rechtstreeks uitlezen",
+  Array.isArray(direct) ? `${direct.length} items zichtbaar via een kale query` : "geweigerd",
+);
 
-if (!Array.isArray(kennis)) {
-  meld(false, "kennisbank leesbaar", JSON.stringify(kennis).slice(0, 120));
-} else {
-  meld(kennis.length > 0, "er is kennis zichtbaar voor een bezoeker", `${kennis.length} items`);
-  meld(
-    kennis.every((k) => k.agent_id),
-    "elk zichtbaar item hoort bij een agent",
-    `${kennis.filter((k) => !k.agent_id).length} zonder agent`,
-  );
-  meld(
-    kennis.every((k) => k.is_active),
-    "geen concepten zichtbaar",
-    `${kennis.filter((k) => !k.is_active).length} inactieve items zichtbaar`,
-  );
-
-  const agents = [...new Set(kennis.map((k) => k.agent_id))];
-  console.log(`  ℹ zichtbare kennis verdeeld over ${agents.length} agent(s)`);
-}
+// Wel via de functie, en dan alleen van de opgevraagde agent.
+const viaFunctie = await (
+  await rest("rpc/agent_knowledge", { method: "POST", body: JSON.stringify({ _slug: "website-assistent" }) })
+).json();
+const kennis = Array.isArray(viaFunctie) ? viaFunctie : [];
+meld(kennis.length > 0, "de eigen agent levert zijn kennis wel via de functie", `${kennis.length} items`);
 
 // --- 2. Agents zijn niet uit te lezen ----------------------------------------
 console.log("\nAgents");
@@ -121,34 +115,66 @@ if (Array.isArray(kennis) && kennis.length > 0) {
   );
 }
 
-// --- 5. De beslissende test: ziet een bezoeker kennis van een niet-live agent?
+// --- 5. De beslissende test: lekt de kennis van een andere klant? ----------
 //
-// Dit is het lek dat de eerdere versie van deze test niet vond. Zolang er één
-// agent is, geeft een brede policy (alleen is_active) hetzelfde resultaat als
-// een strenge (is_active én live agent). Het verschil wordt pas zichtbaar
-// zodra er een agent bestaat die niet live staat. Een beheerder kan die
-// aanmaken; deze test controleert wat een bezoeker er dan van ziet.
-console.log("\nScheiding tussen agents");
+// Dit is de controle waar het om draait. Een brede policy (alleen is_active) en
+// een strenge (is_active plus live agent) geven hetzelfde resultaat zolang er
+// één agent is. Het verschil wordt pas zichtbaar met een tweede agent die niet
+// live staat. De agent "testklant" bestaat daarvoor, met een kennisitem waarvan
+// de titel nergens anders voorkomt.
+console.log("\nScheiding tussen klanten");
 
-const agentsInKennis = Array.isArray(kennis) ? [...new Set(kennis.map((k) => k.agent_id))] : [];
-if (agentsInKennis.length < 2) {
-  console.log(
-    "  \u2139 overgeslagen: er is kennis van \u00e9\u00e9n agent. Maak een tweede agent met status",
-  );
-  console.log(
-    "    'setup' plus een kennisitem, en draai deze test opnieuw. Pas dan is bewezen",
-  );
-  console.log("    dat een bezoeker de kennis van een andere klant niet ziet.");
-} else {
-  const perAgent = agentsInKennis.map(
-    (id) => `${id.slice(0, 8)}: ${kennis.filter((k) => k.agent_id === id).length}`,
-  );
-  meld(
-    false,
-    "bezoeker ziet kennis van meer dan \u00e9\u00e9n agent",
-    perAgent.join(", ") + " \u2014 controleer of al deze agents live horen te zijn",
-  );
-}
+const MARKERING = "Geheim van de testklant";
+
+// Twee wegen proberen: een kale query, en de functie met de slug van de andere
+// klant. Allebei moeten niets opleveren.
+const kaal = await (await rest("knowledge_items?select=title&limit=1000")).json();
+const viaSlug = await (
+  await rest("rpc/agent_knowledge", { method: "POST", body: JSON.stringify({ _slug: "testklant" }) })
+).json();
+const gelekt = [
+  ...(Array.isArray(kaal) ? kaal : []),
+  ...(Array.isArray(viaSlug) ? viaSlug : []),
+].filter((k) => (k.title ?? "").includes(MARKERING));
+
+meld(
+  gelekt.length === 0,
+  `kennis van een niet-live agent blijft onzichtbaar`,
+  gelekt.length > 0
+    ? `LEK: "${MARKERING}" is leesbaar voor een bezoeker`
+    : `"${MARKERING}" niet zichtbaar`,
+);
+
+// Ook via de zoekfunctie mag een niet-live agent niet vindbaar zijn.
+const testklant = await (
+  await rest("rpc/resolve_live_agent", { method: "POST", body: JSON.stringify({ _slug: "testklant" }) })
+).json();
+meld(testklant === null, "een agent op setup is niet op te zoeken via zijn slug");
+
+const testConfig = await (
+  await rest("rpc/agent_public_config", { method: "POST", body: JSON.stringify({ _slug: "testklant" }) })
+).json();
+meld(
+  Array.isArray(testConfig) && testConfig.length === 0,
+  "een agent op setup geeft geen configuratie prijs",
+  Array.isArray(testConfig) && testConfig.length > 0 ? "CONFIGURATIE ZICHTBAAR" : "leeg",
+);
+
+// En de eigen agent moet juist wél gewoon werken.
+const eigenConfig = await (
+  await rest("rpc/agent_public_config", { method: "POST", body: JSON.stringify({ _slug: "website-assistent" }) })
+).json();
+meld(
+  Array.isArray(eigenConfig) && eigenConfig.length === 1,
+  "de eigen agent geeft zijn publieke instellingen wel",
+  Array.isArray(eigenConfig) && eigenConfig[0]
+    ? `limiet ${eigenConfig[0].rate_limit_per_hour}/uur, domeinen: ${(eigenConfig[0].allowed_domains ?? []).join(", ")}`
+    : "",
+);
+meld(
+  Array.isArray(eigenConfig) && eigenConfig[0] && !("notify_email" in eigenConfig[0]),
+  "het meldadres lekt niet mee in de publieke configuratie",
+);
 
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) {
