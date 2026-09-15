@@ -121,6 +121,35 @@ if (Array.isArray(kennis) && kennis.length > 0) {
   );
 }
 
+// --- 5. De beslissende test: ziet een bezoeker kennis van een niet-live agent?
+//
+// Dit is het lek dat de eerdere versie van deze test niet vond. Zolang er één
+// agent is, geeft een brede policy (alleen is_active) hetzelfde resultaat als
+// een strenge (is_active én live agent). Het verschil wordt pas zichtbaar
+// zodra er een agent bestaat die niet live staat. Een beheerder kan die
+// aanmaken; deze test controleert wat een bezoeker er dan van ziet.
+console.log("\nScheiding tussen agents");
+
+const agentsInKennis = Array.isArray(kennis) ? [...new Set(kennis.map((k) => k.agent_id))] : [];
+if (agentsInKennis.length < 2) {
+  console.log(
+    "  \u2139 overgeslagen: er is kennis van \u00e9\u00e9n agent. Maak een tweede agent met status",
+  );
+  console.log(
+    "    'setup' plus een kennisitem, en draai deze test opnieuw. Pas dan is bewezen",
+  );
+  console.log("    dat een bezoeker de kennis van een andere klant niet ziet.");
+} else {
+  const perAgent = agentsInKennis.map(
+    (id) => `${id.slice(0, 8)}: ${kennis.filter((k) => k.agent_id === id).length}`,
+  );
+  meld(
+    false,
+    "bezoeker ziet kennis van meer dan \u00e9\u00e9n agent",
+    perAgent.join(", ") + " \u2014 controleer of al deze agents live horen te zijn",
+  );
+}
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) {
   console.log("Alles in orde: geen lek gevonden.\n");

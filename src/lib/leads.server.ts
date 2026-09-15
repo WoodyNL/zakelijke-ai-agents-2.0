@@ -17,6 +17,8 @@ export type LeadData = {
   phone?: string;
   stage?: string;
   message?: string;
+  /** Alleen gevuld bij een lead uit een chat; het contactformulier heeft geen agent. */
+  agentId?: string;
 };
 
 export async function notifyByEmail(data: LeadData) {
@@ -71,6 +73,7 @@ export async function storeLead(data: LeadData) {
     phone: data.phone || null,
     stage: data.stage ?? "",
     message: data.message || null,
+    agent_id: data.agentId ?? null,
   });
   if (error) throw new Error(error.message);
 }
