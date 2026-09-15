@@ -31,11 +31,11 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
 });
 
 const inputCls =
-  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo";
+  "w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-violet/55";
 const btnCls =
   "rounded-full bg-brand px-4 py-2 text-[12px] font-semibold text-primary-foreground disabled:opacity-50";
 const ghostBtnCls =
-  "rounded-full border border-white/60 bg-white/60 px-3.5 py-2 text-[12px] font-semibold text-brand hover:bg-white/80 disabled:opacity-50";
+  "rounded-full border border-white/12 bg-white/5 px-3.5 py-2 text-[12px] font-semibold text-brand hover:bg-white/10 disabled:opacity-50";
 
 type Item = {
   id: string;
@@ -221,7 +221,7 @@ function KnowledgePage() {
       </div>
 
       {msg && (
-        <p className="mt-4 rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-[12px] text-brand">
+        <p className="mt-4 rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-2.5 text-[12px] text-brand">
           {msg}
         </p>
       )}
@@ -325,7 +325,7 @@ function KnowledgePage() {
             className={
               filter === c
                 ? "rounded-full bg-brand px-3.5 py-1.5 text-[11px] font-semibold text-primary-foreground"
-                : "rounded-full border border-white/60 bg-white/60 px-3.5 py-1.5 text-[11px] font-medium text-brand hover:bg-white/80"
+                : "rounded-full border border-white/12 bg-white/5 px-3.5 py-1.5 text-[11px] font-medium text-brand hover:bg-white/10"
             }
           >
             {c}

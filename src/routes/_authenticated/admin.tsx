@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const inputCls =
-  "w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo";
+  "w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-violet/55";
 const btnCls =
   "rounded-full bg-brand px-4 py-2 text-[12px] font-semibold text-primary-foreground disabled:opacity-50";
 
@@ -74,7 +74,7 @@ function AdminPanel() {
       <DashboardShell isAdmin={false} userName={meQuery.data.name}>
         <p className="text-[13px] text-ink/60">
           Je hebt geen toegang tot deze pagina.{" "}
-          <Link to="/dashboard" className="text-indigo">
+          <Link to="/dashboard" className="text-violet">
             Terug naar dashboard
           </Link>
         </p>
@@ -88,7 +88,7 @@ function AdminPanel() {
     <DashboardShell isAdmin userName={meQuery.data?.name ?? ""}>
       <h1 className="font-display text-[24px] font-bold tracking-tight text-brand">Beheer</h1>
       <p className="mt-1.5 text-[13px] text-ink/55">Klanten, agents en statistieken.</p>
-      {msg && <p className="mt-3 text-[12px] font-medium text-indigo">{msg}</p>}
+      {msg && <p className="mt-3 text-[12px] font-medium text-violet">{msg}</p>}
 
       <section className="card-glass-lg mt-5 rounded-3xl p-5">
         <p className="font-display text-[15px] font-semibold text-brand">Nieuwe klant</p>
@@ -168,7 +168,7 @@ function LeadRequests({ enabled }: { enabled: boolean }) {
 
       <div className="mt-3 space-y-2">
         {leads.map((l) => (
-          <div key={l.id} className="rounded-2xl border border-white/60 bg-white/50 p-4">
+          <div key={l.id} className="rounded-2xl border border-white/12 bg-white/5 p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-[13px] font-semibold text-brand">
                 {l.name} — {l.company}
@@ -181,13 +181,13 @@ function LeadRequests({ enabled }: { enabled: boolean }) {
               </p>
             </div>
             <p className="mt-1 text-[12px] text-ink/60">
-              <a href={`mailto:${l.email}`} className="text-indigo">
+              <a href={`mailto:${l.email}`} className="text-violet">
                 {l.email}
               </a>
               {l.phone ? (
                 <>
                   {" · "}
-                  <a href={`tel:${l.phone.replace(/\s/g, "")}`} className="text-indigo">
+                  <a href={`tel:${l.phone.replace(/\s/g, "")}`} className="text-violet">
                     {l.phone}
                   </a>
                 </>
@@ -248,7 +248,7 @@ function ClientBlock({
       </div>
 
       <details className="mt-3">
-        <summary className="cursor-pointer text-[12px] font-medium text-indigo">
+        <summary className="cursor-pointer text-[12px] font-medium text-violet">
           + Agent toevoegen
         </summary>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -324,7 +324,7 @@ function AgentRow({
   const st = STATUS_META[agent.status] ?? STATUS_META["setup"]!;
 
   return (
-    <div className="rounded-2xl border border-white/60 bg-white/50 p-4">
+    <div className="rounded-2xl border border-white/12 bg-white/5 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[13px] font-semibold text-brand">{agent.name}</p>

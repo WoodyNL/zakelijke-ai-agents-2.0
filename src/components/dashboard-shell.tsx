@@ -1,9 +1,17 @@
-import { BrandLogo } from "@/components/brand-logo";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase-browser";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { ArrowUpRight, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
+import { BrandLogo } from "@/components/brand-logo";
+import { supabase } from "@/lib/supabase-browser";
 
+/**
+ * De schil om alles achter de inlog.
+ *
+ * Draait bewust op hetzelfde donkere thema als de landingspagina. Een klant die
+ * op de site is geweest en dan inlogt, hoort niet het gevoel te krijgen dat hij
+ * bij een ander bedrijf terechtkomt: het portaal is onderdeel van wat hij koopt.
+ */
 export function DashboardShell({
   children,
   isAdmin,
@@ -15,6 +23,7 @@ export function DashboardShell({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const pad = useRouterState({ select: (s) => s.location.pathname });
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -23,54 +32,116 @@ export function DashboardShell({
     navigate({ to: "/auth", replace: true });
   }
 
+  const links = [
+    { to: "/dashboard", label: "Dashboard" },
+    ...(isAdmin
+      ? [
+          { to: "/knowledge", label: "Kennisbank" },
+          { to: "/admin", label: "Beheer" },
+        ]
+      : []),
+    { to: "/account", label: "Account" },
+  ];
+
   return (
-    <div className="surface-gradient min-h-screen w-full font-sans text-ink antialiased">
-      <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
-        <header className="flex items-center justify-between animate-rise">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <BrandLogo />
+    <div className="theme-dark surface-gradient min-h-screen w-full font-sans text-ink antialiased">
+      <header
+        className="sticky top-0 z-40 border-b border-white/[0.08] backdrop-blur-md"
+        style={{ backgroundColor: "rgba(10,10,15,0.82)" }}
+      >
+        <div className="mx-auto flex h-[68px] w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
+          <Link to="/dashboard" className="flex shrink-0 items-center gap-3">
+            <BrandLogo textClassName="text-[14px]" />
           </Link>
-          <nav className="flex items-center gap-2 text-[12px] font-medium">
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className="rounded-full border border-white/60 bg-white/60 px-3.5 py-2 text-brand hover:bg-white/80"
-              >
-                Beheer
-              </Link>
-            )}
-            {isAdmin && (
-              <Link
-                to="/knowledge"
-                className="rounded-full border border-white/60 bg-white/60 px-3.5 py-2 text-brand hover:bg-white/80"
-              >
-                Kennis
-              </Link>
-            )}
-            <Link
-              to="/account"
-              className="rounded-full border border-white/60 bg-white/60 px-3.5 py-2 text-brand hover:bg-white/80"
+
+          <nav aria-label="Klantportaal" className="ml-2 hidden items-center gap-0.5 md:flex">
+            {links.map((l) => {
+              const actief = pad.startsWith(l.to);
+              return (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className={`nav-link px-3 py-2 text-[13px] font-medium whitespace-nowrap transition-colors ${
+                    actief ? "bg-white/[0.07] text-ink" : "text-ink/70 hover:text-ink"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <a
+              href="/"
+              className="nav-link hidden px-3 py-2 text-[12.5px] font-medium text-ink/60 hover:text-ink lg:inline-flex lg:items-center lg:gap-1"
             >
-              Account
-            </Link>
-            {userName && <span className="hidden text-ink/55 sm:inline">{userName}</span>}
+              Website
+              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+            {userName && (
+              <span className="hidden max-w-[18ch] truncate text-[12.5px] text-ink/55 sm:inline">
+                {userName}
+              </span>
+            )}
             <button
+              type="button"
               onClick={signOut}
-              className="rounded-full bg-brand px-3.5 py-2 text-primary-foreground"
-              style={{ boxShadow: "0 12px 26px -12px oklch(0.2 0.04 285 / 0.8)" }}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/12 px-3.5 text-[12.5px] font-semibold text-ink/80 transition-colors hover:border-violet/40 hover:bg-white/5 hover:text-ink"
             >
+              <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
               Uitloggen
             </button>
-          </nav>
-        </header>
-        <main className="mt-7">{children}</main>
-      </div>
+          </div>
+        </div>
+
+        {/* Op een telefoon past de navigatie niet naast het logo; dan komt hij
+            eronder als scrollbare rij in plaats van achter een hamburgermenu,
+            want met drie tot vier bestemmingen is verbergen onnodig. */}
+        <nav
+          aria-label="Klantportaal"
+          className="flex gap-1 overflow-x-auto border-t border-white/[0.06] px-4 py-2 md:hidden"
+        >
+          {links.map((l) => {
+            const actief = pad.startsWith(l.to);
+            return (
+              <Link
+                key={l.to}
+                to={l.to}
+                className={`nav-link shrink-0 px-3 py-1.5 text-[12.5px] font-medium ${
+                  actief ? "bg-white/[0.07] text-ink" : "text-ink/70"
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
     </div>
   );
 }
 
+/**
+ * Statuskleuren. Naast de kleur staat altijd een woord, zodat de status ook
+ * leesbaar is voor wie kleuren niet onderscheidt.
+ */
 export const STATUS_META: Record<string, { label: string; dot: string; chip: string }> = {
-  live: { label: "Live", dot: "bg-mint", chip: "bg-mint/20 text-brand" },
-  paused: { label: "Gepauzeerd", dot: "bg-ink/30", chip: "bg-ink/10 text-ink/70" },
-  setup: { label: "In opbouw", dot: "bg-amber-400", chip: "bg-amber-400/25 text-brand" },
+  live: {
+    label: "Live",
+    dot: "bg-mint",
+    chip: "border-mint/30 bg-mint/12 text-mint",
+  },
+  paused: {
+    label: "Gepauzeerd",
+    dot: "bg-ink/40",
+    chip: "border-white/12 bg-white/5 text-ink/65",
+  },
+  setup: {
+    label: "In opbouw",
+    dot: "bg-amber-400",
+    chip: "border-amber-400/30 bg-amber-400/12 text-amber-300",
+  },
 };

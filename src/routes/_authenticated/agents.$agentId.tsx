@@ -57,7 +57,7 @@ function AgentDetail() {
 
   return (
     <DashboardShell isAdmin={meQuery.data?.isAdmin ?? false} userName={meQuery.data?.name ?? ""}>
-      <Link to="/dashboard" className="text-[12px] font-medium text-ink/55 hover:text-indigo">
+      <Link to="/dashboard" className="text-[12px] font-medium text-ink/55 hover:text-violet">
         ← Terug naar dashboard
       </Link>
 
@@ -93,7 +93,7 @@ function AgentDetail() {
                 className={`rounded-full px-3.5 py-1.5 text-[12px] font-medium transition ${
                   days === r.days
                     ? "bg-brand text-primary-foreground"
-                    : "border border-white/60 bg-white/60 text-ink/70 hover:bg-white/80"
+                    : "border border-white/12 bg-white/5 text-ink/70 hover:border-violet/40 hover:bg-violet/10 hover:text-ink"
                 }`}
               >
                 {r.label}
@@ -153,7 +153,7 @@ function AgentDetail() {
                   <div className="shrink-0 text-right">
                     <p className="text-[12px] font-semibold text-brand">{s.output_count}</p>
                     {s.performance_score != null && (
-                      <p className="text-[11px] text-indigo">
+                      <p className="text-[11px] text-violet">
                         {Number(s.performance_score).toFixed(0)}%
                       </p>
                     )}

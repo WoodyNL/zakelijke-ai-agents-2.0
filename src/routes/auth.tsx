@@ -82,7 +82,7 @@ function AuthPage() {
   }
 
   return (
-    <div className="surface-gradient flex min-h-screen w-full items-center justify-center px-4 py-10 font-sans text-ink antialiased">
+    <div className="theme-dark surface-gradient flex min-h-screen w-full items-center justify-center px-4 py-10 font-sans text-ink antialiased">
       <div className="w-full max-w-sm animate-rise">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2">
           <BrandLogo markClassName="size-9" textClassName="text-[17px]" />
@@ -121,14 +121,13 @@ function AuthPage() {
               />
             )}
 
-            {error && <p className="text-[12px] font-medium text-destructive">{error}</p>}
-            {info && <p className="text-[12px] font-medium text-mint">{info}</p>}
+            {error && <p role="alert" className="rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] font-medium text-ink/85">{error}</p>}
+            {info && <p role="status" className="rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-[12px] font-medium text-ink/85">{info}</p>}
 
             <button
               type="submit"
               disabled={busy}
-              className="mt-1 w-full rounded-full bg-brand px-6 py-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
-              style={{ boxShadow: "0 12px 26px -12px oklch(0.2 0.04 285 / 0.8)" }}
+              className="cta-dark mt-1 w-full rounded-full px-6 py-3 text-[13px] font-semibold text-white disabled:opacity-50"
             >
               {busy
                 ? "Bezig…"
@@ -142,25 +141,33 @@ function AuthPage() {
 
           <div className="mt-4 flex flex-wrap justify-between gap-2 text-[12px] text-ink/55">
             {mode !== "forgot" ? (
-              <button onClick={() => setMode("forgot")} className="hover:text-indigo">
+              <button onClick={() => setMode("forgot")} className="transition-colors hover:text-violet">
                 Wachtwoord vergeten?
               </button>
             ) : (
-              <button onClick={() => setMode("login")} className="hover:text-indigo">
+              <button onClick={() => setMode("login")} className="transition-colors hover:text-violet">
                 Terug naar inloggen
               </button>
             )}
             {mode === "login" ? (
-              <button onClick={() => setMode("signup")} className="hover:text-indigo">
+              <button onClick={() => setMode("signup")} className="transition-colors hover:text-violet">
                 Account aanmaken
               </button>
             ) : mode === "signup" ? (
-              <button onClick={() => setMode("login")} className="hover:text-indigo">
+              <button onClick={() => setMode("login")} className="transition-colors hover:text-violet">
                 Ik heb al een account
               </button>
             ) : null}
           </div>
         </div>
+
+        <p className="mt-5 text-center text-[11.5px]/[1.7] text-ink/40">
+          Alleen voor klanten van Zakelijke AI Agents. Nog geen agent?{" "}
+          <Link to="/" hash="contact" className="underline underline-offset-2 hover:text-ink/70">
+            Plan een gratis verkenning
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );
@@ -189,7 +196,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-white/60 bg-white/70 px-3.5 py-2.5 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-indigo"
+        className="w-full rounded-xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-[13px] text-ink outline-none transition placeholder:text-ink/35 focus:border-violet/55 focus:bg-white/[0.06] focus:ring-2 focus:ring-violet/25"
       />
     </label>
   );
