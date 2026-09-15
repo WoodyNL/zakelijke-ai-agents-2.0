@@ -1,7 +1,7 @@
 import * as React from "react";
 
 export const shadowBrand = {
-  boxShadow: "0 12px 26px -12px oklch(0.2 0.04 285 / 0.8)",
+  boxShadow: "0 10px 30px -10px oklch(0.55 0.22 293 / 0.6), 0 0 24px -6px oklch(0.60 0.20 290 / 0.45)",
 } as const;
 
 export function Container({
@@ -89,10 +89,9 @@ export function CtaButton({
       href={href}
       className={
         variant === "primary"
-          ? `${base} h-12 bg-brand px-7 text-primary-foreground ${className}`
+          ? `${base} h-12 px-7 text-white cta-purple ${className}`
           : `${base} h-12 border border-white/15 bg-white/5 px-6 text-ink/85 hover:bg-white/10 hover:text-ink ${className}`
       }
-      style={variant === "primary" ? shadowBrand : undefined}
     >
       {children}
     </a>

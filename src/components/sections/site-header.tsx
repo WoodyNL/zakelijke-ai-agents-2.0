@@ -24,9 +24,9 @@ export function SiteHeader() {
       style={{ backgroundColor: scrolled ? "rgba(10,10,15,0.9)" : "rgba(10,10,15,0.55)" }}
     >
       <Container className="flex h-[72px] items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
+        <Link to="/" className="mr-8 flex items-center gap-3" onClick={() => setOpen(false)}>
           <BrandLogo />
-          <span className="hidden text-[11px] whitespace-nowrap text-ink/60 2xl:block">
+          <span className="hidden border-l border-white/15 pl-3 text-[11px] leading-none whitespace-nowrap text-ink/60 2xl:block">
             {SITE.tagline}
           </span>
         </Link>
@@ -52,7 +52,7 @@ export function SiteHeader() {
           </a>
           <a
             href="#contact"
-            className="cta-dark inline-flex h-11 items-center whitespace-nowrap rounded-full px-6 text-[13px] font-semibold text-white"
+            className="cta-purple inline-flex h-11 items-center whitespace-nowrap rounded-full px-6 text-[13px] font-semibold text-white"
           >
             {SITE.ctaPrimary}
           </a>
@@ -92,7 +92,7 @@ export function SiteHeader() {
             <a
               href="#contact"
               onClick={() => setOpen(false)}
-              className="cta-dark mt-2 inline-flex h-12 items-center justify-center rounded-full px-6 text-[14px] font-semibold text-white"
+              className="cta-purple mt-2 inline-flex h-12 items-center justify-center rounded-full px-6 text-[14px] font-semibold text-white"
             >
               {SITE.ctaPrimary}
             </a>

@@ -1,10 +1,31 @@
 import * as React from "react";
-import { Check as CheckIcon } from "lucide-react";
+import {
+  Blocks,
+  CalendarDays,
+  Check as CheckIcon,
+  Database,
+  Mail,
+  MessageCircle,
+  Network,
+  PlugZap,
+  Workflow,
+} from "lucide-react";
 import { HeroNetwork } from "@/components/hero-network";
 import { HERO, SITE, TRUSTBAR } from "@/content/site";
 import { Container, CountUp, CtaButton } from "./ui";
 
 const ROTATING_SERVICES = ["Agents", "Projecten", "Consultancy", "Ondersteuning"] as const;
+
+const INTEGRATION_ICONS = {
+  crm: Network,
+  mail: Mail,
+  message: MessageCircle,
+  team: Blocks,
+  database: Database,
+  workspace: PlugZap,
+  workflow: Workflow,
+  calendar: CalendarDays,
+} as const;
 
 function RotatingService() {
   const [activeIndex, setActiveIndex] = React.useState(0);
@@ -114,17 +135,54 @@ export function Hero() {
 
 export function TrustBar() {
   return (
-    <div className="border-y border-white/10 py-8">
-      <Container className="flex flex-col gap-3 md:flex-row md:items-center md:gap-8">
-        <span className="text-[12px] text-ink/40">Werkt met:</span>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          {TRUSTBAR.map((t) => (
-            <span key={t} className="text-[13px] font-medium text-ink/55">
-              {t}
-            </span>
-          ))}
+    <section className="border-y border-white/10 py-10" aria-labelledby="integraties-titel">
+      <Container>
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet">
+              Integraties
+            </p>
+            <h2 id="integraties-titel" className="mt-2 font-display text-[22px] font-bold text-brand sm:text-[26px]">
+              AI die aansluit op wat je al gebruikt
+            </h2>
+          </div>
+          <p className="max-w-[46ch] text-[13px]/[1.65] text-ink/60 md:text-right">
+            Van inbox en CRM tot planning en administratie. Wij verbinden je systemen tot één werkend proces.
+          </p>
+        </div>
+
+        <div className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {TRUSTBAR.map((integration) => {
+            const Icon = INTEGRATION_ICONS[integration.icon];
+            return (
+              <div
+                key={integration.name}
+                className="integration-tile group flex min-h-[76px] items-center gap-3 rounded-xl border border-white/10 bg-white/4 px-3.5 py-3"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet/20 bg-violet/10 text-violet transition-all duration-300 group-hover:border-violet/45 group-hover:bg-violet/20">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold leading-tight text-ink/85 transition-colors group-hover:text-ink">
+                    {integration.name}
+                  </span>
+                  <span className="mt-1 block text-[10px] uppercase tracking-[0.1em] text-ink/35 transition-colors group-hover:text-violet/80">
+                    {integration.category}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-5 flex items-center gap-2 text-[12px] text-ink/50">
+          <span className="relative flex h-2 w-2" aria-hidden="true">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-50" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
+          </span>
+          Staat jouw systeem er niet bij? In de meeste gevallen kunnen we het alsnog koppelen.
         </div>
       </Container>
-    </div>
+    </section>
   );
 }

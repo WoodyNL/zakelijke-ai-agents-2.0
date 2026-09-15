@@ -63,15 +63,19 @@ export const HERO = {
 } as const;
 
 export const TRUSTBAR = [
-  "HubSpot",
-  "Pipedrive",
-  "Gmail & Outlook",
-  "WhatsApp Business",
-  "Slack",
-  "Exact",
-  "Make",
-  "Zapier",
-  "Microsoft 365",
+  { name: "HubSpot", category: "CRM", icon: "crm" },
+  { name: "Pipedrive", category: "CRM", icon: "crm" },
+  { name: "Salesforce", category: "CRM", icon: "crm" },
+  { name: "Gmail & Outlook", category: "E-mail", icon: "mail" },
+  { name: "WhatsApp Business", category: "Berichten", icon: "message" },
+  { name: "Slack & Teams", category: "Samenwerken", icon: "team" },
+  { name: "Exact Online", category: "Administratie", icon: "database" },
+  { name: "Microsoft 365", category: "Werkplek", icon: "workspace" },
+  { name: "Google Workspace", category: "Werkplek", icon: "workspace" },
+  { name: "Make", category: "Automatisering", icon: "workflow" },
+  { name: "n8n", category: "Automatisering", icon: "workflow" },
+  { name: "Zapier", category: "Automatisering", icon: "workflow" },
+  { name: "Calendly", category: "Planning", icon: "calendar" },
 ] as const;
 
 export const PROBLEM = {
@@ -533,7 +537,15 @@ export const PERSON = {
     "Wat je van ons kunt verwachten: we zeggen het als AI niet de oplossing is. Dat is regelmatig het geval, en het scheelt je een hoop geld.",
   ],
   placeholder: `PLAATSHOUDER — foto en korte bio van ${SITE.person}`,
+  name: "Wouter Ransijn",
+  role: "Oprichter & AI-automatisering specialist",
+  bio: [
+    "Zeven jaar zelfstandig ondernemer, de laatste twee jaar volledig gericht op AI-automatisering voor het mkb.",
+    "Werkt dagelijks met Claude Code, n8n, Zapier en Make om processen te bouwen die daadwerkelijk draaien — geen pilots die na drie maanden stilvallen.",
+  ],
+  skills: ["Claude Code", "n8n", "Zapier", "Make", "AI-strategie", "Procesautomatisering"],
 } as const;
+
 
 export const FAQ = {
   h2: "Veelgestelde vragen",

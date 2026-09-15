@@ -106,29 +106,72 @@ export function ProofSection() {
   );
 }
 
+import wouterAsset from "@/assets/wouter-ransijn.jpg.asset.json";
+
 export function PersonSection() {
   return (
     <Section labelledBy="persoon-titel">
       <Container>
-        <Reveal>
-          <div className="mx-auto max-w-3xl text-center">
-            <h2
-              id="persoon-titel"
-              className="font-display text-[28px]/[1.15] font-bold tracking-tight text-brand sm:text-[36px]/[1.1]"
-            >
-              {PERSON.h2}
-            </h2>
+        <div className="grid gap-10 lg:grid-cols-[auto_1fr] lg:gap-14 lg:items-center">
+          {/* Foto met hover-effect en animatie */}
+          <Reveal>
+            <div className="group relative mx-auto w-[240px] sm:w-[280px]">
+              {/* Gloed achter de kaart */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-3 rounded-[28px] bg-gradient-to-br from-violet/30 via-violet/5 to-transparent opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+              />
+              <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 shadow-[0_24px_60px_-20px_oklch(0.2_0.04_285/0.9)] transition-transform duration-500 ease-out group-hover:-translate-y-1.5 group-hover:scale-[1.02]">
+                <img
+                  src={wouterAsset.url}
+                  alt={`Portret van ${PERSON.name}`}
+                  className="aspect-[3/4] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  loading="lazy"
+                />
+                {/* Naam-overlay die omhoog schuift bij hover */}
+                <div className="absolute inset-x-0 bottom-0 translate-y-0 bg-gradient-to-t from-white/95 via-white/70 to-transparent p-4 transition-all duration-500 group-hover:translate-y-0">
+                  <p className="font-display text-[18px] font-bold text-black">
+                    {PERSON.name}
+                  </p>
+                  <p className="text-[12px] text-black/70">{PERSON.role}</p>
+                </div>
+                {/* Violette rand-gloed bij hover */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-violet/0 transition-all duration-500 group-hover:ring-2 group-hover:ring-violet/60"
+                />
+              </div>
+            </div>
+          </Reveal>
 
+          {/* Tekst + bio */}
+          <Reveal delay={100}>
+            <Eyebrow>WIE JE KRIJGT</Eyebrow>
+            <H2 id="persoon-titel">{PERSON.h2}</H2>
             {PERSON.body.map((p) => (
               <p key={p} className="mt-4 text-[14px]/[1.75] text-ink/70">
                 {p}
               </p>
             ))}
-            <div className="mt-7 rounded-2xl border border-dashed border-white/20 p-6 text-[12px] tracking-wide text-ink/40">
-              {PERSON.placeholder}
+            <div className="mt-6 grid gap-3">
+              {PERSON.bio.map((p) => (
+                <p key={p} className="text-[14px]/[1.7] text-ink/60">
+                  {p}
+                </p>
+              ))}
             </div>
-          </div>
-        </Reveal>
+            <ul className="mt-6 flex flex-wrap gap-2">
+              {PERSON.skills.map((s) => (
+                <li
+                  key={s}
+                  className="rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-[12px] font-medium text-ink/75 transition-colors duration-300 hover:border-violet/50 hover:text-violet"
+                >
+                  {s}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
       </Container>
     </Section>
   );
