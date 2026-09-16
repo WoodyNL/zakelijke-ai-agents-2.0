@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
+import { AgentAannames } from "@/components/agent-aannames";
+import { LEGE_AANNAMES, alsGetal, alsTekst, type Aannamewaarden } from "@/lib/agent-aannames";
 import {
   getMe,
   adminListClients,
@@ -118,8 +120,7 @@ function AdminPanel() {
           onClick={() =>
             run(async () => {
               const res = (await createClientFn({ data: nc })) as
-                | { ok: true; id?: string }
-                | { ok: false; error: string };
+                { ok: true; id?: string } | { ok: false; error: string };
               if (!res.ok) throw new Error(res.error);
               setNc({ name: "", email: "", password: "" });
             }, "Klant aangemaakt")
@@ -139,7 +140,9 @@ function AdminPanel() {
             busy={busy}
             onSaveAgent={(payload) => run(() => saveAgentFn({ data: payload }), "Agent opgeslagen")}
             onDeleteAgent={(id) => run(() => deleteAgentFn({ data: { id } }), "Agent verwijderd")}
-            onSaveStat={(payload) => run(() => saveStatFn({ data: payload }), "Statistiek opgeslagen")}
+            onSaveStat={(payload) =>
+              run(() => saveStatFn({ data: payload }), "Statistiek opgeslagen")
+            }
           />
         ))}
         {clientsQuery.isLoading && <p className="text-[13px] text-ink/55">Laden…</p>}
@@ -338,6 +341,8 @@ function AgentRow({
         </span>
       </div>
 
+      <AannamesBlok agent={agent} busy={busy} onSaveAgent={onSaveAgent} />
+
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <select
           className={`${inputCls} max-w-[170px]`}
@@ -415,6 +420,99 @@ function AgentRow({
           Stat opslaan
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * De afspraken met de klant, uitklapbaar zodat de agentlijst overzichtelijk
+ * blijft. Wat hier staat bepaalt wat er op het dashboard van de klant komt.
+ */
+type AgentRij = {
+  id: string;
+  client_id: string;
+  name: string;
+  description: string;
+  metric_label: string;
+  score_label: string;
+  status: string;
+  kind?: string | null;
+  minutes_saved_per_action?: number | null;
+  minutes_saved_basis?: string | null;
+  hourly_rate?: number | null;
+  hourly_rate_basis?: string | null;
+  fair_use_per_month?: number | null;
+  overage_price?: number | null;
+};
+
+function AannamesBlok({
+  agent,
+  busy,
+  onSaveAgent,
+}: {
+  agent: AgentRij;
+  busy: boolean;
+  onSaveAgent: (payload: Record<string, unknown>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [waarden, setWaarden] = useState<Aannamewaarden>({
+    ...LEGE_AANNAMES,
+    kind: (agent.kind ?? "overig") as Aannamewaarden["kind"],
+    minutesSavedPerAction: agent.minutes_saved_per_action?.toString() ?? "",
+    minutesSavedBasis: agent.minutes_saved_basis ?? "",
+    hourlyRate: agent.hourly_rate?.toString() ?? "",
+    hourlyRateBasis: agent.hourly_rate_basis ?? "",
+    fairUsePerMonth: agent.fair_use_per_month?.toString() ?? "",
+    overagePrice: agent.overage_price?.toString() ?? "1",
+  });
+
+  const ingevuld = agent.minutes_saved_per_action != null || agent.hourly_rate != null;
+
+  return (
+    <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <span className="text-[12.5px] font-semibold text-ink/80">
+          Afspraken over tijd en tarief
+        </span>
+        <span className={`text-[11px] ${ingevuld ? "text-mint" : "text-amber-300"}`}>
+          {ingevuld ? "ingevuld" : "nog niet afgesproken"} · {open ? "verbergen" : "tonen"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="mt-4">
+          <AgentAannames waarden={waarden} onWijzig={setWaarden} />
+
+          <button
+            className={`${btnCls} mt-4`}
+            disabled={busy}
+            onClick={() =>
+              onSaveAgent({
+                id: agent.id,
+                clientId: agent.client_id,
+                name: agent.name,
+                description: agent.description,
+                metricLabel: agent.metric_label,
+                scoreLabel: agent.score_label,
+                status: agent.status,
+                kind: waarden.kind,
+                minutesSavedPerAction: alsGetal(waarden.minutesSavedPerAction),
+                minutesSavedBasis: alsTekst(waarden.minutesSavedBasis),
+                hourlyRate: alsGetal(waarden.hourlyRate),
+                hourlyRateBasis: alsTekst(waarden.hourlyRateBasis),
+                fairUsePerMonth: alsGetal(waarden.fairUsePerMonth),
+                overagePrice: alsGetal(waarden.overagePrice) ?? 1,
+              })
+            }
+          >
+            Afspraken opslaan
+          </button>
+        </div>
+      )}
     </div>
   );
 }

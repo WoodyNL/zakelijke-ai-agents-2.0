@@ -144,11 +144,30 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
         metricLabel: z.string().default("acties"),
         scoreLabel: z.string().default("prestatiescore"),
         status: z.enum(["live", "paused", "setup"]),
+        kind: z
+          .enum(["chat_assistent", "sales_assistent", "inbox_draft", "whatsapp_followup", "overig"])
+          .optional(),
+
+        // De afspraken met de klant waarmee het dashboard berichten omrekent
+        // naar tijd en geld. Leeg mag: dan toont het dashboard dat cijfer niet,
+        // en dat is beter dan een getal dat nergens op rust.
+        minutesSavedPerAction: z.number().min(0).max(600).nullable().optional(),
+        minutesSavedBasis: z.string().max(200).nullable().optional(),
+        hourlyRate: z.number().min(0).max(1000).nullable().optional(),
+        hourlyRateBasis: z.string().max(200).nullable().optional(),
+        fairUsePerMonth: z.number().int().min(0).max(1000000).nullable().optional(),
+        overagePrice: z.number().min(0).max(100).optional(),
       })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context as Ctx);
+    // Alleen meesturen wat is ingevuld: een veld dat niet in het formulier zat
+    // mag niet stilletzwijgend op null worden gezet bij het opslaan van iets
+    // anders, zoals een statuswijziging.
+    const optioneel = <T>(waarde: T | undefined, sleutel: string) =>
+      waarde === undefined ? {} : { [sleutel]: waarde };
+
     const row = {
       client_id: data.clientId,
       name: data.name,
@@ -156,6 +175,13 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
       metric_label: data.metricLabel,
       score_label: data.scoreLabel,
       status: data.status,
+      ...optioneel(data.kind, "kind"),
+      ...optioneel(data.minutesSavedPerAction, "minutes_saved_per_action"),
+      ...optioneel(data.minutesSavedBasis, "minutes_saved_basis"),
+      ...optioneel(data.hourlyRate, "hourly_rate"),
+      ...optioneel(data.hourlyRateBasis, "hourly_rate_basis"),
+      ...optioneel(data.fairUsePerMonth, "fair_use_per_month"),
+      ...optioneel(data.overagePrice, "overage_price"),
     };
     const { error } = data.id
       ? await context.supabase.from("agents").update(row).eq("id", data.id)
