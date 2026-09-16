@@ -121,7 +121,16 @@ export function KennisUpload({
 
     const isExcel = EXCEL.includes(bestand.type) || /\.xlsx?$/i.test(bestand.name);
     const isWord = WORD.includes(bestand.type) || /\.docx?$/i.test(bestand.name);
-    if (!isExcel && !isWord && !LEESBAAR[bestand.type]) {
+
+    // Excel en Word hadden al een terugval op de bestandsnaam, de rest niet. Dat
+    // brak op precies het formaat dat een boekhoudpakket uitspuugt: een .csv
+    // meldt zich afhankelijk van het systeem als text/csv, als
+    // application/vnd.ms-excel, of helemaal nergens als. Dan kreeg je "kan ik
+    // niet lezen" voor een bestand dat prima leesbaar is.
+    const isTekst =
+      Boolean(LEESBAAR[bestand.type]) || /\.(csv|txt|md|json)$/i.test(bestand.name);
+
+    if (!isExcel && !isWord && !isTekst) {
       setFout(
         `${bestand.name} kan ik niet lezen. Gebruik pdf, Word, Excel, afbeelding, tekst, csv of json.`,
       );

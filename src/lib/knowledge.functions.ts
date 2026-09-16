@@ -174,3 +174,68 @@ export const exportKnowledge = createServerFn({ method: "GET" })
 
     return { count: items.length, json: items, text: lines.join("\n") };
   });
+
+/**
+ * Prijsregels wegschrijven als kennis.
+ *
+ * Deze route slaat het model bewust over. De zinnen zijn in de browser in
+ * elkaar gezet uit wat er letterlijk in het bestand stond, en hier worden ze
+ * alleen nog opgeslagen. Een bedrag kan onderweg dus niet veranderen.
+ *
+ * Bestaande prijzen van dezelfde agent worden vervangen, niet aangevuld. Een
+ * prijslijst is een momentopname: laat je de oude ernaast staan, dan heeft de
+ * agent twee prijzen voor hetzelfde product en kiest hij er willekeurig een.
+ */
+export const importeerPrijzen = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        agentId: z.string().uuid(),
+        vervangBestaande: z.boolean().default(true),
+        regels: z
+          .array(z.object({ title: z.string().min(1).max(200), content: z.string().min(1).max(2000) }))
+          .min(1)
+          .max(2000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: agent, error: agentFout } = await context.supabase
+      .from("agents")
+      .select("id")
+      .eq("id", data.agentId)
+      .maybeSingle();
+    if (agentFout) throw new Error(agentFout.message);
+    if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");
+
+    let verwijderd = 0;
+    if (data.vervangBestaande) {
+      const { data: oud, error } = await context.supabase
+        .from("knowledge_items")
+        .delete()
+        .eq("agent_id", data.agentId)
+        .eq("category", "prijzen")
+        .select("id");
+      if (error) throw new Error(error.message);
+      verwijderd = oud?.length ?? 0;
+    }
+
+    const rijen = data.regels.map((r, i) => ({
+      agent_id: data.agentId,
+      category: "prijzen",
+      title: r.title,
+      content: r.content,
+      question: null,
+      tags: [] as string[],
+      sort_order: i,
+      is_active: true,
+    }));
+
+    for (let i = 0; i < rijen.length; i += 500) {
+      const { error } = await context.supabase.from("knowledge_items").insert(rijen.slice(i, i + 500));
+      if (error) throw new Error(error.message);
+    }
+
+    return { toegevoegd: rijen.length, verwijderd };
+  });

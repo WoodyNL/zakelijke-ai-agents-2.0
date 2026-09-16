@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { KennisUpload } from "@/components/kennis-upload";
+import { PrijsUpload } from "@/components/prijs-upload";
 import type { KennisVoorstel } from "@/lib/kennisimport.functions";
 import { heeftKennisbank, soortVan } from "@/lib/agent-soorten";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
@@ -13,6 +14,7 @@ import {
   saveKnowledge,
   deleteKnowledge,
   exportKnowledge,
+  importeerPrijzen,
 } from "@/lib/knowledge.functions";
 
 export const Route = createFileRoute("/_authenticated/knowledge")({
@@ -89,6 +91,7 @@ function KnowledgePage() {
   const saveFn = useServerFn(saveKnowledge);
   const deleteFn = useServerFn(deleteKnowledge);
   const exportFn = useServerFn(exportKnowledge);
+  const prijzenFn = useServerFn(importeerPrijzen);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
 
@@ -327,6 +330,21 @@ function KnowledgePage() {
           vragen. We bewaren het bij {actieveAgent.name}. Zodra er een agent draait die vragen
           beantwoordt, is dit waar hij het uit haalt.
         </p>
+      )}
+
+      {/* De prijslijst staat los van de gewone upload, en dat is het hele punt:
+          die laat een model het document lezen, dit niet. Voor voorwaarden en
+          uitleg is lezen prima; voor bedragen wil je uitrekenen. */}
+      {actieveId && (
+        <div className="mt-6">
+          <PrijsUpload
+            onOpslaan={async (regels) => {
+              const r = await prijzenFn({ data: { agentId: actieveId, regels, vervangBestaande: true } });
+              await qc.invalidateQueries({ queryKey: ["knowledge", actieveId] });
+              return r;
+            }}
+          />
+        </div>
       )}
 
       <div className="mt-6">
