@@ -129,6 +129,34 @@ export function domeinToegestaan(config: AgentConfig, origin: string | null): bo
   });
 }
 
+/**
+ * Legt vast wat dit gesprek aan tokens kostte. Dit kan niet in binnenLimiet(),
+ * want tokens zijn pas bekend nadat het model heeft geantwoord. Mislukt het,
+ * dan hoort dat het antwoord niet in de weg te staan: een boekhoudfout mag geen
+ * bezoeker kosten.
+ */
+export async function noteerVerbruik(
+  agentId: string,
+  usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number },
+) {
+  const rest = supabaseRest();
+  if (!rest) return;
+  try {
+    await fetch(`${rest.url}/rest/v1/rpc/record_agent_tokens`, {
+      method: "POST",
+      headers: rest.headers,
+      body: JSON.stringify({
+        _agent_id: agentId,
+        _input: usage.input_tokens ?? 0,
+        _output: usage.output_tokens ?? 0,
+        _cache_read: usage.cache_read_input_tokens ?? 0,
+      }),
+    });
+  } catch (err) {
+    console.warn("assistent: tokenverbruik vastleggen mislukt", err);
+  }
+}
+
 /** Hoogt de teller op en zegt of dit verzoek nog binnen de uurgrens valt. */
 export async function binnenLimiet(agentId: string): Promise<boolean> {
   const rest = supabaseRest();
@@ -347,8 +375,7 @@ export async function verwerkLead(
 }
 
 type AnthropicBlok =
-  | { type: "text"; text: string }
-  | { type: "tool_use"; id: string; name: string; input: unknown };
+  { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: unknown };
 
 type AnthropicAntwoord = {
   content: AnthropicBlok[];
@@ -440,12 +467,24 @@ export async function beantwoord(
   const systeem = bouwSysteemprompt(kennis, config, prive.extra_instructions);
 
   const verloop: unknown[] = berichten.map((b) => ({ role: b.role, content: b.content }));
+  const verbruikt = { input: 0, output: 0, cache: 0 };
+  const tel = (u: AnthropicAntwoord["usage"]) => {
+    verbruikt.input += u.input_tokens ?? 0;
+    verbruikt.output += u.output_tokens ?? 0;
+    verbruikt.cache += (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
+  };
+
   let antwoord = await roepClaude(systeem, verloop, config);
+  tel(antwoord.usage);
   let leadVastgelegd = false;
 
   const toolBlok = antwoord.content.find((b) => b.type === "tool_use");
   if (toolBlok && toolBlok.type === "tool_use") {
-    const resultaat = await verwerkLead(toolBlok.input as ToolInvoer, config.id, prive.notify_email);
+    const resultaat = await verwerkLead(
+      toolBlok.input as ToolInvoer,
+      config.id,
+      prive.notify_email,
+    );
     leadVastgelegd = resultaat.gelukt;
 
     verloop.push({ role: "assistant", content: antwoord.content });
@@ -464,7 +503,16 @@ export async function beantwoord(
     });
 
     antwoord = await roepClaude(systeem, verloop, config);
+    tel(antwoord.usage);
   }
+
+  // Het verbruik van alle modelaanroepen in deze beurt bij elkaar, inclusief de
+  // tweede ronde na een gereedschapsaanroep.
+  await noteerVerbruik(config.id, {
+    input_tokens: verbruikt.input,
+    output_tokens: verbruikt.output,
+    cache_read_input_tokens: verbruikt.cache,
+  });
 
   const tekst = antwoord.content
     .filter((b): b is { type: "text"; text: string } => b.type === "text")

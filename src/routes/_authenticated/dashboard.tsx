@@ -5,9 +5,10 @@ import { ArrowRight, Download, Sparkles } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { SITE } from "@/content/site";
-import { getMe, listAgents } from "@/lib/dashboard.functions";
+import { getMaandstand, getMe, listAgents } from "@/lib/dashboard.functions";
 import { downloadRapport } from "@/lib/rapport";
 import { soortVan } from "@/lib/agent-soorten";
+import { OpbrengstPaneel, type AgentStand } from "@/components/opbrengst-paneel";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -29,6 +30,9 @@ function Dashboard() {
   const agentsFn = useServerFn(listAgents);
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => me() });
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
+
+  const maandFn = useServerFn(getMaandstand);
+  const maandQuery = useQuery({ queryKey: ["maandstand"], queryFn: () => maandFn() });
 
   const agents = (agentsQuery.data ?? []) as any[];
   const live = agents.filter((a) => a.status === "live");
@@ -81,6 +85,12 @@ function Dashboard() {
             waarde={gemiddeldeScore != null ? `${gemiddeldeScore}%` : "—"}
             label="gemiddelde prestatiescore"
           />
+        </div>
+      )}
+
+      {(maandQuery.data ?? []).length > 0 && (
+        <div className="mt-4">
+          <OpbrengstPaneel standen={maandQuery.data as AgentStand[]} />
         </div>
       )}
 

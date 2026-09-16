@@ -234,3 +234,56 @@ export const getAgentUsage = createServerFn({ method: "GET" })
       grondslag: agent?.minutes_saved_basis ?? null,
     };
   });
+
+/**
+ * De maandstand van alle agents van deze gebruiker bij elkaar.
+ *
+ * Voor het dashboard: totaal aantal berichten, wat dat aan tijd en geld scheelt
+ * volgens de afgesproken aannames, en hoeveel er boven de fair-use-grens zit.
+ * Per agent apart erbij, zodat een klant met meerdere agents ziet waar het
+ * vandaan komt.
+ */
+export const getMaandstand = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const db = context.supabase as unknown as {
+      rpc: (
+        naam: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    };
+
+    const { data: agents, error } = await context.supabase
+      .from("agents")
+      .select("id, name, kind, status");
+    if (error) throw new Error(error.message);
+
+    type Stand = {
+      requests: number;
+      input_tokens: number;
+      output_tokens: number;
+      cache_read_tokens: number;
+      fair_use_per_month: number | null;
+      boven_grens: number;
+      overage_price: number | null;
+      overage_bedrag: number;
+      minutes_saved_per_action: number | null;
+      minutes_saved_basis: string | null;
+      hourly_rate: number | null;
+      hourly_rate_basis: string | null;
+    };
+
+    const perAgent = await Promise.all(
+      (agents ?? []).map(async (a) => {
+        const { data, error: fout } = await db.rpc("agent_month_summary", {
+          _agent_id: a.id,
+          _month_offset: 0,
+        });
+        if (fout) throw new Error(fout.message);
+        const stand = ((data ?? []) as Stand[])[0] ?? null;
+        return { agent: a, stand };
+      }),
+    );
+
+    return perAgent;
+  });
