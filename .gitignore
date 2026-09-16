@@ -34,3 +34,7 @@ dist-ssr
 # Environment variables
 .env
 .env.local
+
+# Dit project installeert met bun; bun.lock is de lockfile die telt.
+# Een npm-lockfile ernaast raakt uit de pas en geeft alleen verwarring.
+package-lock.json
