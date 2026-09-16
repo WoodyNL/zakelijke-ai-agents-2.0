@@ -48,6 +48,11 @@ export const saveKnowledge = createServerFn({ method: "POST" })
         // website-assistent, zodat het beheerscherm werkt zoals het was.
         // Vanaf fase 2 kiest een klant hier zijn eigen agent.
         agentSlug: z.string().min(1).default("website-assistent"),
+        // Het interne id heeft voorrang. Niet elke agent heeft een slug: die
+        // wordt pas gezet als er een embed voor nodig is, terwijl een id er
+        // altijd is. Zonder dit kan een klant geen kennis toevoegen aan een
+        // agent die nog geen publieke naam heeft.
+        agentId: z.string().uuid().optional(),
       })
       .parse(d),
   )
@@ -75,11 +80,10 @@ export const saveKnowledge = createServerFn({ method: "POST" })
     // Bewust via de agents-tabel en niet via resolve_live_agent: die geeft
     // alleen live agents terug, en je moet kennis kunnen klaarzetten voor een
     // agent van een nieuwe klant die nog op setup staat.
-    const { data: agent, error: agentError } = await context.supabase
-      .from("agents")
-      .select("id")
-      .eq("slug", data.agentSlug)
-      .maybeSingle();
+    const zoeker = context.supabase.from("agents").select("id");
+    const { data: agent, error: agentError } = await (
+      data.agentId ? zoeker.eq("id", data.agentId) : zoeker.eq("slug", data.agentSlug)
+    ).maybeSingle();
     if (agentError) throw new Error(agentError.message);
     if (!agent) throw new Error("Agent 'website-assistent' niet gevonden");
     const { error } = await context.supabase

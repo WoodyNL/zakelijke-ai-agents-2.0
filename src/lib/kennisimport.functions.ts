@@ -32,7 +32,9 @@ const TOEGESTAAN = {
 } as const;
 
 const invoerSchema = z.object({
-  agentSlug: z.string().min(1).max(64),
+  agentSlug: z.string().min(1).max(64).optional(),
+  /** Heeft voorrang: niet elke agent heeft al een slug, een id altijd. */
+  agentId: z.string().uuid().optional(),
   bestandsnaam: z.string().min(1).max(255),
   mediatype: z.string().min(1).max(100),
   /** base64 voor pdf en afbeeldingen, platte tekst voor de rest. */
@@ -120,11 +122,10 @@ export const importeerKennis = createServerFn({ method: "POST" })
     // Controleer dat deze gebruiker bij die agent hoort vóór we iets aan het
     // model voorleggen, zodat niemand ons modeltegoed kan gebruiken voor een
     // agent die niet van hem is.
-    const { data: agent, error: agentFout } = await context.supabase
-      .from("agents")
-      .select("id, name")
-      .eq("slug", data.agentSlug)
-      .maybeSingle();
+    const zoeker = context.supabase.from("agents").select("id, name");
+    const { data: agent, error: agentFout } = await (
+      data.agentId ? zoeker.eq("id", data.agentId) : zoeker.eq("slug", data.agentSlug ?? "")
+    ).maybeSingle();
     if (agentFout) throw new Error(agentFout.message);
     if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");
 

@@ -102,8 +102,17 @@ function KnowledgePage() {
     name: string;
     slug: string | null;
   }>;
-  const [gekozenSlug, setGekozenSlug] = useState<string | null>(null);
-  const actieveSlug = gekozenSlug ?? mijnAgents.find((a) => a.slug)?.slug ?? null;
+
+  // Een kennisbank heeft alleen zin voor een agent die hem ook raadpleegt: een
+  // chat-assistent die via een embed of onze eigen site draait. Die herken je
+  // aan zijn slug, want die wordt gezet bij het koppelen. Een agent zonder slug
+  // is nog niet gekoppeld, of is een automatisering van een ander soort. Kennis
+  // aanbieden voor zo'n agent slaat wel iets op, maar er gebeurt niets mee.
+  const gekoppeld = mijnAgents.filter((a) => a.slug);
+  const [gekozenId, setGekozenId] = useState<string | null>(null);
+  // Op id en niet op slug: niet elke agent heeft een slug, want die wordt pas
+  // gezet als er een embed voor nodig is. Een id heeft elke agent.
+  const actieveId = gekozenId ?? gekoppeld[0]?.id ?? null;
   const isAdmin = meQuery.data?.isAdmin === true;
   // Geen enabled-vlag meer op de rol: RLS bepaalt wat iemand terugkrijgt. Een
   // beheerder ziet alles, een klant alleen de kennis van zijn eigen agents.
@@ -158,7 +167,7 @@ function KnowledgePage() {
         saveFn({
           data: {
             ...(draft.id ? { id: draft.id } : {}),
-            ...(actieveSlug ? { agentSlug: actieveSlug } : {}),
+            ...(actieveId ? { agentId: actieveId } : {}),
             category: draft.category,
             title: draft.title.trim(),
             question: draft.question.trim() || null,
@@ -192,7 +201,7 @@ function KnowledgePage() {
             data: {
               // Zonder dit belanden de items bij onze eigen agent in plaats van
               // bij die van de klant, en weigert de database het terecht.
-              ...(actieveSlug ? { agentSlug: actieveSlug } : {}),
+              ...(actieveId ? { agentId: actieveId } : {}),
               category: item.category,
               title: item.title,
               question: item.question,
@@ -271,36 +280,35 @@ function KnowledgePage() {
         </div>
       </div>
 
-      {mijnAgents.length > 1 && (
+      {gekoppeld.length > 1 && (
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <span className="text-[12px] text-ink/55">Kennis voor:</span>
-          {mijnAgents
-            .filter((a) => a.slug)
-            .map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => setGekozenSlug(a.slug)}
-                className={`rounded-full px-3.5 py-1.5 text-[12px] font-medium transition ${
-                  actieveSlug === a.slug
-                    ? "bg-violet text-white"
-                    : "border border-white/12 bg-white/5 text-ink/70 hover:bg-white/10"
-                }`}
-              >
-                {a.name}
-              </button>
-            ))}
+          {gekoppeld.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => setGekozenId(a.id)}
+              className={`rounded-full px-3.5 py-1.5 text-[12px] font-medium transition ${
+                actieveId === a.id
+                  ? "bg-violet text-white"
+                  : "border border-white/12 bg-white/5 text-ink/70 hover:bg-white/10"
+              }`}
+            >
+              {a.name}
+            </button>
+          ))}
         </div>
       )}
 
       <div className="mt-6">
-        {actieveSlug ? (
-          <KennisUpload agentSlug={actieveSlug} onOvernemen={neemVoorstellenOver} />
+        {actieveId ? (
+          <KennisUpload agentId={actieveId} onOvernemen={neemVoorstellenOver} />
         ) : (
           <div className="card-glass rounded-3xl p-5">
-            <p className="text-[13px] text-ink/60">
-              Er is nog geen agent aan je account gekoppeld, dus er is nog geen kennisbank om te
-              vullen. Zodra je agent is ingericht, kun je hier bestanden uploaden.
+            <p className="max-w-[68ch] text-[13px]/[1.7] text-ink/60">
+              {mijnAgents.length === 0
+                ? "Er is nog geen agent aan je account gekoppeld, dus er is nog geen kennisbank om te vullen. Zodra je agent is ingericht, kun je hier bestanden uploaden."
+                : "Je agents zijn nog niet als chat-assistent gekoppeld. Een kennisbank heeft pas zin zodra er een assistent is die hem raadpleegt: nu zouden we wel iets opslaan, maar er zou niets mee gebeuren. Neem contact op als je dit wilt inrichten."}
             </p>
           </div>
         )}

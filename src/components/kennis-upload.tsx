@@ -59,10 +59,10 @@ async function excelAlsTekst(bestand: File): Promise<string> {
 }
 
 export function KennisUpload({
-  agentSlug,
+  agentId,
   onOvernemen,
 }: {
-  agentSlug: string;
+  agentId: string;
   onOvernemen: (items: KennisVoorstel[]) => void;
 }) {
   const importeer = useServerFn(importeerKennis);
@@ -102,7 +102,7 @@ export function KennisUpload({
           : { mediatype: "text/plain", inhoud: await bestand.text() };
 
       const uitkomst = await importeer({
-        data: { agentSlug, bestandsnaam: bestand.name, ...payload },
+        data: { agentId, bestandsnaam: bestand.name, ...payload },
       });
 
       if (uitkomst.items.length === 0) {
