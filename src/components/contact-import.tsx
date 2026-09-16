@@ -1,0 +1,408 @@
+import * as React from "react";
+import { FileUp, AlertTriangle, Check } from "lucide-react";
+import {
+  heeftKopregel,
+  leesContacten,
+  raadKolommen,
+  type GelezenContact,
+  type Kolomsoort,
+  type Overgeslagen,
+} from "@/lib/contactimport";
+
+/**
+ * Een aangeleverde contactlijst inlezen.
+ *
+ * Het scherm dwingt één ding af: je ziet wat er gaat gebeuren voordat het
+ * gebeurt. De kolommen worden geraden maar staan als keuzelijst op het scherm,
+ * de eerste rijen staan eronder zoals ze straks worden opgeslagen, en de
+ * overgeslagen regels staan erbij mét reden.
+ *
+ * Dat is hier geen luxe. Aan het eind van deze lijst gaan er echte mails uit
+ * naar echte mensen. Een verkeerd geraden kolom is dan geen schoonheidsfout
+ * maar tweehonderd berichten die een slagerij aanspreken alsof het een persoon
+ * is.
+ */
+
+const KOLOMNAMEN: Record<Kolomsoort, string> = {
+  email: "E-mailadres",
+  naam: "Naam",
+  bedrijf: "Bedrijf",
+  plaats: "Plaats",
+  telefoon: "Telefoon",
+  negeren: "— niet gebruiken —",
+};
+
+const veldCls =
+  "rounded-xl border border-white/12 bg-white/[0.04] px-2.5 py-1.5 text-[12px] text-ink outline-none transition focus:border-violet/55 focus:ring-2 focus:ring-violet/25";
+
+async function leesBestand(bestand: File): Promise<string[][]> {
+  const XLSX = await import("xlsx");
+  const boek = XLSX.read(await bestand.arrayBuffer(), { type: "array", raw: false });
+  const naam = boek.SheetNames[0];
+  if (!naam) throw new Error("Dit bestand bevat geen werkblad.");
+  const blad = boek.Sheets[naam];
+  if (!blad) throw new Error("Het eerste werkblad is leeg.");
+  const rijen = XLSX.utils.sheet_to_json<string[]>(blad, {
+    header: 1,
+    defval: "",
+    raw: false,
+  });
+  return rijen.map((r) => (Array.isArray(r) ? r.map((c) => String(c ?? "")) : []));
+}
+
+/** Geplakte tekst: tabs of puntkomma's als scheiding, want dat komt uit Excel. */
+function leesTekst(tekst: string): string[][] {
+  const regels = tekst.split(/\r?\n/).filter((r) => r.trim() !== "");
+  const scheiding = regels[0]?.includes("\t") ? "\t" : regels[0]?.includes(";") ? ";" : ",";
+  return regels.map((r) => r.split(scheiding).map((c) => c.trim().replace(/^"|"$/g, "")));
+}
+
+export type Importuitkomst = {
+  toegevoegd: number;
+  bestond_al: number;
+  afgemeld_overgeslagen: number;
+  totaal_in_lijst: number;
+};
+
+export function ContactImport({
+  onOpslaan,
+}: {
+  onOpslaan: (
+    contacten: GelezenContact[],
+    herkomst: "oud_klant" | "koud",
+  ) => Promise<Importuitkomst>;
+}) {
+  const [rijen, zetRijen] = React.useState<string[][]>([]);
+  const [kolommen, zetKolommen] = React.useState<Kolomsoort[]>([]);
+  const [kopregel, zetKopregel] = React.useState(true);
+  const [herkomst, zetHerkomst] = React.useState<"oud_klant" | "koud">("oud_klant");
+  const [bestandsnaam, zetBestandsnaam] = React.useState("");
+  const [plakken, zetPlakken] = React.useState("");
+  const [fout, zetFout] = React.useState<string | null>(null);
+  const [bezig, zetBezig] = React.useState(false);
+  const [uitkomst, zetUitkomst] = React.useState<Importuitkomst | null>(null);
+
+  const invoer = React.useRef<HTMLInputElement>(null);
+
+  const verwerk = React.useCallback((nieuweRijen: string[][], naam: string) => {
+    zetFout(null);
+    zetUitkomst(null);
+    if (nieuweRijen.length === 0) {
+      zetFout("Dit bestand bevat geen rijen.");
+      return;
+    }
+    zetRijen(nieuweRijen);
+    zetKolommen(raadKolommen(nieuweRijen));
+    zetKopregel(heeftKopregel(nieuweRijen));
+    zetBestandsnaam(naam);
+  }, []);
+
+  const gelezen = React.useMemo(
+    () =>
+      rijen.length > 0
+        ? leesContacten(rijen, kolommen, kopregel)
+        : { contacten: [] as GelezenContact[], overgeslagen: [] as Overgeslagen[] },
+    [rijen, kolommen, kopregel],
+  );
+
+  const heeftEmail = kolommen.includes("email");
+
+  async function opslaan() {
+    zetBezig(true);
+    zetFout(null);
+    zetUitkomst(null);
+    try {
+      zetUitkomst(await onOpslaan(gelezen.contacten, herkomst));
+      zetRijen([]);
+      zetKolommen([]);
+      zetBestandsnaam("");
+      zetPlakken("");
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Opslaan is niet gelukt.");
+    } finally {
+      zetBezig(false);
+    }
+  }
+
+  return (
+    <div className="card-glass-lg rounded-3xl p-5 sm:p-6">
+      <h2 className="font-display text-[16px] font-semibold text-brand">Contacten toevoegen</h2>
+      <p className="mt-1.5 max-w-[62ch] text-[12.5px]/[1.65] text-ink/60">
+        Excel, CSV of geplakt uit een spreadsheet. De kolommen worden geraden; controleer ze
+        hieronder voordat je opslaat.
+      </p>
+
+      {rijen.length === 0 ? (
+        <>
+          <div
+            className="mt-5 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center transition-colors"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={async (e) => {
+              e.preventDefault();
+              const b = e.dataTransfer.files[0];
+              if (!b) return;
+              try {
+                verwerk(await leesBestand(b), b.name);
+              } catch (err) {
+                zetFout(err instanceof Error ? err.message : "Dit bestand kon ik niet lezen.");
+              }
+            }}
+          >
+            <FileUp className="mx-auto h-6 w-6 text-ink/40" aria-hidden="true" />
+            <p className="mt-2.5 text-[13px] text-ink/70">
+              Sleep een bestand hierheen, of{" "}
+              <button
+                type="button"
+                onClick={() => invoer.current?.click()}
+                className="font-semibold text-violet underline underline-offset-2 hover:text-violet/80"
+              >
+                kies een bestand
+              </button>
+            </p>
+            <p className="mt-1 text-[11px] text-ink/40">.xlsx, .xls of .csv</p>
+            <input
+              ref={invoer}
+              type="file"
+              className="hidden"
+              accept=".xlsx,.xls,.csv"
+              onChange={async (e) => {
+                const b = e.target.files?.[0];
+                if (!b) return;
+                try {
+                  verwerk(await leesBestand(b), b.name);
+                } catch (err) {
+                  zetFout(err instanceof Error ? err.message : "Dit bestand kon ik niet lezen.");
+                }
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          <details className="mt-3">
+            <summary className="cursor-pointer text-[12px] text-ink/50 hover:text-ink/70">
+              Of plak de rijen rechtstreeks
+            </summary>
+            <textarea
+              value={plakken}
+              onChange={(e) => zetPlakken(e.target.value)}
+              rows={5}
+              placeholder={"Bedrijf\tNaam\tE-mail\nSlagerij Van Dam\tPiet\tpiet@vandam.nl"}
+              className="mt-2 w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 font-mono text-[12px] text-ink outline-none focus:border-violet/55"
+            />
+            <button
+              type="button"
+              disabled={!plakken.trim()}
+              onClick={() => verwerk(leesTekst(plakken), "geplakte tekst")}
+              className="mt-2 rounded-xl border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[12px] text-ink/80 transition hover:bg-white/10 disabled:opacity-40"
+            >
+              Inlezen
+            </button>
+          </details>
+        </>
+      ) : (
+        <div className="mt-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[12.5px] text-ink/70">
+              <span className="text-ink/90">{bestandsnaam}</span> — {rijen.length} regels
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                zetRijen([]);
+                zetKolommen([]);
+                zetBestandsnaam("");
+              }}
+              className="text-[12px] text-ink/50 underline underline-offset-2 hover:text-ink/80"
+            >
+              ander bestand kiezen
+            </button>
+          </div>
+
+          <label className="mt-3 inline-flex items-center gap-2 text-[12px] text-ink/70">
+            <input
+              type="checkbox"
+              checked={kopregel}
+              onChange={(e) => zetKopregel(e.target.checked)}
+              className="accent-violet"
+            />
+            eerste regel is een kopregel
+          </label>
+
+          {/* De kolomindeling met een paar echte waarden eronder, zodat je ziet
+              waar je naar kijkt in plaats van alleen een kolomnummer. */}
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] border-separate border-spacing-x-1.5 text-left">
+              <thead>
+                <tr>
+                  {kolommen.map((k, i) => (
+                    <th key={i} className="pb-1.5">
+                      <select
+                        value={k}
+                        onChange={(e) => {
+                          const nieuw = [...kolommen];
+                          const gekozen = e.target.value as Kolomsoort;
+                          // Een soort kan maar één keer voorkomen; kiest iemand
+                          // 'e-mail' voor een tweede kolom, dan laat de eerste los.
+                          if (gekozen !== "negeren") {
+                            const eerder = nieuw.indexOf(gekozen);
+                            if (eerder >= 0 && eerder !== i) nieuw[eerder] = "negeren";
+                          }
+                          nieuw[i] = gekozen;
+                          zetKolommen(nieuw);
+                          zetUitkomst(null);
+                        }}
+                        className={`${veldCls} w-full`}
+                      >
+                        {(Object.keys(KOLOMNAMEN) as Kolomsoort[]).map((s) => (
+                          <option key={s} value={s} className="bg-[#12121a]">
+                            {KOLOMNAMEN[s]}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rijen.slice(kopregel ? 1 : 0, kopregel ? 4 : 3).map((rij, r) => (
+                  <tr key={r}>
+                    {kolommen.map((_, i) => (
+                      <td
+                        key={i}
+                        className="max-w-[160px] truncate px-2 py-1 text-[11.5px] text-ink/45"
+                      >
+                        {rij[i] ?? ""}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {!heeftEmail && (
+            <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-[12.5px]/[1.6] text-ink/85">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+              Wijs eerst aan welke kolom het e-mailadres bevat. Zonder adres kan er niets worden
+              opgeslagen.
+            </p>
+          )}
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+            <label className="block">
+              <span className="mb-1 block text-[11.5px] font-medium text-ink/70">
+                Wat voor lijst is dit?
+              </span>
+              <select
+                value={herkomst}
+                onChange={(e) => zetHerkomst(e.target.value as "oud_klant" | "koud")}
+                className={`${veldCls} w-full`}
+              >
+                <option value="oud_klant" className="bg-[#12121a]">
+                  Oud-klanten — ze kenden het bedrijf al
+                </option>
+                <option value="koud" className="bg-[#12121a]">
+                  Koud — nog nooit contact gehad
+                </option>
+              </select>
+              <span className="mt-1 block text-[10.5px] text-ink/40">
+                Bepaalt de toon van het eerste bericht
+              </span>
+            </label>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <p className="text-[12.5px] text-ink/75">
+              <strong className="font-semibold text-brand">{gelezen.contacten.length}</strong>{" "}
+              contacten klaar om op te slaan
+              {gelezen.overgeslagen.length > 0 && (
+                <>
+                  {" · "}
+                  <span className="text-amber-300">
+                    {gelezen.overgeslagen.length} overgeslagen
+                  </span>
+                </>
+              )}
+            </p>
+
+            {gelezen.overgeslagen.length > 0 && (
+              <details className="mt-2">
+                <summary className="cursor-pointer text-[11.5px] text-ink/50 hover:text-ink/70">
+                  laat zien welke, en waarom
+                </summary>
+                <ul className="mt-2 grid max-h-44 gap-1 overflow-y-auto">
+                  {gelezen.overgeslagen.slice(0, 100).map((o, i) => (
+                    <li key={i} className="text-[11.5px]/[1.6] text-ink/50">
+                      <span className="text-ink/70">regel {o.rij}</span> — {o.reden}
+                      {o.inhoud && <span className="text-ink/35"> · {o.inhoud}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+
+          {/* De knop en de uitkomst staan bij elkaar. Eerder in dit project
+              verscheen een bevestiging elders op de pagina, waarna het twee keer
+              leek alsof opslaan niet werkte terwijl het wel werkte. */}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={opslaan}
+              disabled={bezig || gelezen.contacten.length === 0 || !heeftEmail}
+              className="rounded-xl bg-violet px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-violet/90 disabled:opacity-40"
+            >
+              {bezig ? "Bezig met opslaan…" : `${gelezen.contacten.length} contacten opslaan`}
+            </button>
+
+            {uitkomst && (
+              <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                <span>
+                  {uitkomst.toegevoegd} toegevoegd
+                  {uitkomst.bestond_al > 0 && `, ${uitkomst.bestond_al} stonden er al`}
+                  {uitkomst.afgemeld_overgeslagen > 0 && (
+                    <>
+                      ,{" "}
+                      <span className="text-amber-300">
+                        {uitkomst.afgemeld_overgeslagen} afgemeld en dus overgeslagen
+                      </span>
+                    </>
+                  )}
+                  .
+                </span>
+              </p>
+            )}
+
+            {fout && (
+              <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-rose-300">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                {fout}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {rijen.length === 0 && uitkomst && (
+        <p className="mt-4 inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
+          <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+          <span>
+            {uitkomst.toegevoegd} contacten toegevoegd
+            {uitkomst.bestond_al > 0 && `, ${uitkomst.bestond_al} stonden er al`}
+            {uitkomst.afgemeld_overgeslagen > 0 &&
+              `, ${uitkomst.afgemeld_overgeslagen} afgemeld en overgeslagen`}
+            .
+          </span>
+        </p>
+      )}
+
+      {rijen.length === 0 && fout && (
+        <p className="mt-4 inline-flex items-start gap-2 text-[12.5px]/[1.6] text-rose-300">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          {fout}
+        </p>
+      )}
+    </div>
+  );
+}

@@ -32,11 +32,19 @@ export function DashboardShell({
     navigate({ to: "/auth", replace: true });
   }
 
-  // De kennisbank is voor iedereen: RLS zorgt dat een klant alleen de kennis
-  // van zijn eigen agents ziet. Alleen het beheerpaneel blijft afgeschermd.
+  // De kennisbank en de contactenlijst zijn voor iedereen: RLS zorgt dat een
+  // klant alleen ziet wat bij zijn eigen agents hoort. Alleen het beheerpaneel
+  // blijft afgeschermd.
+  //
+  // Contacten staat er ook voor een klant zonder e-mailagent, en dat is een
+  // afweging. Een menu-item dat niets doet is rommelig, maar een scherm dat
+  // bestaat zonder link is erger: dat is eerder in dit project gebeurd en toen
+  // dacht iedereen dat de functie ontbrak. De pagina legt zelf uit wanneer er
+  // niets te doen valt.
   const links = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/knowledge", label: "Kennisbank" },
+    { to: "/contacten", label: "Contacten" },
     ...(isAdmin ? [{ to: "/admin", label: "Beheer" }] : []),
     { to: "/account", label: "Account" },
   ];
