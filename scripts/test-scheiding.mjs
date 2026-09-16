@@ -260,6 +260,38 @@ meld(
   `HTTP ${afmeldPoging.status}${afmeldPoging.status >= 400 ? " \u2014 AFMELDEN KAN NIET MEER" : ""}`,
 );
 
+console.log("\nBinnenkomende antwoorden");
+
+const antwoordLezen = await rest("outbound_replies?select=*&limit=1");
+meld(
+  antwoordLezen.status === 401 || antwoordLezen.status === 403,
+  "een bezoeker kan de antwoorden van klanten niet lezen",
+  `HTTP ${antwoordLezen.status}${antwoordLezen.status === 200 ? " \u2014 LEK" : ""}${antwoordLezen.status === 404 ? " \u2014 TABEL BESTAAT NIET" : ""}`,
+);
+
+const antwoordSchrijven = await rest("outbound_replies", {
+  method: "POST",
+  body: JSON.stringify({ agent_id: NEP, van_email: "nep@voorbeeld.nl", provider_id: "LEKTEST" }),
+});
+meld(
+  antwoordSchrijven.status === 401 || antwoordSchrijven.status === 403,
+  "een bezoeker kan geen antwoord verzinnen",
+  `HTTP ${antwoordSchrijven.status}`,
+);
+
+// Het ontvangstadres hoort niet in de publieke configuratie terecht te komen.
+// Wie het kent kan er post naartoe sturen die als klantantwoord wordt gelezen;
+// de handtekeningcontrole vangt dat af, maar het hoort er simpelweg niet in.
+const config = await rest("rpc/agent_public_config", {
+  method: "POST",
+  body: JSON.stringify({ _slug: "website-assistent" }),
+});
+const configTekst = config.ok ? await config.text() : "";
+meld(
+  !configTekst.includes("inbound_local"),
+  "het ontvangstadres lekt niet mee in de publieke configuratie",
+);
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) {
   console.log("Alles in orde: geen lek gevonden.\n");
