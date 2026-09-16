@@ -12,7 +12,8 @@ import {
   CartesianGrid,
 } from "recharts";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
-import { getMe, getAgent } from "@/lib/dashboard.functions";
+import { VerbruikPaneel } from "@/components/verbruik-paneel";
+import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/agents/$agentId")({
   head: () => ({
@@ -44,6 +45,12 @@ function AgentDetail() {
   const query = useQuery({
     queryKey: ["agent", agentId, days],
     queryFn: () => agentFn({ data: { agentId, days } }),
+  });
+
+  const usageFn = useServerFn(getAgentUsage);
+  const verbruikQuery = useQuery({
+    queryKey: ["agent-verbruik", agentId, days],
+    queryFn: () => usageFn({ data: { agentId, days } }),
   });
 
   const agent = query.data?.agent;
@@ -167,6 +174,14 @@ function AgentDetail() {
           </div>
         </>
       )}
+      <div className="mt-4">
+        <VerbruikPaneel
+          dagen={verbruikQuery.data?.dagen ?? []}
+          minutenPerActie={verbruikQuery.data?.minutenPerActie ?? null}
+          grondslag={verbruikQuery.data?.grondslag ?? null}
+          periodeLabel={`laatste ${days} dagen`}
+        />
+      </div>
     </DashboardShell>
   );
 }

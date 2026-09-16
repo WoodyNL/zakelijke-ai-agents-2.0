@@ -56,7 +56,8 @@ export const listAgents = createServerFn({ method: "GET" })
       const total = rows.reduce((sum: number, s: any) => sum + (s.output_count ?? 0), 0);
       const scored = rows.filter((s: any) => s.performance_score != null);
       const score = scored.length
-        ? scored.reduce((sum: number, s: any) => sum + Number(s.performance_score), 0) / scored.length
+        ? scored.reduce((sum: number, s: any) => sum + Number(s.performance_score), 0) /
+          scored.length
         : null;
       return { ...a, total30: total, score30: score, series: rows };
     });
@@ -200,4 +201,50 @@ export const adminSaveStat = createServerFn({ method: "POST" })
     );
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Verbruik per dag van één agent, plus de aanname over tijdwinst.
+ *
+ * Loopt via twee database-functies die zelf controleren of deze gebruiker
+ * eigenaar is. Dat is strenger dan een controle hier, want hij geldt ook als
+ * deze server function ooit vanaf een andere plek wordt aangeroepen.
+ */
+export const getAgentUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({ agentId: z.string().uuid(), days: z.number().int().min(1).max(365).default(30) })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    // De cast is tijdelijk: src/integrations/supabase/types.ts wordt gegenereerd
+    // uit de live database, en deze twee functies bestaan daar pas nadat de
+    // fase 2-migratie is gedraaid. Zodra de types kloppen kan hij weg.
+    const db = context.supabase as unknown as {
+      rpc: (
+        naam: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    };
+
+    const [verbruik, instellingen] = await Promise.all([
+      db.rpc("agent_usage_daily", { _agent_id: data.agentId, _days: data.days }),
+      db.rpc("my_agent_settings", { _agent_id: data.agentId }),
+    ]);
+
+    if (verbruik.error) throw new Error(verbruik.error.message);
+    if (instellingen.error) throw new Error(instellingen.error.message);
+
+    type Instelling = {
+      minutes_saved_per_action: number | null;
+      minutes_saved_basis: string | null;
+    };
+    const agent = ((instellingen.data ?? []) as Instelling[])[0] ?? null;
+
+    return {
+      dagen: (verbruik.data ?? []) as Array<{ dag: string; requests: number }>,
+      minutenPerActie: agent?.minutes_saved_per_action ?? null,
+      grondslag: agent?.minutes_saved_basis ?? null,
+    };
   });

@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { KennisUpload } from "@/components/kennis-upload";
+import type { KennisVoorstel } from "@/lib/kennisimport.functions";
 import { getMe } from "@/lib/dashboard.functions";
 import {
   CATEGORIES,
@@ -89,10 +91,11 @@ function KnowledgePage() {
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
   const isAdmin = meQuery.data?.isAdmin === true;
+  // Geen enabled-vlag meer op de rol: RLS bepaalt wat iemand terugkrijgt. Een
+  // beheerder ziet alles, een klant alleen de kennis van zijn eigen agents.
   const itemsQuery = useQuery({
     queryKey: ["knowledge"],
     queryFn: () => listFn() as Promise<Item[]>,
-    enabled: isAdmin,
   });
 
   const [draft, setDraft] = useState<Draft>(emptyDraft);
@@ -158,6 +161,45 @@ function KnowledgePage() {
     setDraft(emptyDraft);
   }
 
+  /**
+   * Voorstellen uit een geüpload bestand wegschrijven. Eén voor één, zodat een
+   * item dat de database weigert de rest niet meesleept, en de gebruiker ziet
+   * hoeveel er echt zijn opgeslagen.
+   */
+  async function neemVoorstellenOver(items: KennisVoorstel[]) {
+    setBusy(true);
+    setMsg(null);
+    let gelukt = 0;
+    try {
+      for (const item of items) {
+        try {
+          await saveFn({
+            data: {
+              category: item.category,
+              title: item.title,
+              question: item.question,
+              content: item.content,
+              tags: [],
+              sortOrder: 0,
+              isActive: true,
+            },
+          });
+          gelukt++;
+        } catch (err) {
+          console.error("kennisitem opslaan mislukt", item.title, err);
+        }
+      }
+      await itemsQuery.refetch();
+      setMsg(
+        gelukt === items.length
+          ? `${gelukt} kennisstukken toegevoegd`
+          : `${gelukt} van ${items.length} toegevoegd; de rest is niet gelukt`,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function doExport(format: "json" | "txt") {
     setBusy(true);
     setMsg(null);
@@ -189,25 +231,16 @@ function KnowledgePage() {
     );
   }
 
-  if (!isAdmin) {
-    return (
-      <DashboardShell userName={meQuery.data?.name}>
-        <div className="card-glass rounded-3xl p-5">
-          <p className="text-[13px] text-ink/60">Deze pagina is alleen voor beheerders.</p>
-        </div>
-      </DashboardShell>
-    );
-  }
-
   return (
-    <DashboardShell isAdmin userName={meQuery.data?.name}>
+    <DashboardShell isAdmin={isAdmin} userName={meQuery.data?.name}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-[24px] font-bold tracking-tight text-brand">
             Kennisbank
           </h1>
           <p className="mt-1 text-[12px] text-ink/55">
-            Alles wat een AI agent over ons bedrijf moet weten. Download het als trainingsbestand.
+            Alles wat je agent over je bedrijf moet weten. Hoe vollediger dit is, hoe beter hij
+            antwoordt.
           </p>
         </div>
         <div className="flex gap-2">
@@ -218,6 +251,10 @@ function KnowledgePage() {
             Download trainingsbestand
           </button>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <KennisUpload agentSlug="website-assistent" onOvernemen={neemVoorstellenOver} />
       </div>
 
       {msg && (

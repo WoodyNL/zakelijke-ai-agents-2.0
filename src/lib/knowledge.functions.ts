@@ -2,19 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-type Ctx = { supabase: any; userId: string };
-
-async function assertAdmin(context: Ctx) {
-  const { data, error } = await context.supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", context.userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Geen beheerdersrechten");
-}
-
 export const CATEGORIES = [
   "bedrijf",
   "agents",
@@ -25,10 +12,16 @@ export const CATEGORIES = [
   "overig",
 ] as const;
 
+/**
+ * De kennisitems die deze gebruiker mag zien. Geen assertAdmin meer: RLS
+ * bepaalt de grens. Een beheerder krijgt alles via "Admins manage knowledge",
+ * een klant alleen de kennis van zijn eigen agents via "Clients manage
+ * knowledge of own agents". Dat is strenger dan een controle in de code, want
+ * hij geldt ook als deze functie ooit ergens anders wordt aangeroepen.
+ */
 export const listKnowledge = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context as Ctx);
     const { data, error } = await context.supabase
       .from("knowledge_items")
       .select("*")
@@ -59,7 +52,9 @@ export const saveKnowledge = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context as Ctx);
+    // Geen rolcontrole: RLS laat een klant alleen schrijven naar kennis van zijn
+    // eigen agents, en de agent-opzoeking hieronder valt onder dezelfde regels.
+    // Een klant die de slug van een ander opgeeft, vindt niets.
     const row = {
       category: data.category,
       title: data.title,
@@ -77,7 +72,6 @@ export const saveKnowledge = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       return { ok: true };
     }
-    // Nieuwe kennisitems horen bij onze eigen Website-assistent.
     // Bewust via de agents-tabel en niet via resolve_live_agent: die geeft
     // alleen live agents terug, en je moet kennis kunnen klaarzetten voor een
     // agent van een nieuwe klant die nog op setup staat.
@@ -99,7 +93,7 @@ export const deleteKnowledge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context as Ctx);
+    // RLS beslist of dit item van deze gebruiker is; een vreemd id raakt niets.
     const { error } = await context.supabase.from("knowledge_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -108,7 +102,6 @@ export const deleteKnowledge = createServerFn({ method: "POST" })
 export const exportKnowledge = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context as Ctx);
     const { data, error } = await context.supabase
       .from("knowledge_items")
       .select("*")
@@ -116,7 +109,15 @@ export const exportKnowledge = createServerFn({ method: "GET" })
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
 
-    const items = (data ?? []).map((i: any) => ({
+    type Rij = {
+      category: string;
+      title: string;
+      question: string | null;
+      content: string;
+      tags: string[] | null;
+    };
+
+    const items = ((data ?? []) as Rij[]).map((i) => ({
       category: i.category,
       title: i.title,
       question: i.question ?? null,
