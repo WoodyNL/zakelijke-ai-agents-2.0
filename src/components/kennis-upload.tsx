@@ -79,7 +79,8 @@ export function KennisUpload({
   onOvernemen,
 }: {
   agentId: string;
-  onOvernemen: (items: KennisVoorstel[]) => void;
+  /** Slaat de voorstellen op en geeft terug wat er gebeurd is, om te tonen. */
+  onOvernemen: (items: KennisVoorstel[]) => Promise<{ gelukt: number; melding: string }>;
 }) {
   const importeer = useServerFn(importeerKennis);
   const [bezig, setBezig] = React.useState(false);
@@ -87,6 +88,8 @@ export function KennisUpload({
   const [voorstel, setVoorstel] = React.useState<KennisVoorstel[] | null>(null);
   const [bron, setBron] = React.useState<string>("");
   const [sleep, setSleep] = React.useState(false);
+  const [uitkomstMelding, setUitkomstMelding] = React.useState<string | null>(null);
+  const [opslaan, setOpslaan] = React.useState(false);
   const invoer = React.useRef<HTMLInputElement>(null);
 
   /** Meerdere bestanden achter elkaar; de voorstellen stapelen op tot één lijst. */
@@ -231,6 +234,15 @@ export function KennisUpload({
         </p>
       )}
 
+      {!voorstel && uitkomstMelding && (
+        <p
+          role="status"
+          className="mt-4 rounded-xl border border-mint/30 bg-mint/10 px-3.5 py-2.5 text-[12.5px] text-ink/85"
+        >
+          {uitkomstMelding}
+        </p>
+      )}
+
       {voorstel && (
         <div className="mt-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -249,17 +261,36 @@ export function KennisUpload({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  onOvernemen(voorstel);
-                  setVoorstel(null);
+                disabled={opslaan}
+                onClick={async () => {
+                  setOpslaan(true);
+                  setUitkomstMelding(null);
+                  try {
+                    const uit = await onOvernemen(voorstel);
+                    setUitkomstMelding(uit.melding);
+                    // De lijst blijft staan als er iets misging, zodat je ziet
+                    // waar het over ging en het opnieuw kunt proberen.
+                    if (uit.gelukt === voorstel.length) setVoorstel(null);
+                  } finally {
+                    setOpslaan(false);
+                  }
                 }}
                 className="inline-flex h-9 items-center gap-1.5 rounded-full bg-violet px-4 text-[12.5px] font-semibold text-white hover:bg-violet/85"
               >
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                Allemaal toevoegen
+                {opslaan ? "Bezig met opslaan\u2026" : "Allemaal toevoegen"}
               </button>
             </div>
           </div>
+
+          {uitkomstMelding && (
+            <p
+              role="status"
+              className="mt-3 rounded-xl border border-violet/30 bg-violet/10 px-3.5 py-2.5 text-[12.5px] text-ink/85"
+            >
+              {uitkomstMelding}
+            </p>
+          )}
 
           <p className="mt-2 text-[11.5px] text-ink/45">
             Lees ze na voordat je ze toevoegt. Vooral prijzen en termijnen, want die vertelt je

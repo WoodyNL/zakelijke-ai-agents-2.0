@@ -198,6 +198,8 @@ function KnowledgePage() {
     setBusy(true);
     setMsg(null);
     let gelukt = 0;
+    const redenen: string[] = [];
+
     try {
       for (const item of items) {
         try {
@@ -217,15 +219,25 @@ function KnowledgePage() {
           });
           gelukt++;
         } catch (err) {
+          // De reden hoort op het scherm, niet alleen in de console. Anders
+          // lijkt de knop stuk terwijl de database een duidelijke uitleg geeft.
+          const reden = err instanceof Error ? err.message : String(err);
+          if (!redenen.includes(reden)) redenen.push(reden);
           console.error("kennisitem opslaan mislukt", item.title, err);
         }
       }
+
       await itemsQuery.refetch();
-      setMsg(
+
+      const melding =
         gelukt === items.length
-          ? `${gelukt} kennisstukken toegevoegd`
-          : `${gelukt} van ${items.length} toegevoegd; de rest is niet gelukt`,
-      );
+          ? `${gelukt} kennisstukken toegevoegd aan je kennisbank.`
+          : gelukt === 0
+            ? `Niets opgeslagen. ${redenen.join(" ")}`
+            : `${gelukt} van ${items.length} toegevoegd. ${redenen.join(" ")}`;
+
+      setMsg(melding);
+      return { gelukt, melding };
     } finally {
       setBusy(false);
     }
