@@ -26,6 +26,7 @@ import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/what
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAntwoordenRouteImport } from './routes/_authenticated/antwoorden'
+import { Route as AuthenticatedCampagnesRouteImport } from './routes/_authenticated/campagnes'
 import { Route as AuthenticatedContactenRouteImport } from './routes/_authenticated/contacten'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
@@ -119,6 +120,11 @@ const AuthenticatedAntwoordenRoute = AuthenticatedAntwoordenRouteImport.update({
   path: '/antwoorden',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCampagnesRoute = AuthenticatedCampagnesRouteImport.update({
+  id: '/campagnes',
+  path: '/campagnes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedContactenRoute = AuthenticatedContactenRouteImport.update({
   id: '/contacten',
   path: '/contacten',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
+  '/campagnes': typeof AuthenticatedCampagnesRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
+  '/campagnes': typeof AuthenticatedCampagnesRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/antwoorden': typeof AuthenticatedAntwoordenRoute
+  '/_authenticated/campagnes': typeof AuthenticatedCampagnesRoute
   '/_authenticated/contacten': typeof AuthenticatedContactenRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/antwoorden'
+    | '/campagnes'
     | '/contacten'
     | '/dashboard'
     | '/knowledge'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/antwoorden'
+    | '/campagnes'
     | '/contacten'
     | '/dashboard'
     | '/knowledge'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/antwoorden'
+    | '/_authenticated/campagnes'
     | '/_authenticated/contacten'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
@@ -442,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAntwoordenRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/campagnes': {
+      id: '/_authenticated/campagnes'
+      path: '/campagnes'
+      fullPath: '/campagnes'
+      preLoaderRoute: typeof AuthenticatedCampagnesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contacten': {
       id: '/_authenticated/contacten'
       path: '/contacten'
@@ -491,6 +510,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAntwoordenRoute: typeof AuthenticatedAntwoordenRoute
+  AuthenticatedCampagnesRoute: typeof AuthenticatedCampagnesRoute
   AuthenticatedContactenRoute: typeof AuthenticatedContactenRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
@@ -501,6 +521,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAntwoordenRoute: AuthenticatedAntwoordenRoute,
+  AuthenticatedCampagnesRoute: AuthenticatedCampagnesRoute,
   AuthenticatedContactenRoute: AuthenticatedContactenRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
