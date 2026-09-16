@@ -710,6 +710,7 @@ export type Database = {
         | "inbox_draft"
         | "whatsapp_followup"
         | "overig"
+        | "uitgaande_email"
       agent_status: "live" | "paused" | "setup"
       app_role: "admin" | "client"
       bericht_status:
@@ -853,6 +854,7 @@ export const Constants = {
         "inbox_draft",
         "whatsapp_followup",
         "overig",
+        "uitgaande_email",
       ],
       agent_status: ["live", "paused", "setup"],
       app_role: ["admin", "client"],
