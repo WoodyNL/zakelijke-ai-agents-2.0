@@ -55,17 +55,29 @@ export type Database = {
       agent_usage: {
         Row: {
           agent_id: string
+          billable_requests: number
+          cache_read_tokens: number
           hour: string
+          input_tokens: number
+          output_tokens: number
           requests: number
         }
         Insert: {
           agent_id: string
+          billable_requests?: number
+          cache_read_tokens?: number
           hour: string
+          input_tokens?: number
+          output_tokens?: number
           requests?: number
         }
         Update: {
           agent_id?: string
+          billable_requests?: number
+          cache_read_tokens?: number
           hour?: string
+          input_tokens?: number
+          output_tokens?: number
           requests?: number
         }
         Relationships: [
@@ -86,6 +98,9 @@ export type Database = {
           created_at: string
           description: string
           extra_instructions: string | null
+          fair_use_per_month: number | null
+          hourly_rate: number | null
+          hourly_rate_basis: string | null
           id: string
           kind: Database["public"]["Enums"]["agent_kind"]
           metric_label: string
@@ -94,6 +109,7 @@ export type Database = {
           model: string
           name: string
           notify_email: string | null
+          overage_price: number
           rate_limit_per_hour: number
           score_label: string
           slug: string | null
@@ -108,6 +124,9 @@ export type Database = {
           created_at?: string
           description?: string
           extra_instructions?: string | null
+          fair_use_per_month?: number | null
+          hourly_rate?: number | null
+          hourly_rate_basis?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["agent_kind"]
           metric_label?: string
@@ -116,6 +135,7 @@ export type Database = {
           model?: string
           name: string
           notify_email?: string | null
+          overage_price?: number
           rate_limit_per_hour?: number
           score_label?: string
           slug?: string | null
@@ -130,6 +150,9 @@ export type Database = {
           created_at?: string
           description?: string
           extra_instructions?: string | null
+          fair_use_per_month?: number | null
+          hourly_rate?: number | null
+          hourly_rate_basis?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["agent_kind"]
           metric_label?: string
@@ -138,6 +161,7 @@ export type Database = {
           model?: string
           name?: string
           notify_email?: string | null
+          overage_price?: number
           rate_limit_per_hour?: number
           score_label?: string
           slug?: string | null
@@ -305,6 +329,25 @@ export type Database = {
           title: string
         }[]
       }
+      agent_month_summary: {
+        Args: { _agent_id: string; _month_offset?: number }
+        Returns: {
+          boven_grens: number
+          cache_read_tokens: number
+          fair_use_per_month: number
+          hourly_rate: number
+          hourly_rate_basis: string
+          input_tokens: number
+          maand: string
+          minutes_saved_basis: string
+          minutes_saved_per_action: number
+          output_tokens: number
+          overage_bedrag: number
+          overage_price: number
+          requests: number
+          ruwe_requests: number
+        }[]
+      }
       agent_public_config: {
         Args: { _slug: string }
         Returns: {
@@ -342,6 +385,15 @@ export type Database = {
           tone: string
           welcome_text: string
         }[]
+      }
+      record_agent_tokens: {
+        Args: {
+          _agent_id: string
+          _cache_read: number
+          _input: number
+          _output: number
+        }
+        Returns: undefined
       }
       resolve_live_agent: { Args: { _slug: string }; Returns: string }
       update_my_agent: {
