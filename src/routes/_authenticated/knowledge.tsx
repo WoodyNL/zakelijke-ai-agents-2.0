@@ -5,7 +5,7 @@ import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { KennisUpload } from "@/components/kennis-upload";
 import type { KennisVoorstel } from "@/lib/kennisimport.functions";
-import { getMe } from "@/lib/dashboard.functions";
+import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
   CATEGORIES,
   listKnowledge,
@@ -90,6 +90,20 @@ function KnowledgePage() {
   const exportFn = useServerFn(exportKnowledge);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
+
+  // Welke agent hoort bij deze gebruiker? Een klant heeft er meestal één; een
+  // beheerder krijgt onze eigen website-assistent. Zonder deze stap zou de
+  // upload proberen te schrijven naar een agent die niet van de klant is, en
+  // dat weigert de database terecht.
+  const agentsFn = useServerFn(listAgents);
+  const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
+  const mijnAgents = (agentsQuery.data ?? []) as Array<{
+    id: string;
+    name: string;
+    slug: string | null;
+  }>;
+  const [gekozenSlug, setGekozenSlug] = useState<string | null>(null);
+  const actieveSlug = gekozenSlug ?? mijnAgents.find((a) => a.slug)?.slug ?? null;
   const isAdmin = meQuery.data?.isAdmin === true;
   // Geen enabled-vlag meer op de rol: RLS bepaalt wat iemand terugkrijgt. Een
   // beheerder ziet alles, een klant alleen de kennis van zijn eigen agents.
@@ -144,6 +158,7 @@ function KnowledgePage() {
         saveFn({
           data: {
             ...(draft.id ? { id: draft.id } : {}),
+            ...(actieveSlug ? { agentSlug: actieveSlug } : {}),
             category: draft.category,
             title: draft.title.trim(),
             question: draft.question.trim() || null,
@@ -175,6 +190,9 @@ function KnowledgePage() {
         try {
           await saveFn({
             data: {
+              // Zonder dit belanden de items bij onze eigen agent in plaats van
+              // bij die van de klant, en weigert de database het terecht.
+              ...(actieveSlug ? { agentSlug: actieveSlug } : {}),
               category: item.category,
               title: item.title,
               question: item.question,
@@ -253,8 +271,39 @@ function KnowledgePage() {
         </div>
       </div>
 
+      {mijnAgents.length > 1 && (
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <span className="text-[12px] text-ink/55">Kennis voor:</span>
+          {mijnAgents
+            .filter((a) => a.slug)
+            .map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => setGekozenSlug(a.slug)}
+                className={`rounded-full px-3.5 py-1.5 text-[12px] font-medium transition ${
+                  actieveSlug === a.slug
+                    ? "bg-violet text-white"
+                    : "border border-white/12 bg-white/5 text-ink/70 hover:bg-white/10"
+                }`}
+              >
+                {a.name}
+              </button>
+            ))}
+        </div>
+      )}
+
       <div className="mt-6">
-        <KennisUpload agentSlug="website-assistent" onOvernemen={neemVoorstellenOver} />
+        {actieveSlug ? (
+          <KennisUpload agentSlug={actieveSlug} onOvernemen={neemVoorstellenOver} />
+        ) : (
+          <div className="card-glass rounded-3xl p-5">
+            <p className="text-[13px] text-ink/60">
+              Er is nog geen agent aan je account gekoppeld, dus er is nog geen kennisbank om te
+              vullen. Zodra je agent is ingericht, kun je hier bestanden uploaden.
+            </p>
+          </div>
+        )}
       </div>
 
       {msg && (

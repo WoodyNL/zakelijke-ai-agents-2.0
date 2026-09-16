@@ -32,14 +32,12 @@ export function DashboardShell({
     navigate({ to: "/auth", replace: true });
   }
 
+  // De kennisbank is voor iedereen: RLS zorgt dat een klant alleen de kennis
+  // van zijn eigen agents ziet. Alleen het beheerpaneel blijft afgeschermd.
   const links = [
     { to: "/dashboard", label: "Dashboard" },
-    ...(isAdmin
-      ? [
-          { to: "/knowledge", label: "Kennisbank" },
-          { to: "/admin", label: "Beheer" },
-        ]
-      : []),
+    { to: "/knowledge", label: "Kennisbank" },
+    ...(isAdmin ? [{ to: "/admin", label: "Beheer" }] : []),
     { to: "/account", label: "Account" },
   ];
 
