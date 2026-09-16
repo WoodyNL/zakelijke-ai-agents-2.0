@@ -218,32 +218,18 @@ export const getAgentUsage = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    // De cast is tijdelijk: src/integrations/supabase/types.ts wordt gegenereerd
-    // uit de live database, en deze twee functies bestaan daar pas nadat de
-    // fase 2-migratie is gedraaid. Zodra de types kloppen kan hij weg.
-    const db = context.supabase as unknown as {
-      rpc: (
-        naam: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ data: unknown; error: { message: string } | null }>;
-    };
-
     const [verbruik, instellingen] = await Promise.all([
-      db.rpc("agent_usage_daily", { _agent_id: data.agentId, _days: data.days }),
-      db.rpc("my_agent_settings", { _agent_id: data.agentId }),
+      context.supabase.rpc("agent_usage_daily", { _agent_id: data.agentId, _days: data.days }),
+      context.supabase.rpc("my_agent_settings", { _agent_id: data.agentId }),
     ]);
 
     if (verbruik.error) throw new Error(verbruik.error.message);
     if (instellingen.error) throw new Error(instellingen.error.message);
 
-    type Instelling = {
-      minutes_saved_per_action: number | null;
-      minutes_saved_basis: string | null;
-    };
-    const agent = ((instellingen.data ?? []) as Instelling[])[0] ?? null;
+    const agent = (instellingen.data ?? [])[0] ?? null;
 
     return {
-      dagen: (verbruik.data ?? []) as Array<{ dag: string; requests: number }>,
+      dagen: verbruik.data ?? [],
       minutenPerActie: agent?.minutes_saved_per_action ?? null,
       grondslag: agent?.minutes_saved_basis ?? null,
     };

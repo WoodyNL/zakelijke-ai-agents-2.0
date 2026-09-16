@@ -71,10 +71,7 @@ function AgentDetail() {
           <div className="mt-4 flex flex-wrap items-start justify-between gap-3 animate-rise">
             <div>
               <p className="font-mono text-[10.5px] tracking-[0.12em] text-violet/80 uppercase">
-                {/* De cast is tijdelijk: types.ts wordt gegenereerd uit de live
-                    database, en kind bestaat daar pas nadat de migratie met de
-                    agentsoorten is gedraaid. */}
-                {soortVan((agent as { kind?: string } | undefined)?.kind).label}
+                {soortVan(agent.kind).label}
               </p>
               <h1 className="mt-1 font-display text-[24px] font-bold tracking-tight text-brand">
                 {agent.name}

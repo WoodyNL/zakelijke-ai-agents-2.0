@@ -52,39 +52,98 @@ export type Database = {
           },
         ]
       }
+      agent_usage: {
+        Row: {
+          agent_id: string
+          hour: string
+          requests: number
+        }
+        Insert: {
+          agent_id: string
+          hour: string
+          requests?: number
+        }
+        Update: {
+          agent_id?: string
+          hour?: string
+          requests?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_usage_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
+          allowed_domains: string[]
+          capture_leads: boolean
           client_id: string
           created_at: string
           description: string
+          extra_instructions: string | null
           id: string
+          kind: Database["public"]["Enums"]["agent_kind"]
           metric_label: string
+          minutes_saved_basis: string | null
+          minutes_saved_per_action: number | null
+          model: string
           name: string
+          notify_email: string | null
+          rate_limit_per_hour: number
           score_label: string
           slug: string | null
           status: Database["public"]["Enums"]["agent_status"]
+          tone: string | null
+          welcome_text: string | null
         }
         Insert: {
+          allowed_domains?: string[]
+          capture_leads?: boolean
           client_id: string
           created_at?: string
           description?: string
+          extra_instructions?: string | null
           id?: string
+          kind?: Database["public"]["Enums"]["agent_kind"]
           metric_label?: string
+          minutes_saved_basis?: string | null
+          minutes_saved_per_action?: number | null
+          model?: string
           name: string
+          notify_email?: string | null
+          rate_limit_per_hour?: number
           score_label?: string
           slug?: string | null
           status?: Database["public"]["Enums"]["agent_status"]
+          tone?: string | null
+          welcome_text?: string | null
         }
         Update: {
+          allowed_domains?: string[]
+          capture_leads?: boolean
           client_id?: string
           created_at?: string
           description?: string
+          extra_instructions?: string | null
           id?: string
+          kind?: Database["public"]["Enums"]["agent_kind"]
           metric_label?: string
+          minutes_saved_basis?: string | null
+          minutes_saved_per_action?: number | null
+          model?: string
           name?: string
+          notify_email?: string | null
+          rate_limit_per_hour?: number
           score_label?: string
           slug?: string | null
           status?: Database["public"]["Enums"]["agent_status"]
+          tone?: string | null
+          welcome_text?: string | null
         }
         Relationships: [
           {
@@ -234,9 +293,69 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agent_knowledge: {
+        Args: { _slug: string }
+        Returns: {
+          category: string
+          content: string
+          id: string
+          question: string
+          sort_order: number
+          tags: string[]
+          title: string
+        }[]
+      }
+      agent_public_config: {
+        Args: { _slug: string }
+        Returns: {
+          allowed_domains: string[]
+          capture_leads: boolean
+          id: string
+          model: string
+          name: string
+          rate_limit_per_hour: number
+          tone: string
+          welcome_text: string
+        }[]
+      }
+      agent_usage_daily: {
+        Args: { _agent_id: string; _days?: number }
+        Returns: {
+          dag: string
+          requests: number
+        }[]
+      }
+      claim_agent_request: { Args: { _agent_id: string }; Returns: boolean }
+      my_agent_settings: {
+        Args: { _agent_id: string }
+        Returns: {
+          capture_leads: boolean
+          id: string
+          kind: string
+          metric_label: string
+          minutes_saved_basis: string
+          minutes_saved_per_action: number
+          name: string
+          score_label: string
+          slug: string
+          status: string
+          tone: string
+          welcome_text: string
+        }[]
+      }
       resolve_live_agent: { Args: { _slug: string }; Returns: string }
+      update_my_agent: {
+        Args: { _agent_id: string; _tone: string; _welcome_text: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      agent_kind:
+        | "chat_assistent"
+        | "sales_assistent"
+        | "inbox_draft"
+        | "whatsapp_followup"
+        | "overig"
       agent_status: "live" | "paused" | "setup"
       app_role: "admin" | "client"
     }
@@ -366,6 +485,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_kind: [
+        "chat_assistent",
+        "sales_assistent",
+        "inbox_draft",
+        "whatsapp_followup",
+        "overig",
+      ],
       agent_status: ["live", "paused", "setup"],
       app_role: ["admin", "client"],
     },

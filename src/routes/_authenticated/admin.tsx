@@ -117,7 +117,10 @@ function AdminPanel() {
           disabled={busy || !nc.name || !nc.email || nc.password.length < 8}
           onClick={() =>
             run(async () => {
-              await createClientFn({ data: nc });
+              const res = (await createClientFn({ data: nc })) as
+                | { ok: true; id?: string }
+                | { ok: false; error: string };
+              if (!res.ok) throw new Error(res.error);
               setNc({ name: "", email: "", password: "" });
             }, "Klant aangemaakt")
           }
