@@ -105,6 +105,27 @@ export function verdeelOverDagen(
 }
 
 /**
+ * Het moment waarop een opvolging mag vertrekken.
+ *
+ * Niet verdeeld over dagen zoals het eerste bericht, maar per contact geteld
+ * vanaf zijn eigen eerste mail. Dat regelt het tempo vanzelf: zijn de eerste
+ * berichten over veertien werkdagen verdeeld, dan zijn de opvolgingen dat ook.
+ *
+ * Wel naar een werkdag en naar de ochtend. Een herinnering die zaterdagnacht
+ * binnenkomt is maandag ondergesneeuwd, en dat is precies het bericht dat je
+ * niet wilt verspillen.
+ */
+export function opvolgmoment(verzondenOp: Date, naDagen: number): Date {
+  const d = new Date(verzondenOp);
+  d.setDate(d.getDate() + naDagen);
+  d.setHours(9, 30, 0, 0);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  // Nooit in het verleden: bij een campagne die al langer loopt zou de
+  // opvolging anders geweigerd worden en stilletjes uitvallen.
+  return d.getTime() < Date.now() ? new Date(Date.now() + 5 * 60_000) : d;
+}
+
+/**
  * Zet één bericht klaar bij Resend en onthoudt het id.
  *
  * Eerst versturen, dan pas vastleggen zou betekenen dat een mislukte opslag een

@@ -222,3 +222,44 @@ export const haalBerichten = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return rijen ?? [];
   });
+
+/** Opvolgberichten klaarzetten voor wie niet heeft geantwoord. */
+export const bereidOpvolgingVoor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        campagneId: z.string().uuid(),
+        portie: z.number().int().min(1).max(50).default(10),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: campagne, error } = await context.supabase
+      .from("outbound_campaigns")
+      .select("id")
+      .eq("id", data.campagneId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+
+    const mod = await import("@/lib/campagne-uitvoeren.server");
+    return mod.bereidOpvolgingVoor(data.campagneId, data.portie);
+  });
+
+/** De klaarstaande opvolgingen inplannen, elk op zijn eigen moment. */
+export const verstuurOpvolging = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ campagneId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: campagne, error } = await context.supabase
+      .from("outbound_campaigns")
+      .select("id")
+      .eq("id", data.campagneId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+
+    const mod = await import("@/lib/campagne-uitvoeren.server");
+    return mod.verstuurOpvolging(data.campagneId);
+  });

@@ -9,7 +9,7 @@
  *   node scripts/test-planning.ts
  */
 
-import { verdeelOverDagen } from "../src/lib/verzenden.server.ts";
+import { opvolgmoment, verdeelOverDagen } from "../src/lib/verzenden.server.ts";
 
 let gezakt = 0;
 const meld = (goed: boolean, naam: string, detail = "") => {
@@ -83,6 +83,38 @@ meld(
 meld(
   heleLijst[heleLijst.length - 1]!.getTime() - Date.now() < 30 * 24 * 3600 * 1000,
   "het laatste bericht valt binnen de grens van 30 dagen",
+);
+
+// ---------------------------------------------------------------------------
+// Opvolging
+// ---------------------------------------------------------------------------
+
+console.log("\nOpvolgmoment");
+
+const dinsdag = new Date();
+dinsdag.setDate(dinsdag.getDate() + 3);
+while (dinsdag.getDay() !== 2) dinsdag.setDate(dinsdag.getDate() + 1);
+dinsdag.setHours(11, 0, 0, 0);
+
+const na7 = opvolgmoment(dinsdag, 7);
+meld(na7.getDay() === 2, "zeven dagen na dinsdag is weer een dinsdag", String(na7.getDay()));
+meld(na7.getHours() === 9 && na7.getMinutes() === 30, "in de ochtend", `${na7.getHours()}:${na7.getMinutes()}`);
+
+// Woensdag + 3 dagen is zaterdag; dat moet naar maandag schuiven.
+const woensdag = new Date(dinsdag);
+woensdag.setDate(woensdag.getDate() + 1);
+const naWeekend = opvolgmoment(woensdag, 3);
+meld(
+  naWeekend.getDay() !== 0 && naWeekend.getDay() !== 6,
+  "een opvolging in het weekend schuift naar een werkdag",
+  `dag ${naWeekend.getDay()}`,
+);
+
+// Een campagne die al maanden loopt mag niet in het verleden inplannen.
+const langGeleden = new Date(Date.now() - 90 * 24 * 3600 * 1000);
+meld(
+  opvolgmoment(langGeleden, 7).getTime() > Date.now(),
+  "een moment in het verleden wordt naar voren gehaald",
 );
 
 console.log("\n" + "=".repeat(52));

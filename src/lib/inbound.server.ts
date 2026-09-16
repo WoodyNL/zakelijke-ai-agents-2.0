@@ -25,6 +25,8 @@ import { eersteEmail } from "@/lib/contactimport";
 
 type InboundGegevens = {
   email_id?: string;
+  /** Bij meldingen over uitgaande post: het id dat wij bij verzenden kregen. */
+  id?: string;
   from?: string;
   to?: string[];
   received_for?: string[];
@@ -100,7 +102,56 @@ export async function verwerkInboundWebhook(request: Request): Promise<Response>
     return new Response("Bad JSON", { status: 400 });
   }
 
-  // Alles wat we niet verwerken krijgt 2xx, anders blijft het terugkomen.
+  // Meldingen over uitgaande post: bevestiging dat een ingepland bericht
+  // werkelijk is vertrokken, of dat het adres niet bestaat.
+  //
+  // Zonder deze melding weten we nooit of een ingepland bericht is verstuurd —
+  // de planning ligt bij Resend, niet bij ons. En opvolgen mag alleen na een
+  // bericht dat werkelijk weg is, anders krijgt iemand een herinnering aan post
+  // die hij nooit heeft gehad.
+  if (
+    melding.type === "email.sent" ||
+    melding.type === "email.delivered" ||
+    melding.type === "email.bounced" ||
+    melding.type === "email.complained"
+  ) {
+    const providerId = melding.data?.id ?? melding.data?.email_id;
+    if (!providerId) return new Response("ok", { status: 200 });
+
+    const db = supabase();
+    if (!db) return new Response("Database unavailable", { status: 503 });
+
+    if (melding.type === "email.bounced" || melding.type === "email.complained") {
+      // Een klacht telt hier net zo zwaar als een bounce: wie op "dit is spam"
+      // drukt, moet niets meer krijgen. Dat is geen beleefdheid maar het enige
+      // wat het verzenddomein beschermt.
+      const res = await fetch(`${db.url}/rest/v1/rpc/outbound_meld_bounce`, {
+        method: "POST",
+        headers: db.headers,
+        body: JSON.stringify({
+          _provider_id: providerId,
+          _reden: melding.type === "email.complained" ? "gemeld als spam" : "adres bestaat niet",
+        }),
+      });
+      if (!res.ok) return new Response("Bounce failed", { status: 503 });
+      return new Response("ok", { status: 200 });
+    }
+
+    // Verzonden: alleen bijwerken wat nog niet verstuurd was. Een bericht dat
+    // al is beantwoord mag niet terugvallen naar 'verzonden'.
+    const res = await fetch(
+      `${db.url}/rest/v1/outbound_messages?provider_id=eq.${encodeURIComponent(providerId)}&status=eq.gepland`,
+      {
+        method: "PATCH",
+        headers: { ...db.headers, Prefer: "return=minimal" },
+        body: JSON.stringify({ status: "verzonden", verzonden_op: new Date().toISOString() }),
+      },
+    );
+    if (!res.ok) return new Response("Update failed", { status: 503 });
+    return new Response("ok", { status: 200 });
+  }
+
+  // Alles wat we verder niet verwerken krijgt 2xx, anders blijft het terugkomen.
   if (melding.type !== "email.received") return new Response("ok", { status: 200 });
 
   const d = melding.data ?? {};
