@@ -273,6 +273,233 @@ export type Database = {
           },
         ]
       }
+      outbound_campaigns: {
+        Row: {
+          aangemaakt_op: string
+          actief: boolean
+          afzender_email: string | null
+          afzender_naam: string | null
+          agent_id: string
+          antwoord_naar: string | null
+          dagmaximum: number
+          herkomst: Database["public"]["Enums"]["contact_herkomst"]
+          id: string
+          naam: string
+          verzendwijze: Database["public"]["Enums"]["verzendwijze"]
+        }
+        Insert: {
+          aangemaakt_op?: string
+          actief?: boolean
+          afzender_email?: string | null
+          afzender_naam?: string | null
+          agent_id: string
+          antwoord_naar?: string | null
+          dagmaximum?: number
+          herkomst?: Database["public"]["Enums"]["contact_herkomst"]
+          id?: string
+          naam: string
+          verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
+        }
+        Update: {
+          aangemaakt_op?: string
+          actief?: boolean
+          afzender_email?: string | null
+          afzender_naam?: string | null
+          agent_id?: string
+          antwoord_naar?: string | null
+          dagmaximum?: number
+          herkomst?: Database["public"]["Enums"]["contact_herkomst"]
+          id?: string
+          naam?: string
+          verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_campaigns_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_contacts: {
+        Row: {
+          aangemaakt_op: string
+          afgemeld_op: string | null
+          afmeldsleutel: string
+          agent_id: string
+          bedrijf: string | null
+          bounce_op: string | null
+          email: string
+          herkomst: Database["public"]["Enums"]["contact_herkomst"]
+          id: string
+          laatst_besteld_op: string | null
+          naam: string | null
+          notitie: string | null
+          plaats: string | null
+          telefoon: string | null
+        }
+        Insert: {
+          aangemaakt_op?: string
+          afgemeld_op?: string | null
+          afmeldsleutel?: string
+          agent_id: string
+          bedrijf?: string | null
+          bounce_op?: string | null
+          email: string
+          herkomst?: Database["public"]["Enums"]["contact_herkomst"]
+          id?: string
+          laatst_besteld_op?: string | null
+          naam?: string | null
+          notitie?: string | null
+          plaats?: string | null
+          telefoon?: string | null
+        }
+        Update: {
+          aangemaakt_op?: string
+          afgemeld_op?: string | null
+          afmeldsleutel?: string
+          agent_id?: string
+          bedrijf?: string | null
+          bounce_op?: string | null
+          email?: string
+          herkomst?: Database["public"]["Enums"]["contact_herkomst"]
+          id?: string
+          laatst_besteld_op?: string | null
+          naam?: string | null
+          notitie?: string | null
+          plaats?: string | null
+          telefoon?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_contacts_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_deliveries: {
+        Row: {
+          aangemaakt_op: string
+          adres: string | null
+          agent_id: string
+          bezorgdag: string
+          contact_id: string
+          id: string
+          notitie: string | null
+          status: string
+        }
+        Insert: {
+          aangemaakt_op?: string
+          adres?: string | null
+          agent_id: string
+          bezorgdag: string
+          contact_id: string
+          id?: string
+          notitie?: string | null
+          status?: string
+        }
+        Update: {
+          aangemaakt_op?: string
+          adres?: string | null
+          agent_id?: string
+          bezorgdag?: string
+          contact_id?: string
+          id?: string
+          notitie?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_deliveries_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_deliveries_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_messages: {
+        Row: {
+          aangemaakt_op: string
+          agent_id: string
+          campaign_id: string | null
+          contact_id: string
+          fout: string | null
+          gepland_voor: string | null
+          id: string
+          onderwerp: string
+          provider_id: string | null
+          stap: number
+          status: Database["public"]["Enums"]["bericht_status"]
+          tekst: string
+          verzonden_op: string | null
+        }
+        Insert: {
+          aangemaakt_op?: string
+          agent_id: string
+          campaign_id?: string | null
+          contact_id: string
+          fout?: string | null
+          gepland_voor?: string | null
+          id?: string
+          onderwerp: string
+          provider_id?: string | null
+          stap?: number
+          status?: Database["public"]["Enums"]["bericht_status"]
+          tekst: string
+          verzonden_op?: string | null
+        }
+        Update: {
+          aangemaakt_op?: string
+          agent_id?: string
+          campaign_id?: string | null
+          contact_id?: string
+          fout?: string | null
+          gepland_voor?: string | null
+          id?: string
+          onderwerp?: string
+          provider_id?: string | null
+          stap?: number
+          status?: Database["public"]["Enums"]["bericht_status"]
+          tekst?: string
+          verzonden_op?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_messages_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -386,6 +613,14 @@ export type Database = {
           welcome_text: string
         }[]
       }
+      outbound_afmelden: { Args: { _sleutel: string }; Returns: undefined }
+      outbound_vrijdagen: {
+        Args: { _agent_id: string; _weken?: number }
+        Returns: {
+          afgesproken: number
+          bezorgdag: string
+        }[]
+      }
       record_agent_tokens: {
         Args: {
           _agent_id: string
@@ -410,6 +645,14 @@ export type Database = {
         | "overig"
       agent_status: "live" | "paused" | "setup"
       app_role: "admin" | "client"
+      bericht_status:
+        | "concept"
+        | "gepland"
+        | "verzonden"
+        | "mislukt"
+        | "beantwoord"
+      contact_herkomst: "oud_klant" | "koud"
+      verzendwijze: "concept" | "direct"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -546,6 +789,15 @@ export const Constants = {
       ],
       agent_status: ["live", "paused", "setup"],
       app_role: ["admin", "client"],
+      bericht_status: [
+        "concept",
+        "gepland",
+        "verzonden",
+        "mislukt",
+        "beantwoord",
+      ],
+      contact_herkomst: ["oud_klant", "koud"],
+      verzendwijze: ["concept", "direct"],
     },
   },
 } as const
