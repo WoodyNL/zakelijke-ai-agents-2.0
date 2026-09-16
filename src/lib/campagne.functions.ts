@@ -155,3 +155,70 @@ export const maakVoorbeeld = createServerFn({ method: "POST" })
       kennisItems: kennis?.length ?? 0,
     };
   });
+
+/**
+ * Een portie berichten klaarzetten.
+ *
+ * De eigendomscontrole staat hier en niet in de uitvoering. Die draait met de
+ * service-role en komt overal bij; wat hem tegenhoudt is dat hij alleen wordt
+ * aangeroepen nadat hier is vastgesteld dat deze gebruiker bij deze campagne
+ * hoort.
+ */
+export const bereidCampagneVoor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        campagneId: z.string().uuid(),
+        // Klein beginnen is hier de bedoeling: na tien berichten weet je of de
+        // toon klopt, en dan pas zet je de rest klaar.
+        portie: z.number().int().min(1).max(50).default(10),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: campagne, error } = await context.supabase
+      .from("outbound_campaigns")
+      .select("id, agent_id")
+      .eq("id", data.campagneId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+
+    const { bereidVoor } = await import("@/lib/campagne-uitvoeren.server");
+    return bereidVoor(data.campagneId, data.portie);
+  });
+
+/** De klaarstaande berichten inplannen bij Resend. */
+export const verstuurCampagne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ campagneId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: campagne, error } = await context.supabase
+      .from("outbound_campaigns")
+      .select("id, agent_id")
+      .eq("id", data.campagneId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+
+    const { verstuurKlaarstaande } = await import("@/lib/campagne-uitvoeren.server");
+    return verstuurKlaarstaande(data.campagneId);
+  });
+
+/** Wat er klaarstaat, gepland is of al weg is. */
+export const haalBerichten = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rijen, error } = await context.supabase
+      .from("outbound_messages")
+      .select(
+        "id, stap, status, onderwerp, tekst, gepland_voor, verzonden_op, fout, aangemaakt_op, outbound_contacts(naam, bedrijf, email)",
+      )
+      .eq("agent_id", data.agentId)
+      .order("aangemaakt_op", { ascending: false })
+      .limit(300);
+    if (error) throw new Error(error.message);
+    return rijen ?? [];
+  });
