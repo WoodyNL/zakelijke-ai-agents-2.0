@@ -57,6 +57,11 @@ function AdminPanel() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-clients"] });
 
+  /**
+   * Voert een actie uit en meldt de uitkomst bovenaan de pagina. Geeft die
+   * uitkomst ook terug, want de melding bovenaan is onzichtbaar voor wie
+   * verderop in de lijst met een agent bezig is.
+   */
   async function run(fn: () => Promise<unknown>, okMsg: string) {
     setBusy(true);
     setMsg(null);
@@ -64,8 +69,11 @@ function AdminPanel() {
       await fn();
       setMsg(okMsg);
       await refresh();
+      return { ok: true as const, melding: okMsg };
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Er ging iets mis");
+      const melding = err instanceof Error ? err.message : "Er ging iets mis";
+      setMsg(melding);
+      return { ok: false as const, melding };
     } finally {
       setBusy(false);
     }
@@ -219,7 +227,7 @@ function ClientBlock({
 }: {
   client: any;
   busy: boolean;
-  onSaveAgent: (p: any) => void;
+  onSaveAgent: (p: Record<string, unknown>) => Promise<{ ok: boolean; melding: string }>;
   onDeleteAgent: (id: string) => void;
   onSaveStat: (p: any) => void;
 }) {
@@ -316,7 +324,7 @@ function AgentRow({
 }: {
   agent: any;
   busy: boolean;
-  onSaveAgent: (p: any) => void;
+  onSaveAgent: (p: Record<string, unknown>) => Promise<{ ok: boolean; melding: string }>;
   onDeleteAgent: (id: string) => void;
   onSaveStat: (p: any) => void;
 }) {
@@ -452,7 +460,7 @@ function AannamesBlok({
 }: {
   agent: AgentRij;
   busy: boolean;
-  onSaveAgent: (payload: Record<string, unknown>) => void;
+  onSaveAgent: (payload: Record<string, unknown>) => Promise<{ ok: boolean; melding: string }>;
 }) {
   const [open, setOpen] = useState(false);
   const [waarden, setWaarden] = useState<Aannamewaarden>({
@@ -467,6 +475,7 @@ function AannamesBlok({
   });
 
   const ingevuld = agent.minutes_saved_per_action != null || agent.hourly_rate != null;
+  const [uitkomst, setUitkomst] = useState<{ ok: boolean; melding: string } | null>(null);
 
   return (
     <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
@@ -490,27 +499,43 @@ function AannamesBlok({
           <button
             className={`${btnCls} mt-4`}
             disabled={busy}
-            onClick={() =>
-              onSaveAgent({
-                id: agent.id,
-                clientId: agent.client_id,
-                name: agent.name,
-                description: agent.description,
-                metricLabel: agent.metric_label,
-                scoreLabel: agent.score_label,
-                status: agent.status,
-                kind: waarden.kind,
-                minutesSavedPerAction: alsGetal(waarden.minutesSavedPerAction),
-                minutesSavedBasis: alsTekst(waarden.minutesSavedBasis),
-                hourlyRate: alsGetal(waarden.hourlyRate),
-                hourlyRateBasis: alsTekst(waarden.hourlyRateBasis),
-                fairUsePerMonth: alsGetal(waarden.fairUsePerMonth),
-                overagePrice: alsGetal(waarden.overagePrice) ?? 1,
-              })
-            }
+            onClick={async () => {
+              setUitkomst(null);
+              setUitkomst(
+                await onSaveAgent({
+                  id: agent.id,
+                  clientId: agent.client_id,
+                  name: agent.name,
+                  description: agent.description,
+                  metricLabel: agent.metric_label,
+                  scoreLabel: agent.score_label,
+                  status: agent.status,
+                  kind: waarden.kind,
+                  minutesSavedPerAction: alsGetal(waarden.minutesSavedPerAction),
+                  minutesSavedBasis: alsTekst(waarden.minutesSavedBasis),
+                  hourlyRate: alsGetal(waarden.hourlyRate),
+                  hourlyRateBasis: alsTekst(waarden.hourlyRateBasis),
+                  fairUsePerMonth: alsGetal(waarden.fairUsePerMonth),
+                  overagePrice: alsGetal(waarden.overagePrice) ?? 1,
+                }),
+              );
+            }}
           >
-            Afspraken opslaan
+            {busy ? "Bezig\u2026" : "Afspraken opslaan"}
           </button>
+
+          {uitkomst && (
+            <p
+              role="status"
+              className={`mt-3 rounded-xl border px-3.5 py-2.5 text-[12.5px] ${
+                uitkomst.ok
+                  ? "border-mint/30 bg-mint/10 text-ink/85"
+                  : "border-warn/30 bg-warn/10 text-ink/85"
+              }`}
+            >
+              {uitkomst.melding}
+            </p>
+          )}
         </div>
       )}
     </div>
