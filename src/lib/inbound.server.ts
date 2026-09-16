@@ -184,5 +184,22 @@ export async function verwerkInboundWebhook(request: Request): Promise<Response>
     return new Response("Storage failed", { status: 503 });
   }
 
+  // Wie heeft geantwoord, krijgt geen herinnering meer die al klaarstond. Die
+  // ligt ingepland bij Resend en moet daar actief worden weggehaald.
+  //
+  // Dit mag de afhandeling niet laten struikelen: het antwoord is al bewaard,
+  // en een 5xx hierna zou de hele melding opnieuw laten aanbieden — met een
+  // dubbel antwoord tot gevolg als de unieke index er ooit naast zit. Lukt het
+  // intrekken niet, dan is dat een vervelende mail, geen verloren gegeven.
+  if (contactId) {
+    try {
+      const { trekOpvolgingIn } = await import("@/lib/verzenden.server");
+      const aantal = await trekOpvolgingIn(contactId);
+      if (aantal > 0) console.info(`Opvolging ingetrokken voor contact ${contactId}: ${aantal}`);
+    } catch (e) {
+      console.error("Opvolging intrekken mislukt:", e);
+    }
+  }
+
   return new Response("ok", { status: 200 });
 }
