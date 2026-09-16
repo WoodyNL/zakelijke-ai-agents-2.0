@@ -206,6 +206,60 @@ meld(
   `HTTP ${maandPoging.status}`,
 );
 
+console.log("\nUitgaande e-mail");
+
+// Contactgegevens van derden zijn het gevoeligste wat hier staat: mensen die
+// zelf nooit met ons platform hebben ingestemd. Anon mag er niet bij, en ook
+// niet ongemerkt rijen toevoegen aan andermans lijst.
+for (const tabel of [
+  "outbound_contacts",
+  "outbound_campaigns",
+  "outbound_messages",
+  "outbound_deliveries",
+]) {
+  const lezen = await rest(`${tabel}?select=*&limit=1`);
+  meld(
+    lezen.status === 401 || lezen.status === 403,
+    `een bezoeker kan ${tabel} niet lezen`,
+    `HTTP ${lezen.status}${lezen.status === 200 ? " \u2014 LEK" : ""}${lezen.status === 404 ? " \u2014 TABEL BESTAAT NIET" : ""}`,
+  );
+}
+
+const schrijfPoging = await rest("outbound_contacts", {
+  method: "POST",
+  body: JSON.stringify({ agent_id: NEP, email: "lektest@voorbeeld.nl" }),
+});
+meld(
+  schrijfPoging.status === 401 || schrijfPoging.status === 403,
+  "een bezoeker kan geen contact toevoegen aan een lijst",
+  `HTTP ${schrijfPoging.status}`,
+);
+
+const vrijdagPoging = await rest("rpc/outbound_vrijdagen", {
+  method: "POST",
+  body: JSON.stringify({ _agent_id: NEP }),
+});
+meld(
+  vrijdagPoging.status === 401 || vrijdagPoging.status === 403,
+  "een bezoeker kan de bezorgplanning niet opvragen",
+  `HTTP ${vrijdagPoging.status}`,
+);
+
+// Deze moet juist wél open staan, en daarom staat hij hier. Iemand die een
+// koude mail krijgt heeft geen account en gaat er geen maken; werkt de
+// afmeldlink niet, dan is dat geen ongemak maar een wettelijk probleem. Een
+// latere policy die "alles dichtzet" zou dit stilletjes kunnen breken, en dan
+// merk je het pas als iemand zich beklaagt.
+const afmeldPoging = await rest("rpc/outbound_afmelden", {
+  method: "POST",
+  body: JSON.stringify({ _sleutel: NEP }),
+});
+meld(
+  afmeldPoging.status === 204 || afmeldPoging.status === 200,
+  "de afmeldlink werkt zonder account",
+  `HTTP ${afmeldPoging.status}${afmeldPoging.status >= 400 ? " \u2014 AFMELDEN KAN NIET MEER" : ""}`,
+);
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) {
   console.log("Alles in orde: geen lek gevonden.\n");
