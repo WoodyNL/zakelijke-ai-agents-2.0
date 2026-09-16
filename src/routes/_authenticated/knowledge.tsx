@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { KennisUpload } from "@/components/kennis-upload";
 import type { KennisVoorstel } from "@/lib/kennisimport.functions";
+import { heeftKennisbank, soortVan } from "@/lib/agent-soorten";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
   CATEGORIES,
@@ -100,15 +101,14 @@ function KnowledgePage() {
   const mijnAgents = (agentsQuery.data ?? []) as Array<{
     id: string;
     name: string;
-    slug: string | null;
+    kind: string | null;
   }>;
 
-  // Een kennisbank heeft alleen zin voor een agent die hem ook raadpleegt: een
-  // chat-assistent die via een embed of onze eigen site draait. Die herken je
-  // aan zijn slug, want die wordt gezet bij het koppelen. Een agent zonder slug
-  // is nog niet gekoppeld, of is een automatisering van een ander soort. Kennis
-  // aanbieden voor zo'n agent slaat wel iets op, maar er gebeurt niets mee.
-  const gekoppeld = mijnAgents.filter((a) => a.slug);
+  // Alleen agents die een kennisbank raadplegen. Dat staat nu als eigenschap in
+  // de database in plaats van dat we het afleiden uit de aanwezigheid van een
+  // slug; kennis aanbieden voor een agent die hem nooit leest, slaat wel iets
+  // op maar doet niets.
+  const gekoppeld = mijnAgents.filter((a) => heeftKennisbank(a.kind));
   const [gekozenId, setGekozenId] = useState<string | null>(null);
   // Op id en niet op slug: niet elke agent heeft een slug, want die wordt pas
   // gezet als er een embed voor nodig is. Een id heeft elke agent.
@@ -308,7 +308,9 @@ function KnowledgePage() {
             <p className="max-w-[68ch] text-[13px]/[1.7] text-ink/60">
               {mijnAgents.length === 0
                 ? "Er is nog geen agent aan je account gekoppeld, dus er is nog geen kennisbank om te vullen. Zodra je agent is ingericht, kun je hier bestanden uploaden."
-                : "Je agents zijn nog niet als chat-assistent gekoppeld. Een kennisbank heeft pas zin zodra er een assistent is die hem raadpleegt: nu zouden we wel iets opslaan, maar er zou niets mee gebeuren. Neem contact op als je dit wilt inrichten."}
+                : `Een kennisbank hoort bij een chat-assistent, en die heb je nog niet. ${mijnAgents
+                    .map((a) => `${a.name} is een ${soortVan(a.kind).label.toLowerCase()}`)
+                    .join(", ")}. Neem contact op als je er een chat-assistent bij wilt.`}
             </p>
           </div>
         )}

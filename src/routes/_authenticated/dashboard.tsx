@@ -7,6 +7,7 @@ import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { SITE } from "@/content/site";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import { downloadRapport } from "@/lib/rapport";
+import { soortVan } from "@/lib/agent-soorten";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -48,7 +49,9 @@ function Dashboard() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-[26px] font-bold tracking-tight text-brand sm:text-[30px]">
-            {meQuery.data?.name ? `Welkom terug, ${meQuery.data.name.split(" ")[0]}` : "Jouw AI-agents"}
+            {meQuery.data?.name
+              ? `Welkom terug, ${meQuery.data.name.split(" ")[0]}`
+              : "Jouw AI-agents"}
           </h1>
           <p className="mt-1.5 text-[13.5px] text-ink/60">
             Live status en resultaten over de laatste 30 dagen.
@@ -179,6 +182,9 @@ function Dashboard() {
                 <div className="min-w-0">
                   <p className="font-display text-[15.5px] leading-tight font-semibold text-brand">
                     {a.name}
+                  </p>
+                  <p className="mt-1 font-mono text-[10.5px] tracking-[0.1em] text-ink/40 uppercase">
+                    {soortVan(a.kind).label}
                   </p>
                   <p className="mt-1 line-clamp-2 min-h-[2.6em] text-[12.5px]/[1.55] text-ink/60">
                     {a.description}

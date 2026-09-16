@@ -2,17 +2,10 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { VerbruikPaneel } from "@/components/verbruik-paneel";
+import { soortVan } from "@/lib/agent-soorten";
 import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/agents/$agentId")({
@@ -77,7 +70,13 @@ function AgentDetail() {
         <>
           <div className="mt-4 flex flex-wrap items-start justify-between gap-3 animate-rise">
             <div>
-              <h1 className="font-display text-[24px] font-bold tracking-tight text-brand">
+              <p className="font-mono text-[10.5px] tracking-[0.12em] text-violet/80 uppercase">
+                {/* De cast is tijdelijk: types.ts wordt gegenereerd uit de live
+                    database, en kind bestaat daar pas nadat de migratie met de
+                    agentsoorten is gedraaid. */}
+                {soortVan((agent as { kind?: string } | undefined)?.kind).label}
+              </p>
+              <h1 className="mt-1 font-display text-[24px] font-bold tracking-tight text-brand">
                 {agent.name}
               </h1>
               <p className="mt-1.5 max-w-[60ch] text-[13px]/[1.6] text-ink/55">
@@ -110,10 +109,7 @@ function AgentDetail() {
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <Stat value={String(total)} label={agent.metric_label} />
-            <Stat
-              value={score != null ? `${score.toFixed(0)}%` : "—"}
-              label={agent.score_label}
-            />
+            <Stat value={score != null ? `${score.toFixed(0)}%` : "—"} label={agent.score_label} />
             <Stat value={String(stats.length)} label="dagen met activiteit" />
           </div>
 
@@ -124,9 +120,15 @@ function AgentDetail() {
             <div className="mt-3 h-56">
               {stats.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.map((s: any) => ({ date: s.date.slice(5), v: s.output_count }))}>
+                  <BarChart
+                    data={stats.map((s: any) => ({ date: s.date.slice(5), v: s.output_count }))}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.05 281 / 0.08)" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="oklch(0.28 0.05 281 / 0.4)" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11 }}
+                      stroke="oklch(0.28 0.05 281 / 0.4)"
+                    />
                     <YAxis tick={{ fontSize: 11 }} stroke="oklch(0.28 0.05 281 / 0.4)" width={30} />
                     <Tooltip />
                     <Bar dataKey="v" fill="oklch(0.63 0.22 281)" radius={[4, 4, 0, 0]} />
