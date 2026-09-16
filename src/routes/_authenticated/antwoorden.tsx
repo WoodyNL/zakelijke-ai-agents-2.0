@@ -134,8 +134,12 @@ function AntwoordenPagina() {
                         {naam ?? a.van_email}
                         {bedrijf && <span className="ml-2 text-ink/50">{bedrijf}</span>}
                       </p>
+                      {/* Het adres staat er alleen bij als er ook een naam is.
+                          Zonder naam is de kop het adres zelf, en dan is het
+                          twee keer tonen geen extra informatie maar ruis. */}
                       <p className="mt-0.5 text-[11.5px] text-ink/45">
-                        {a.van_email} · {wanneer(a.ontvangen_op)}
+                        {naam ? `${a.van_email} · ` : ""}
+                        {wanneer(a.ontvangen_op)}
                       </p>
                     </div>
 
