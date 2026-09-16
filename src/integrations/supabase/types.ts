@@ -102,6 +102,7 @@ export type Database = {
           hourly_rate: number | null
           hourly_rate_basis: string | null
           id: string
+          inbound_local: string | null
           kind: Database["public"]["Enums"]["agent_kind"]
           metric_label: string
           minutes_saved_basis: string | null
@@ -128,6 +129,7 @@ export type Database = {
           hourly_rate?: number | null
           hourly_rate_basis?: string | null
           id?: string
+          inbound_local?: string | null
           kind?: Database["public"]["Enums"]["agent_kind"]
           metric_label?: string
           minutes_saved_basis?: string | null
@@ -154,6 +156,7 @@ export type Database = {
           hourly_rate?: number | null
           hourly_rate_basis?: string | null
           id?: string
+          inbound_local?: string | null
           kind?: Database["public"]["Enums"]["agent_kind"]
           metric_label?: string
           minutes_saved_basis?: string | null
@@ -496,6 +499,70 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "outbound_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_replies: {
+        Row: {
+          afgehandeld_op: string | null
+          agent_id: string
+          contact_id: string | null
+          id: string
+          message_id: string | null
+          onderwerp: string | null
+          ontvangen_op: string
+          provider_id: string
+          tekst: string
+          van_email: string
+          van_naam: string | null
+        }
+        Insert: {
+          afgehandeld_op?: string | null
+          agent_id: string
+          contact_id?: string | null
+          id?: string
+          message_id?: string | null
+          onderwerp?: string | null
+          ontvangen_op?: string
+          provider_id: string
+          tekst?: string
+          van_email: string
+          van_naam?: string | null
+        }
+        Update: {
+          afgehandeld_op?: string | null
+          agent_id?: string
+          contact_id?: string | null
+          id?: string
+          message_id?: string | null
+          onderwerp?: string | null
+          ontvangen_op?: string
+          provider_id?: string
+          tekst?: string
+          van_email?: string
+          van_naam?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_replies_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_replies_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_replies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
             referencedColumns: ["id"]
           },
         ]
