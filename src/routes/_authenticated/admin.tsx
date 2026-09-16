@@ -378,10 +378,25 @@ function AgentRow({
         >
           Status opslaan
         </button>
+        {/* Een agent verwijderen neemt zijn kennisbank, zijn verbruik en zijn
+            hele geschiedenis mee: die hangen er met ON DELETE CASCADE aan. Dat
+            is niet terug te draaien, en het is precies wat er is gebeurd met de
+            website-assistent — één klik zonder tussenstap.
+            
+            Daarom staat de naam nu in de vraag: je moet lezen wát je weggooit
+            voordat je ja zegt. */}
         <button
           className="rounded-full border border-destructive/40 px-4 py-2 text-[12px] font-semibold text-destructive"
           disabled={busy}
-          onClick={() => onDeleteAgent(agent.id)}
+          onClick={() => {
+            const zeker = window.confirm(
+              `"${agent.name}" definitief verwijderen?\n\n` +
+                "Hiermee verdwijnt ook zijn hele kennisbank, zijn verbruiksgeschiedenis " +
+                "en alles wat eraan hangt. Dit kan niet ongedaan worden gemaakt.\n\n" +
+                "Wil je hem alleen tijdelijk uitzetten, kies dan Gepauzeerd bij de status.",
+            );
+            if (zeker) onDeleteAgent(agent.id);
+          }}
         >
           Verwijderen
         </button>
@@ -452,6 +467,7 @@ type AgentRij = {
   fair_use_per_month?: number | null;
   overage_price?: number | null;
   inbound_local?: string | null;
+  slug?: string | null;
 };
 
 function AannamesBlok({
@@ -474,6 +490,7 @@ function AannamesBlok({
     fairUsePerMonth: agent.fair_use_per_month?.toString() ?? "",
     overagePrice: agent.overage_price?.toString() ?? "1",
     inboundLocal: agent.inbound_local ?? "",
+    slug: agent.slug ?? "",
   });
 
   const ingevuld = agent.minutes_saved_per_action != null || agent.hourly_rate != null;
@@ -520,6 +537,7 @@ function AannamesBlok({
                   fairUsePerMonth: alsGetal(waarden.fairUsePerMonth),
                   overagePrice: alsGetal(waarden.overagePrice) ?? 1,
                   inboundLocal: alsTekst(waarden.inboundLocal),
+                  slug: alsTekst(waarden.slug),
                 }),
               );
             }}

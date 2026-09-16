@@ -21,6 +21,8 @@ export type Aannamewaarden = {
   overagePrice: string;
   /** Ontvangstadres voor antwoorden; alleen het stuk vóór de apenstaart. */
   inboundLocal: string;
+  /** De publieke naam waarmee de website deze agent opzoekt. */
+  slug: string;
 };
 
 export const LEGE_AANNAMES: Aannamewaarden = {
@@ -32,6 +34,7 @@ export const LEGE_AANNAMES: Aannamewaarden = {
   fairUsePerMonth: "",
   overagePrice: "1",
   inboundLocal: "",
+  slug: "",
 };
 
 /** Lege invoer wordt null, zodat het dashboard het cijfer weglaat. */

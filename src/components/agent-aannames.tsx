@@ -128,6 +128,23 @@ export function AgentAannames({
             dat er geen antwoorden binnenkomen; een verkeerd ingevulde waarde
             betekent dat antwoorden stilletjes bij niemand aankomen, dus staat
             er uitdrukkelijk bij waar dit vandaan komt. */}
+        {/* De slug is de naam waarmee de website deze agent opzoekt. Hij stond
+            nergens in een scherm, en toen de website-assistent per ongeluk werd
+            verwijderd bleek hij daardoor niet opnieuw aan te maken zonder dat
+            er iemand in de database dook. Een waarde waar de site op draait,
+            hoort bereikbaar te zijn voor wie de site beheert. */}
+        <Veld
+          label="Slug"
+          hint="Waarmee de website deze agent opzoekt — voor de website-assistent: website-assistent"
+        >
+          <input
+            className={veldCls}
+            placeholder="bijv. website-assistent"
+            value={waarden.slug}
+            onChange={(e) => zet("slug")(e.target.value)}
+          />
+        </Veld>
+
         <Veld
           label="Ontvangstadres voor antwoorden"
           hint="Alleen het stuk vóór de @ — laat leeg als deze agent geen e-mail verstuurt"

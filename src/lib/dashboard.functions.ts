@@ -163,6 +163,23 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
          * Alleen kleine letters, cijfers, punt en streepje — dat is wat een
          * e-mailadres links van de apenstaart betrouwbaar aankan.
          */
+        /**
+         * De publieke naam waarmee de website deze agent opzoekt. Alleen kleine
+         * letters, cijfers en streepjes.
+         *
+         * Dit veld ontbrak, en dat heeft geld gekost: toen de website-assistent
+         * per ongeluk werd verwijderd, kon hij niet opnieuw worden aangemaakt
+         * zonder dat er iemand rechtstreeks in de database ging. Een waarde
+         * waar de site op draait, hoort bereikbaar te zijn voor wie de site
+         * beheert.
+         */
+        slug: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9-]{2,64}$/, "Alleen kleine letters, cijfers en streepjes.")
+          .nullable()
+          .optional(),
         inboundLocal: z
           .string()
           .trim()
@@ -195,6 +212,7 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
       ...optioneel(data.hourlyRateBasis, "hourly_rate_basis"),
       ...optioneel(data.fairUsePerMonth, "fair_use_per_month"),
       ...optioneel(data.overagePrice, "overage_price"),
+      ...optioneel(data.slug, "slug"),
       ...optioneel(data.inboundLocal, "inbound_local"),
     };
     const { error } = data.id
