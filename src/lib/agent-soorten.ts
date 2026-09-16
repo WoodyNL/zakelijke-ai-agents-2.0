@@ -8,7 +8,12 @@
  */
 
 export type AgentSoort =
-  "chat_assistent" | "sales_assistent" | "inbox_draft" | "whatsapp_followup" | "overig";
+  | "chat_assistent"
+  | "uitgaande_email"
+  | "sales_assistent"
+  | "inbox_draft"
+  | "whatsapp_followup"
+  | "overig";
 
 type Beschrijving = {
   label: string;
@@ -24,6 +29,17 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Beantwoordt vragen van bezoekers op je website. Wat hij weet, komt uit zijn kennisbank.",
+  },
+  uitgaande_email: {
+    label: "Uitgaande e-mailagent",
+    // Wél een kennisbank, en om een andere reden dan bij de chat-assistent. Die
+    // beantwoordt vragen van vreemden op een website; deze schrijft namens het
+    // bedrijf aan mensen die het kennen. Wat hij beweert over prijzen, levering
+    // en wat er in een pakket zit, moet uit de kennisbank komen en niet uit wat
+    // het model aannemelijk vindt.
+    kennisbank: true,
+    uitleg:
+      "Neemt zelf contact op met je relaties en volgt op. Wat hij over je bedrijf zegt, komt uit zijn kennisbank.",
   },
   sales_assistent: {
     label: "Sales-assistent",

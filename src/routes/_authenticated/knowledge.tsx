@@ -320,8 +320,8 @@ function KnowledgePage() {
       {actieveAgent && !leestKennis && (
         <p className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[12.5px]/[1.7] text-ink/60">
           Je kunt hier alvast alles kwijt over je bedrijf: prijzen, voorwaarden, veelgestelde
-          vragen. We bewaren het bij {actieveAgent.name}. Zodra er een chat-assistent voor je
-          draait, is dit wat hij aan bezoekers vertelt.
+          vragen. We bewaren het bij {actieveAgent.name}. Zodra er een agent draait die vragen
+          beantwoordt, is dit waar hij het uit haalt.
         </p>
       )}
 
