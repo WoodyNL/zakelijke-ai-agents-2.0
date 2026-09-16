@@ -14,6 +14,8 @@ export type AgentStand = {
   agent: { id: string; name: string; kind: string | null };
   stand: {
     requests: number;
+    /** De ruwe teller; alleen voor beheerders interessant bij een groot verschil. */
+    ruwe_requests?: number;
     fair_use_per_month: number | null;
     boven_grens: number;
     overage_price: number | null;

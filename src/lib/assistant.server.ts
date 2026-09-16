@@ -139,7 +139,14 @@ export async function noteerVerbruik(
   agentId: string,
   usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number },
 ) {
-  const rest = supabaseRest();
+  // Bewust met de service-role: deze functie telt het gesprek mee dat straks op
+  // de factuur komt, en mag daarom niet aanroepbaar zijn voor een bezoeker. Een
+  // bezoeker kan wel de snelheidsteller ophogen, maar sluit daarmee alleen
+  // zichzelf buiten.
+  //
+  // Lokaal is die sleutel er niet, dus wordt er niets geteld. Dat klopt: lokaal
+  // factureren we ook niets.
+  const rest = supabaseRest(true);
   if (!rest) return;
   try {
     await fetch(`${rest.url}/rest/v1/rpc/record_agent_tokens`, {

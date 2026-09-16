@@ -176,6 +176,36 @@ meld(
   "het meldadres lekt niet mee in de publieke configuratie",
 );
 
+// --- 6. De teller die de factuur bepaalt, is afgeschermd ------------------
+//
+// claim_agent_request mag een bezoeker aanroepen: dat is de snelheidslimiet, en
+// wie hem ophoogt sluit alleen zichzelf buiten. record_agent_tokens telt mee wat
+// er op de factuur komt en mag dus niet aanroepbaar zijn, anders kan iemand de
+// rekening van een klant opblazen. Het agent-id is namelijk te achterhalen: de
+// slug staat in het embed-script en agent_public_config geeft het id daarbij.
+console.log("\nFacturatie");
+
+const NEP = "00000000-0000-4000-8000-000000000000";
+const tokenPoging = await rest("rpc/record_agent_tokens", {
+  method: "POST",
+  body: JSON.stringify({ _agent_id: NEP, _input: 0, _output: 0, _cache_read: 0 }),
+});
+meld(
+  tokenPoging.status === 401 || tokenPoging.status === 403,
+  "een bezoeker kan het facturabele verbruik niet ophogen",
+  `HTTP ${tokenPoging.status}${tokenPoging.status < 300 ? " \u2014 AANROEPBAAR, DIT HOORT DICHT" : ""}`,
+);
+
+const maandPoging = await rest("rpc/agent_month_summary", {
+  method: "POST",
+  body: JSON.stringify({ _agent_id: NEP, _month_offset: 0 }),
+});
+meld(
+  maandPoging.status === 401 || maandPoging.status === 403,
+  "een bezoeker kan de maandstand niet opvragen",
+  `HTTP ${maandPoging.status}`,
+);
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) {
   console.log("Alles in orde: geen lek gevonden.\n");
