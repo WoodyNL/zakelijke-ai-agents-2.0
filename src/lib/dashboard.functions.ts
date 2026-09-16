@@ -157,6 +157,19 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
         hourlyRateBasis: z.string().max(200).nullable().optional(),
         fairUsePerMonth: z.number().int().min(0).max(1000000).nullable().optional(),
         overagePrice: z.number().min(0).max(100).optional(),
+        /**
+         * Het stuk vóór de apenstaart van het ontvangstadres waarop antwoorden
+         * van klanten binnenkomen. Leeg betekent: deze agent ontvangt niets.
+         * Alleen kleine letters, cijfers, punt en streepje — dat is wat een
+         * e-mailadres links van de apenstaart betrouwbaar aankan.
+         */
+        inboundLocal: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9._-]{1,64}$/, "Alleen kleine letters, cijfers, punt en streepje.")
+          .nullable()
+          .optional(),
       })
       .parse(d),
   )
@@ -182,6 +195,7 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
       ...optioneel(data.hourlyRateBasis, "hourly_rate_basis"),
       ...optioneel(data.fairUsePerMonth, "fair_use_per_month"),
       ...optioneel(data.overagePrice, "overage_price"),
+      ...optioneel(data.inboundLocal, "inbound_local"),
     };
     const { error } = data.id
       ? await context.supabase.from("agents").update(row).eq("id", data.id)

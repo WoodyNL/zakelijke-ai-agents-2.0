@@ -451,6 +451,7 @@ type AgentRij = {
   hourly_rate_basis?: string | null;
   fair_use_per_month?: number | null;
   overage_price?: number | null;
+  inbound_local?: string | null;
 };
 
 function AannamesBlok({
@@ -472,6 +473,7 @@ function AannamesBlok({
     hourlyRateBasis: agent.hourly_rate_basis ?? "",
     fairUsePerMonth: agent.fair_use_per_month?.toString() ?? "",
     overagePrice: agent.overage_price?.toString() ?? "1",
+    inboundLocal: agent.inbound_local ?? "",
   });
 
   const ingevuld = agent.minutes_saved_per_action != null || agent.hourly_rate != null;
@@ -517,6 +519,7 @@ function AannamesBlok({
                   hourlyRateBasis: alsTekst(waarden.hourlyRateBasis),
                   fairUsePerMonth: alsGetal(waarden.fairUsePerMonth),
                   overagePrice: alsGetal(waarden.overagePrice) ?? 1,
+                  inboundLocal: alsTekst(waarden.inboundLocal),
                 }),
               );
             }}

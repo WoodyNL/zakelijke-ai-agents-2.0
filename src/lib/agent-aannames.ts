@@ -19,6 +19,8 @@ export type Aannamewaarden = {
   hourlyRateBasis: string;
   fairUsePerMonth: string;
   overagePrice: string;
+  /** Ontvangstadres voor antwoorden; alleen het stuk vóór de apenstaart. */
+  inboundLocal: string;
 };
 
 export const LEGE_AANNAMES: Aannamewaarden = {
@@ -29,6 +31,7 @@ export const LEGE_AANNAMES: Aannamewaarden = {
   hourlyRateBasis: "",
   fairUsePerMonth: "",
   overagePrice: "1",
+  inboundLocal: "",
 };
 
 /** Lege invoer wordt null, zodat het dashboard het cijfer weglaat. */

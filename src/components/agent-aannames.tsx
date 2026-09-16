@@ -123,6 +123,22 @@ export function AgentAannames({
             />
           </Veld>
         </div>
+
+        {/* Alleen nodig bij een agent die e-mail verstuurt. Leeg laten betekent
+            dat er geen antwoorden binnenkomen; een verkeerd ingevulde waarde
+            betekent dat antwoorden stilletjes bij niemand aankomen, dus staat
+            er uitdrukkelijk bij waar dit vandaan komt. */}
+        <Veld
+          label="Ontvangstadres voor antwoorden"
+          hint="Alleen het stuk vóór de @ — laat leeg als deze agent geen e-mail verstuurt"
+        >
+          <input
+            className={veldCls}
+            placeholder="bijv. fjsnacks"
+            value={waarden.inboundLocal}
+            onChange={(e) => zet("inboundLocal")(e.target.value)}
+          />
+        </Veld>
       </div>
 
       {/* De uitkomst naast de invoer, zodat je tijdens het gesprek ziet wat je
