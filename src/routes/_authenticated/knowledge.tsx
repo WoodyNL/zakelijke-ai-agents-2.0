@@ -104,15 +104,19 @@ function KnowledgePage() {
     kind: string | null;
   }>;
 
-  // Alleen agents die een kennisbank raadplegen. Dat staat nu als eigenschap in
-  // de database in plaats van dat we het afleiden uit de aanwezigheid van een
-  // slug; kennis aanbieden voor een agent die hem nooit leest, slaat wel iets
-  // op maar doet niets.
-  const gekoppeld = mijnAgents.filter((a) => heeftKennisbank(a.kind));
+  // Kennis gaat over het bedrijf van de klant, niet over één agent. Iemand moet
+  // zijn prijslijst en voorwaarden kwijt kunnen voordat er een chat-assistent
+  // staat, zodat het klaarstaat zodra die er komt. We slaan het daarom op bij
+  // de gekozen agent en zeggen erbij wie het straks gaat gebruiken.
+  const gekoppeld = mijnAgents;
+  const leestKennis = gekoppeld.some((a) => heeftKennisbank(a.kind));
   const [gekozenId, setGekozenId] = useState<string | null>(null);
   // Op id en niet op slug: niet elke agent heeft een slug, want die wordt pas
   // gezet als er een embed voor nodig is. Een id heeft elke agent.
-  const actieveId = gekozenId ?? gekoppeld[0]?.id ?? null;
+  // Een chat-assistent krijgt voorrang, want die gaat de kennis werkelijk lezen.
+  const actieveId =
+    gekozenId ?? gekoppeld.find((a) => heeftKennisbank(a.kind))?.id ?? gekoppeld[0]?.id ?? null;
+  const actieveAgent = gekoppeld.find((a) => a.id === actieveId) ?? null;
   const isAdmin = meQuery.data?.isAdmin === true;
   // Geen enabled-vlag meer op de rol: RLS bepaalt wat iemand terugkrijgt. Een
   // beheerder ziet alles, een klant alleen de kennis van zijn eigen agents.
@@ -295,9 +299,18 @@ function KnowledgePage() {
               }`}
             >
               {a.name}
+              <span className="ml-1.5 opacity-60">{soortVan(a.kind).label}</span>
             </button>
           ))}
         </div>
+      )}
+
+      {actieveAgent && !leestKennis && (
+        <p className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[12.5px]/[1.7] text-ink/60">
+          Je kunt hier alvast alles kwijt over je bedrijf: prijzen, voorwaarden, veelgestelde
+          vragen. We bewaren het bij {actieveAgent.name}. Zodra er een chat-assistent voor je
+          draait, is dit wat hij aan bezoekers vertelt.
+        </p>
       )}
 
       <div className="mt-6">
@@ -306,11 +319,8 @@ function KnowledgePage() {
         ) : (
           <div className="card-glass rounded-3xl p-5">
             <p className="max-w-[68ch] text-[13px]/[1.7] text-ink/60">
-              {mijnAgents.length === 0
-                ? "Er is nog geen agent aan je account gekoppeld, dus er is nog geen kennisbank om te vullen. Zodra je agent is ingericht, kun je hier bestanden uploaden."
-                : `Een kennisbank hoort bij een chat-assistent, en die heb je nog niet. ${mijnAgents
-                    .map((a) => `${a.name} is een ${soortVan(a.kind).label.toLowerCase()}`)
-                    .join(", ")}. Neem contact op als je er een chat-assistent bij wilt.`}
+              Er is nog geen agent aan je account gekoppeld, dus er is nog geen plek om deze kennis
+              te bewaren. Zodra je agent is ingericht, kun je hier bestanden uploaden.
             </p>
           </div>
         )}

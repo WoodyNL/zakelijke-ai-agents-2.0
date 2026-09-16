@@ -31,6 +31,11 @@ const EXCEL = [
   "application/vnd.ms-excel",
 ];
 
+const WORD = [
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+];
+
 function alsBase64(bestand: File): Promise<string> {
   return new Promise((klaar, mis) => {
     const lezer = new FileReader();
@@ -58,6 +63,17 @@ async function excelAlsTekst(bestand: File): Promise<string> {
   }).join("\n\n");
 }
 
+/**
+ * Word wordt in de browser naar tekst omgezet. Net als bij Excel: het is een
+ * zipformaat dat de server niet hoeft te ontleden, en Claude leest het niet
+ * rechtstreeks zoals pdf en afbeeldingen.
+ */
+async function wordAlsTekst(bestand: File): Promise<string> {
+  const mammoth = await import("mammoth");
+  const { value } = await mammoth.extractRawText({ arrayBuffer: await bestand.arrayBuffer() });
+  return value;
+}
+
 export function KennisUpload({
   agentId,
   onOvernemen,
@@ -73,23 +89,40 @@ export function KennisUpload({
   const [sleep, setSleep] = React.useState(false);
   const invoer = React.useRef<HTMLInputElement>(null);
 
-  async function verwerk(bestand: File) {
+  /** Meerdere bestanden achter elkaar; de voorstellen stapelen op tot één lijst. */
+  async function verwerkAlle(bestanden: File[]) {
     setFout(null);
     setVoorstel(null);
+    const alles: KennisVoorstel[] = [];
+    const mislukt: string[] = [];
 
+    for (const bestand of bestanden) {
+      const uit = await verwerk(bestand);
+      if (uit) alles.push(...uit);
+      else mislukt.push(bestand.name);
+    }
+
+    if (alles.length > 0) setVoorstel(alles);
+    if (mislukt.length > 0 && alles.length > 0) {
+      setFout(`Niet gelukt: ${mislukt.join(", ")}. De rest staat hieronder.`);
+    }
+  }
+
+  async function verwerk(bestand: File): Promise<KennisVoorstel[] | null> {
     if (bestand.size > MAX_MB * 1024 * 1024) {
       setFout(
-        `Dit bestand is ${(bestand.size / 1024 / 1024).toFixed(1)} MB. Houd het onder ${MAX_MB} MB.`,
+        `${bestand.name} is ${(bestand.size / 1024 / 1024).toFixed(1)} MB. Houd het onder ${MAX_MB} MB.`,
       );
-      return;
+      return null;
     }
 
     const isExcel = EXCEL.includes(bestand.type) || /\.xlsx?$/i.test(bestand.name);
-    if (!isExcel && !LEESBAAR[bestand.type]) {
+    const isWord = WORD.includes(bestand.type) || /\.docx?$/i.test(bestand.name);
+    if (!isExcel && !isWord && !LEESBAAR[bestand.type]) {
       setFout(
-        "Dit bestandstype kan ik niet lezen. Gebruik pdf, afbeelding, tekst, csv, json of Excel.",
+        `${bestand.name} kan ik niet lezen. Gebruik pdf, Word, Excel, afbeelding, tekst, csv of json.`,
       );
-      return;
+      return null;
     }
 
     setBezig(true);
@@ -97,24 +130,27 @@ export function KennisUpload({
     try {
       const payload = isExcel
         ? { mediatype: "text/csv", inhoud: await excelAlsTekst(bestand) }
-        : LEESBAAR[bestand.type] === "pdf" || bestand.type.startsWith("image/")
-          ? { mediatype: bestand.type, inhoud: await alsBase64(bestand) }
-          : { mediatype: "text/plain", inhoud: await bestand.text() };
+        : isWord
+          ? { mediatype: "text/plain", inhoud: await wordAlsTekst(bestand) }
+          : LEESBAAR[bestand.type] === "pdf" || bestand.type.startsWith("image/")
+            ? { mediatype: bestand.type, inhoud: await alsBase64(bestand) }
+            : { mediatype: "text/plain", inhoud: await bestand.text() };
 
       const uitkomst = await importeer({
         data: { agentId, bestandsnaam: bestand.name, ...payload },
       });
 
       if (uitkomst.items.length === 0) {
-        setFout("Uit dit bestand kwam geen bruikbare kennis. Klopt het dat er tekst in staat?");
-      } else {
-        setVoorstel(uitkomst.items);
+        setFout(`Uit ${bestand.name} kwam geen bruikbare kennis. Klopt het dat er tekst in staat?`);
+        return null;
       }
+      return uitkomst.items;
     } catch (err) {
-      console.error("kennisimport mislukt", err);
+      console.error("kennisimport mislukt", bestand.name, err);
       setFout(
         err instanceof Error ? err.message : "Er ging iets mis bij het lezen van het bestand.",
       );
+      return null;
     } finally {
       setBezig(false);
     }
@@ -126,8 +162,9 @@ export function KennisUpload({
         Kennis toevoegen uit een bestand
       </h2>
       <p className="mt-1.5 max-w-[62ch] text-[12.5px]/[1.65] text-ink/60">
-        Upload een prijslijst, offerte, folder of veelgestelde vragen. We halen de kennis eruit en
-        laten je die eerst nakijken voordat er iets wordt opgeslagen.
+        Upload alles wat je agent moet weten: prijslijsten, offertes, folders, voorwaarden,
+        veelgestelde vragen. Meerdere bestanden tegelijk mag. We halen de kennis eruit en laten je
+        die eerst nakijken voordat er iets wordt opgeslagen.
       </p>
 
       <div
@@ -139,8 +176,8 @@ export function KennisUpload({
         onDrop={(e) => {
           e.preventDefault();
           setSleep(false);
-          const bestand = e.dataTransfer.files?.[0];
-          if (bestand) void verwerk(bestand);
+          const bestanden = [...(e.dataTransfer.files ?? [])];
+          if (bestanden.length) void verwerkAlle(bestanden);
         }}
         className={`mt-5 rounded-2xl border border-dashed p-6 text-center transition-colors ${
           sleep ? "border-violet/60 bg-violet/10" : "border-white/15 bg-white/[0.03]"
@@ -151,10 +188,11 @@ export function KennisUpload({
           id="kennis-bestand"
           type="file"
           className="sr-only"
-          accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.csv,.json,.xlsx,.xls"
+          accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.csv,.json"
+          multiple
           onChange={(e) => {
-            const bestand = e.target.files?.[0];
-            if (bestand) void verwerk(bestand);
+            const bestanden = [...(e.target.files ?? [])];
+            if (bestanden.length) void verwerkAlle(bestanden);
             e.target.value = "";
           }}
         />
@@ -168,17 +206,17 @@ export function KennisUpload({
           <>
             <FileUp className="mx-auto h-6 w-6 text-ink/40" aria-hidden="true" />
             <p className="mt-2.5 text-[13px] text-ink/70">
-              Sleep een bestand hierheen, of{" "}
+              Sleep bestanden hierheen, of{" "}
               <button
                 type="button"
                 onClick={() => invoer.current?.click()}
                 className="font-semibold text-violet underline underline-offset-2 hover:text-violet/80"
               >
-                kies een bestand
+                kies bestanden
               </button>
             </p>
             <p className="mt-1.5 text-[11.5px] text-ink/40">
-              pdf, afbeelding, tekst, csv, json of Excel · maximaal {MAX_MB} MB
+              pdf, Word, Excel, afbeelding, tekst, csv of json · maximaal {MAX_MB} MB per bestand
             </p>
           </>
         )}
