@@ -131,10 +131,11 @@ function ContactenPagina() {
                 </div>
               ) : (
                 <div className="mt-4 overflow-x-auto">
-                  <table className="w-full min-w-[560px] text-left text-[12.5px]">
+                  <table className="w-full min-w-[680px] text-left text-[12.5px]">
                     <thead>
                       <tr className="text-[11px] tracking-wide text-ink/45 uppercase">
                         <th className="pb-2 font-medium">Adres</th>
+                        <th className="pb-2 font-medium">Naam</th>
                         <th className="pb-2 font-medium">Bedrijf</th>
                         <th className="pb-2 font-medium">Plaats</th>
                         <th className="pb-2 font-medium">Herkomst</th>
@@ -157,6 +158,12 @@ function ContactenPagina() {
                                   bestaat niet
                                 </span>
                               )}
+                            </td>
+                            {/* De naam staat er bewust naast het adres: hiermee begint
+                                straks elke aanhef, dus dit is het veld dat je wilt
+                                nalopen voordat er iets uitgaat. */}
+                            <td className={`py-2 pr-3 ${c.naam ? "text-ink/70" : "text-ink/30"}`}>
+                              {c.naam ?? "geen naam"}
                             </td>
                             <td className="py-2 pr-3 text-ink/55">{c.bedrijf ?? "—"}</td>
                             <td className="py-2 pr-3 text-ink/55">{c.plaats ?? "—"}</td>
