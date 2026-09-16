@@ -26,10 +26,8 @@ type Campagne = {
   afzender_naam: string | null;
   afzender_email: string | null;
   antwoord_naar: string | null;
-  // Optioneel omdat de gegenereerde types deze twee nog niet kennen; na de
-  // migratie komen ze er gewoon in en blijft dit kloppen.
-  aanbod?: string | null;
-  ondertekening?: string | null;
+  aanbod: string | null;
+  ondertekening: string | null;
   dagmaximum: number;
   actief: boolean;
 };

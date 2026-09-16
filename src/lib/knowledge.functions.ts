@@ -19,16 +19,36 @@ export const CATEGORIES = [
  * knowledge of own agents". Dat is strenger dan een controle in de code, want
  * hij geldt ook als deze functie ooit ergens anders wordt aangeroepen.
  */
+/**
+ * De kennis van één agent.
+ *
+ * Het filter op agent_id lijkt dubbelop naast de beveiliging in de database, en
+ * voor een klant is dat ook zo: die krijgt toch alleen zijn eigen agents terug.
+ * Voor een beheerder niet. Die mag alles zien, en kreeg dus álle kennis van
+ * álle klanten in één lijst — terwijl er een agentkeuze boven stond die niets
+ * deed.
+ *
+ * Dat is geen lek maar wel gevaarlijk: je past een item aan of gooit het weg in
+ * de veronderstelling dat het bij de ene klant hoort, terwijl het bij een
+ * andere staat.
+ */
 export const listKnowledge = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .validator((d: unknown) =>
+    z.object({ agentId: z.string().uuid().optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    const zoeker = context.supabase
       .from("knowledge_items")
       .select("*")
       .order("category", { ascending: true })
       .order("sort_order", { ascending: true });
+
+    const { data: rijen, error } = await (data.agentId
+      ? zoeker.eq("agent_id", data.agentId)
+      : zoeker);
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return rijen ?? [];
   });
 
 export const saveKnowledge = createServerFn({ method: "POST" })

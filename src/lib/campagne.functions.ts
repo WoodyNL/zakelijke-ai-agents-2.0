@@ -55,7 +55,7 @@ export const bewaarCampagne = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await mijnAgent(context as never, data.agentId);
 
-    const bekend: TablesInsert<"outbound_campaigns"> = {
+    const rij: TablesInsert<"outbound_campaigns"> = {
       agent_id: data.agentId,
       naam: data.naam,
       herkomst: data.herkomst,
@@ -63,20 +63,11 @@ export const bewaarCampagne = createServerFn({ method: "POST" })
       afzender_naam: data.afzenderNaam ?? null,
       afzender_email: data.afzenderEmail ?? null,
       antwoord_naar: data.antwoordNaar ?? null,
+      aanbod: data.aanbod ?? null,
+      ondertekening: data.ondertekening ?? null,
       dagmaximum: data.dagmaximum,
       actief: data.actief,
     };
-
-    // aanbod en ondertekening staan wél in de database maar nog niet in de
-    // gegenereerde types; die worden opnieuw gemaakt nadat migratie
-    // 20260917180000 is gedraaid. Eén omweg op één plek, en hij mag weg zodra
-    // de types bij zijn. Staat hij er dan nog, dan lopen repo en database uit
-    // de pas — precies het probleem dat dit project al drie keer heeft gehad.
-    const rij = {
-      ...bekend,
-      aanbod: data.aanbod ?? null,
-      ondertekening: data.ondertekening ?? null,
-    } as TablesInsert<"outbound_campaigns">;
 
     const { error } = data.id
       ? await context.supabase.from("outbound_campaigns").update(rij).eq("id", data.id)

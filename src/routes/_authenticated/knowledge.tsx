@@ -120,9 +120,13 @@ function KnowledgePage() {
   const isAdmin = meQuery.data?.isAdmin === true;
   // Geen enabled-vlag meer op de rol: RLS bepaalt wat iemand terugkrijgt. Een
   // beheerder ziet alles, een klant alleen de kennis van zijn eigen agents.
+  // De sleutel bevat de agent, zodat wisselen van agent ook echt een andere
+  // lijst oplevert in plaats van dezelfde uit het geheugen.
   const itemsQuery = useQuery({
-    queryKey: ["knowledge"],
-    queryFn: () => listFn() as Promise<Item[]>,
+    queryKey: ["knowledge", actieveId],
+    queryFn: () =>
+      listFn({ data: actieveId ? { agentId: actieveId } : {} }) as Promise<Item[]>,
+    enabled: actieveId !== null,
   });
 
   const [draft, setDraft] = useState<Draft>(emptyDraft);
@@ -139,7 +143,7 @@ function KnowledgePage() {
     try {
       await fn();
       setMsg(okMsg);
-      await qc.invalidateQueries({ queryKey: ["knowledge"] });
+      await qc.invalidateQueries({ queryKey: ["knowledge", actieveId] });
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Er ging iets mis");
     } finally {
@@ -453,6 +457,16 @@ function KnowledgePage() {
 
       {/* List */}
       <section className="mt-4 space-y-2.5 pb-10">
+        {/* Als beheerder zie je de kennis van elke klant, en dan moet er geen
+            twijfel zijn over wie je voor je hebt. Zonder deze regel leek elke
+            agent dezelfde kennisbank te hebben. */}
+        {actieveAgent && !itemsQuery.isLoading && (
+          <p className="pb-1 text-[11.5px] text-ink/45">
+            {items.length === 0
+              ? `${actieveAgent.name} heeft nog geen kennis.`
+              : `${items.length} ${items.length === 1 ? "stuk" : "stukken"} van ${actieveAgent.name}.`}
+          </p>
+        )}
         {itemsQuery.isLoading && <p className="text-[13px] text-ink/55">Kennis laden…</p>}
         {!itemsQuery.isLoading && visible.length === 0 && (
           <p className="text-[13px] text-ink/55">Nog geen kennisstukken in deze categorie.</p>
