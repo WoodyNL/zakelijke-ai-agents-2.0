@@ -45,6 +45,7 @@ export function DashboardShell({
     { to: "/dashboard", label: "Dashboard" },
     { to: "/knowledge", label: "Kennisbank" },
     { to: "/contacten", label: "Contacten" },
+    { to: "/antwoorden", label: "Antwoorden" },
     ...(isAdmin ? [{ to: "/admin", label: "Beheer" }] : []),
     { to: "/account", label: "Account" },
   ];

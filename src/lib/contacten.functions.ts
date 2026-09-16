@@ -131,3 +131,42 @@ export const haalContacten = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return rijen ?? [];
   });
+
+/**
+ * De antwoorden die zijn binnengekomen.
+ *
+ * Ook die van een onbekend adres. Dat lijkt rommel maar is het niet: iemand die
+ * vanaf zijn privéadres terugschrijft, een collega die het overneemt, of een
+ * testbericht — het zijn juist de berichten die iemand moet lezen, omdat de
+ * software er zelf geen raad mee weet.
+ */
+export const haalAntwoorden = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rijen, error } = await context.supabase
+      .from("outbound_replies")
+      .select(
+        "id, van_email, van_naam, onderwerp, tekst, ontvangen_op, afgehandeld_op, contact_id, outbound_contacts(naam, bedrijf)",
+      )
+      .eq("agent_id", data.agentId)
+      .order("ontvangen_op", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return rijen ?? [];
+  });
+
+/** Een antwoord afvinken, of weer openzetten. */
+export const zetAntwoordAf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z.object({ id: z.string().uuid(), afgehandeld: z.boolean() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("outbound_replies")
+      .update({ afgehandeld_op: data.afgehandeld ? new Date().toISOString() : null })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

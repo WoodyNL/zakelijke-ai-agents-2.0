@@ -25,6 +25,7 @@ import { Route as TarievenRouteImport } from './routes/tarieven'
 import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/whatsapp-follow-up-automatiseren'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAntwoordenRouteImport } from './routes/_authenticated/antwoorden'
 import { Route as AuthenticatedContactenRouteImport } from './routes/_authenticated/contacten'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
@@ -113,6 +114,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAntwoordenRoute = AuthenticatedAntwoordenRouteImport.update({
+  id: '/antwoorden',
+  path: '/antwoorden',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedContactenRoute = AuthenticatedContactenRouteImport.update({
   id: '/contacten',
   path: '/contacten',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/_authenticated/contacten': typeof AuthenticatedContactenRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
     | '/admin'
+    | '/antwoorden'
     | '/contacten'
     | '/dashboard'
     | '/knowledge'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
     | '/admin'
+    | '/antwoorden'
     | '/contacten'
     | '/dashboard'
     | '/knowledge'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/whatsapp-follow-up-automatiseren'
     | '/_authenticated/account'
     | '/_authenticated/admin'
+    | '/_authenticated/antwoorden'
     | '/_authenticated/contacten'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
@@ -423,6 +435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/antwoorden': {
+      id: '/_authenticated/antwoorden'
+      path: '/antwoorden'
+      fullPath: '/antwoorden'
+      preLoaderRoute: typeof AuthenticatedAntwoordenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contacten': {
       id: '/_authenticated/contacten'
       path: '/contacten'
@@ -471,6 +490,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAntwoordenRoute: typeof AuthenticatedAntwoordenRoute
   AuthenticatedContactenRoute: typeof AuthenticatedContactenRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
@@ -480,6 +500,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAntwoordenRoute: AuthenticatedAntwoordenRoute,
   AuthenticatedContactenRoute: AuthenticatedContactenRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
