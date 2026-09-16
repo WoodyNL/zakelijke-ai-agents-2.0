@@ -278,6 +278,7 @@ export type Database = {
       }
       outbound_campaigns: {
         Row: {
+          aanbod: string | null
           aangemaakt_op: string
           actief: boolean
           afzender_email: string | null
@@ -288,9 +289,11 @@ export type Database = {
           herkomst: Database["public"]["Enums"]["contact_herkomst"]
           id: string
           naam: string
+          ondertekening: string | null
           verzendwijze: Database["public"]["Enums"]["verzendwijze"]
         }
         Insert: {
+          aanbod?: string | null
           aangemaakt_op?: string
           actief?: boolean
           afzender_email?: string | null
@@ -301,9 +304,11 @@ export type Database = {
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
           naam: string
+          ondertekening?: string | null
           verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
         }
         Update: {
+          aanbod?: string | null
           aangemaakt_op?: string
           actief?: boolean
           afzender_email?: string | null
@@ -314,6 +319,7 @@ export type Database = {
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
           naam?: string
+          ondertekening?: string | null
           verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
         }
         Relationships: [
