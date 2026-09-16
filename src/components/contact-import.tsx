@@ -25,10 +25,13 @@ import {
 
 const KOLOMNAMEN: Record<Kolomsoort, string> = {
   email: "E-mailadres",
-  naam: "Naam",
+  naam: "Naam (volledig)",
+  voornaam: "Voornaam",
+  achternaam: "Achternaam",
   bedrijf: "Bedrijf",
   plaats: "Plaats",
   telefoon: "Telefoon",
+  herkomst: "Klant of prospect",
   negeren: "— niet gebruiken —",
 };
 
@@ -106,6 +109,19 @@ export function ContactImport({
   );
 
   const heeftEmail = kolommen.includes("email");
+
+  // Zegt het bestand per rij of iemand klant of prospect was, dan is de
+  // keuzelijst hieronder alleen nog een terugval. Dat moet je zien: anders stel
+  // je "oud-klanten" in en krijgt de helft toch de koude tekst.
+  const perRij = gelezen.contacten.reduce(
+    (t, c) => {
+      if (c.herkomst === "oud_klant") t.klant++;
+      else if (c.herkomst === "koud") t.prospect++;
+      return t;
+    },
+    { klant: 0, prospect: 0 },
+  );
+  const bestandWeetHet = perRij.klant + perRij.prospect > 0;
 
   async function opslaan() {
     zetBezig(true);
@@ -306,10 +322,21 @@ export function ContactImport({
                 </option>
               </select>
               <span className="mt-1 block text-[10.5px] text-ink/40">
-                Bepaalt de toon van het eerste bericht
+                {bestandWeetHet
+                  ? "Alleen voor rijen die het zelf niet aangeven"
+                  : "Bepaalt de toon van het eerste bericht"}
               </span>
             </label>
           </div>
+
+          {bestandWeetHet && (
+            <p className="mt-3 rounded-2xl border border-violet/25 bg-violet/[0.06] px-4 py-3 text-[12.5px]/[1.65] text-ink/80">
+              Dit bestand geeft per rij aan wat voor relatie het is:{" "}
+              <strong className="font-semibold text-brand">{perRij.klant}</strong> oud-klanten en{" "}
+              <strong className="font-semibold text-brand">{perRij.prospect}</strong> prospects. Die
+              indeling wordt aangehouden — ze krijgen straks een ander eerste bericht.
+            </p>
+          )}
 
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
             <p className="text-[12.5px] text-ink/75">

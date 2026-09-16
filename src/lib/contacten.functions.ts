@@ -19,10 +19,13 @@ const contactSchema = z.object({
   bedrijf: z.string().max(200).optional(),
   plaats: z.string().max(120).optional(),
   telefoon: z.string().max(60).optional(),
+  /** Staat er in het bestand zelf of dit een klant of een prospect is, dan wint dat. */
+  herkomst: z.enum(["oud_klant", "koud"]).optional(),
 });
 
 const importSchema = z.object({
   agentId: z.string().uuid(),
+  /** De keuze bij de import; geldt voor elke rij die het zelf niet zegt. */
   herkomst: z.enum(["oud_klant", "koud"]),
   contacten: z.array(contactSchema).min(1).max(5000),
 });
@@ -83,7 +86,10 @@ export const importeerContacten = createServerFn({ method: "POST" })
       const rij: TablesInsert<"outbound_contacts"> = {
         agent_id: data.agentId,
         email: c.email.toLowerCase(),
-        herkomst: data.herkomst,
+        // Het bestand weet het beter dan de keuzelijst: een export met een kolom
+        // "Prospect/Klant" bevat allebei door elkaar, en die twee groepen
+        // krijgen straks een heel ander eerste bericht.
+        herkomst: c.herkomst ?? data.herkomst,
       };
       if (c.naam) rij.naam = c.naam;
       if (c.bedrijf) rij.bedrijf = c.bedrijf;

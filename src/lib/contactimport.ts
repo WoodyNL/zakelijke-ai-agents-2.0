@@ -13,16 +13,65 @@
  * krijgt een reden, zodat zichtbaar is wat er niet is geïmporteerd.
  */
 
-export type Kolomsoort = "email" | "naam" | "bedrijf" | "plaats" | "telefoon" | "negeren";
+export type Kolomsoort =
+  | "email"
+  | "naam"
+  | "voornaam"
+  | "achternaam"
+  | "bedrijf"
+  | "plaats"
+  | "telefoon"
+  | "herkomst"
+  | "negeren";
 
-/** Wat we in een kop zoeken om een kolom te herkennen, in volgorde van zekerheid. */
+/**
+ * Woorden die een kolom verraden. Volgorde binnen een lijst doet er niet toe;
+ * de score bepaalt wat wint.
+ *
+ * Bewust géén losse "relatie": een CRM-export begint met "Unieke relatiecode",
+ * en dat is een klantnummer, geen bedrijfsnaam. Dat is precies hoe de eerste
+ * echte lijst de vorige versie onderuit haalde.
+ */
 const KOPPEN: Record<Exclude<Kolomsoort, "negeren">, string[]> = {
   email: ["e-mail", "email", "mail", "emailadres", "e-mailadres"],
-  naam: ["naam", "contactpersoon", "contact", "name", "achternaam", "voornaam"],
-  bedrijf: ["bedrijf", "bedrijfsnaam", "klant", "relatie", "company", "zaak", "debiteur"],
-  plaats: ["plaats", "stad", "woonplaats", "vestiging", "city", "gemeente"],
+  voornaam: ["voornaam", "first name", "firstname"],
+  achternaam: ["achternaam", "last name", "lastname", "familienaam"],
+  naam: ["naam", "contactpersoon", "contact", "name", "volledige naam"],
+  bedrijf: ["bedrijf", "bedrijfsnaam", "relatienaam", "klantnaam", "company", "zaak", "handelsnaam"],
+  plaats: ["plaats", "stad", "woonplaats", "vestigingsplaats", "city", "gemeente"],
   telefoon: ["telefoon", "tel", "telefoonnummer", "mobiel", "phone", "gsm"],
+  herkomst: ["prospect/klant", "prospect / klant", "soort relatie", "relatiesoort", "type relatie"],
 };
+
+/**
+ * Maakt van een kopregel het stuk dat er werkelijk toe doet.
+ *
+ * Boekhoudpakketten zetten er een categorie voor en een toelichting achter:
+ * "Factuurgegevens / Bedrijfsnaam", "Algemeen / Email (algemeen)",
+ * "Factuurgegevens / Bedrijfsnaam 2". Alleen het laatste stuk zegt iets.
+ */
+function kernVanKop(ruw: string): string {
+  let t = ruw.trim().toLowerCase();
+  // De categorie wordt gescheiden door een schuine streep mét spaties eromheen:
+  // "Instellingen / Prospect/Klant". Knippen op de láátste schuine streep zou
+  // daar "klant" van maken en de kolom onherkenbaar; knippen op " / " houdt het
+  // veld heel.
+  const schuin = t.lastIndexOf(" / ");
+  if (schuin > 0) t = t.slice(schuin + 3);
+  t = t.replace(/\([^)]*\)/g, " ");       // "(algemeen)" weg
+  t = t.replace(/\s*\d+\s*$/, "");         // "Bedrijfsnaam 2" -> "bedrijfsnaam"
+  return t.replace(/\s+/g, " ").trim();
+}
+
+/** Komt het woord als heel woord voor, en niet als deel van een langer woord? */
+function heelWoord(tekst: string, woord: string): boolean {
+  const i = tekst.indexOf(woord);
+  if (i < 0) return false;
+  const voor = i === 0 ? "" : tekst[i - 1]!;
+  const na = tekst[i + woord.length] ?? "";
+  const grens = (c: string) => c === "" || !/[a-z0-9]/.test(c);
+  return grens(voor) && grens(na);
+}
 
 /**
  * Herkent een e-mailadres goed genoeg om een lijst te schonen.
@@ -60,61 +109,57 @@ export function eersteEmail(cel: string): string | null {
 /**
  * Raadt per kolom wat erin staat.
  *
- * Eerst op de kopregel, want die is het betrouwbaarst. Levert dat voor e-mail
- * niets op, dan kijken we naar de inhoud: de kolom met de meeste geldige
- * adressen is de e-mailkolom. Een lijst zonder kopregel komt vaak genoeg voor
- * om dat op te vangen.
+ * De eerste echte klantlijst haalde de vorige aanpak onderuit, en het is
+ * leerzaam hoe. Die liep de kolommen van links naar rechts af en gaf elke
+ * kolom de eerste soort die paste. Kolom 0 heette "Unieke relatiecode", dat
+ * bevatte "relatie", en dus werd het klantnummer de bedrijfsnaam. Kolom 1 heette
+ * "Factuurgegevens / Bedrijfsnaam", maar bedrijf was al vergeven, en die kwam
+ * terecht op naam. Resultaat: tweehonderd mails die een slagerij aanspreken
+ * alsof het een persoon is.
+ *
+ * Twee dingen zijn daarom veranderd. Er wordt gescoord in plaats van gegrepen,
+ * en pas als alles gescoord is wordt er toegewezen — hoogste score eerst. En er
+ * wordt op hele woorden gematcht, zodat "relatiecode" niet meer meetelt als
+ * "relatie".
  */
 export function raadKolommen(rijen: string[][]): Kolomsoort[] {
   const kop = rijen[0] ?? [];
   const breedte = Math.max(...rijen.map((r) => r.length), 0);
   const uitkomst: Kolomsoort[] = Array(breedte).fill("negeren");
-  const gebruikt = new Set<Kolomsoort>();
-
   const soorten = Object.entries(KOPPEN) as [Exclude<Kolomsoort, "negeren">, string[]][];
-  const tekstVan = (i: number) => (kop[i] ?? "").trim().toLowerCase();
 
-  // Twee rondes, en de volgorde is het hele punt. "Bedrijfsnaam" bevat het
-  // woord "naam", dus een enkele ronde die per kolom de eerste de beste
-  // treffer pakt maakt er een persoonsnaam van — waarna de kolom die
-  // wérkelijk de contactpersoon bevat nergens meer heen kan, en er straks
-  // tweehonderd mails uitgaan die een slagerij met "Beste Slagerij Van Dam"
-  // aanspreken.
-  //
-  // Ronde 1 kent alleen kolommen toe waarvan de kop precies gelijk is aan een
-  // bekend woord. Pas in ronde 2 mag "bevat" meedoen, en dan wint het langste
-  // woord, zodat een specifieke kop het wint van een algemene.
+  const kandidaten: Array<{ kolom: number; soort: Kolomsoort; score: number }> = [];
   for (let i = 0; i < breedte; i++) {
-    const tekst = tekstVan(i);
-    if (!tekst) continue;
-    const treffer = soorten.find(([soort, woorden]) => !gebruikt.has(soort) && woorden.includes(tekst));
-    if (treffer) {
-      uitkomst[i] = treffer[0];
-      gebruikt.add(treffer[0]);
-    }
-  }
-
-  for (let i = 0; i < breedte; i++) {
-    if (uitkomst[i] !== "negeren") continue;
-    const tekst = tekstVan(i);
-    if (!tekst) continue;
-
-    let beste: { soort: Exclude<Kolomsoort, "negeren">; lengte: number } | null = null;
+    const kern = kernVanKop(kop[i] ?? "");
+    if (!kern) continue;
     for (const [soort, woorden] of soorten) {
-      if (gebruikt.has(soort)) continue;
+      let beste = 0;
       for (const woord of woorden) {
-        if (tekst.includes(woord) && (!beste || woord.length > beste.lengte)) {
-          beste = { soort, lengte: woord.length };
-        }
+        if (kern === woord) beste = Math.max(beste, 100);
+        else if (heelWoord(kern, woord)) beste = Math.max(beste, 50 + woord.length);
       }
-    }
-    if (beste) {
-      uitkomst[i] = beste.soort;
-      gebruikt.add(beste.soort);
+      if (beste > 0) kandidaten.push({ kolom: i, soort, score: beste });
     }
   }
 
-  if (!gebruikt.has("email")) {
+  // Hoogste score eerst; bij gelijke score wint de linkerkolom, want een export
+  // zet de belangrijkste gegevens vooraan. Zo wint "Factuurgegevens / Plaats"
+  // van "Verzendgegevens / Plaats" zonder dat we die regel apart hoeven op te
+  // schrijven.
+  kandidaten.sort((a, b) => b.score - a.score || a.kolom - b.kolom);
+
+  const kolomBezet = new Set<number>();
+  const soortBezet = new Set<Kolomsoort>();
+  for (const k of kandidaten) {
+    if (kolomBezet.has(k.kolom) || soortBezet.has(k.soort)) continue;
+    uitkomst[k.kolom] = k.soort;
+    kolomBezet.add(k.kolom);
+    soortBezet.add(k.soort);
+  }
+
+  // Geen e-mailkolom herkend? Dan kijken we naar de inhoud: de kolom met de
+  // meeste geldige adressen. Lijsten zonder kopregel komen vaak genoeg voor.
+  if (!soortBezet.has("email")) {
     let beste = -1;
     let meeste = 0;
     for (let i = 0; i < breedte; i++) {
@@ -139,13 +184,33 @@ export function heeftKopregel(rijen: string[][]): boolean {
   return !eerste.some((cel) => eersteEmail(cel) !== null);
 }
 
+export type Herkomst = "oud_klant" | "koud";
+
 export type GelezenContact = {
   email: string;
   naam?: string;
   bedrijf?: string;
   plaats?: string;
   telefoon?: string;
+  /** Alleen gevuld als het bestand zelf per rij zegt wat voor relatie het is. */
+  herkomst?: Herkomst;
 };
+
+/**
+ * Leest uit een cel of dit een oud-klant is of een prospect.
+ *
+ * In de export van FJ Snacks staat een kolom "Prospect/Klant", en het verschil
+ * is groot: wie ooit besteld heeft krijgt een ander bericht dan wie alleen ooit
+ * in het systeem is gezet. Herkennen we de waarde niet, dan geven we niets
+ * terug en valt de rij terug op de keuze die bij de import is gemaakt.
+ */
+export function leesHerkomst(cel: string): Herkomst | null {
+  const t = cel.trim().toLowerCase();
+  if (!t) return null;
+  if (t.startsWith("klant") || t.startsWith("customer")) return "oud_klant";
+  if (t.startsWith("prospect") || t.startsWith("lead")) return "koud";
+  return null;
+}
 
 export type Overgeslagen = { rij: number; reden: string; inhoud: string };
 
@@ -200,14 +265,23 @@ export function leesContacten(
       return waarde || undefined;
     };
 
+    // Een CRM houdt voor- en achternaam apart; wij hebben één naam nodig voor de
+    // aanhef. Staat er een losse naamkolom, dan wint die, want die is al
+    // samengesteld zoals de klant hem zelf schrijft.
+    const naam =
+      pak("naam") ?? [pak("voornaam"), pak("achternaam")].filter(Boolean).join(" ").trim();
+
     // Alleen velden meesturen die werkelijk iets bevatten. Een leeg veld
     // weglaten is niet hetzelfde als er een lege tekst in zetten: dat laatste
     // maakt van "onbekend" een bewering.
     const contact: GelezenContact = { email };
-    for (const soort of ["naam", "bedrijf", "plaats", "telefoon"] as const) {
+    if (naam) contact.naam = naam;
+    for (const soort of ["bedrijf", "plaats", "telefoon"] as const) {
       const waarde = pak(soort);
       if (waarde) contact[soort] = waarde;
     }
+    const herkomst = leesHerkomst(pak("herkomst") ?? "");
+    if (herkomst) contact.herkomst = herkomst;
     contacten.push(contact);
   });
 

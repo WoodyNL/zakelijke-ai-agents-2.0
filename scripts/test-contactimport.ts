@@ -106,6 +106,93 @@ meld(
   "kopregel wordt niet als contact ingelezen",
 );
 
+console.log("\nEchte CRM-export (kopregels uit de lijst van FJ Snacks)");
+
+// Deze kopregels komen letterlijk uit de eerste echte klantlijst. Ze staan hier
+// omdat de vorige versie er onderuit ging op een manier die met verzonnen
+// testgegevens nooit zichtbaar was geworden.
+const crm = [
+  [
+    "Unieke relatiecode",
+    "Factuurgegevens / Bedrijfsnaam",
+    "Factuurgegevens / Bedrijfsnaam 2",
+    "Factuurgegevens / Plaats",
+    "Verzendgegevens / Plaats",
+    "Algemeen / Telefoon (algemeen)",
+    "Algemeen / Email (algemeen)",
+    "Persoonsgegevens / Voornaam",
+    "Persoonsgegevens / Achternaam",
+    "Persoonsgegevens / Email (persoonlijk)",
+    "Instellingen / Prospect/Klant",
+    "Instellingen / Handelsnaam",
+  ],
+  [
+    "1015",
+    "Slagerij Van Dam",
+    "",
+    "LEIDEN",
+    "Leiden",
+    "0612812367",
+    "info@vandam.nl",
+    "Piet",
+    "van Dam",
+    "piet@vandam.nl",
+    "Klant",
+    "Van Dam VOF",
+  ],
+  [
+    "1048",
+    "Hotel Zuid",
+    "",
+    "DEN HAAG",
+    "",
+    "",
+    "receptie@hotelzuid.nl",
+    "Jan",
+    "Bakker",
+    "",
+    "Prospect",
+    "",
+  ],
+];
+
+const crmKolommen = raadKolommen(crm);
+const noem = (i: number) => crmKolommen[i];
+
+// Het klantnummer is geen bedrijfsnaam. Hierop ging de vorige versie mis: de
+// kop bevat "relatie", dus werd "1015" de bedrijfsnaam en schoof de echte
+// bedrijfsnaam door naar het naamveld.
+meld(noem(0) === "negeren", "klantnummer wordt genegeerd", `nu: ${noem(0)}`);
+meld(noem(1) === "bedrijf", "bedrijfsnaam wordt bedrijf", `nu: ${noem(1)}`);
+meld(noem(2) === "negeren", "tweede bedrijfsnaam blijft ongebruikt", `nu: ${noem(2)}`);
+meld(noem(3) === "plaats", "factuurplaats wint van verzendplaats", `nu: ${noem(3)}`);
+meld(noem(4) === "negeren", "verzendplaats blijft ongebruikt", `nu: ${noem(4)}`);
+meld(noem(5) === "telefoon", "telefoon ondanks '(algemeen)' erachter", `nu: ${noem(5)}`);
+meld(noem(6) === "email", "e-mail ondanks categorie ervoor", `nu: ${noem(6)}`);
+meld(noem(7) === "voornaam", "voornaam apart herkend", `nu: ${noem(7)}`);
+meld(noem(8) === "achternaam", "achternaam apart herkend", `nu: ${noem(8)}`);
+meld(noem(10) === "herkomst", "Prospect/Klant herkend ondanks schuine streep", `nu: ${noem(10)}`);
+meld(noem(11) === "negeren", "handelsnaam pakt bedrijf niet af", `nu: ${noem(11)}`);
+
+const crmGelezen = leesContacten(crm, crmKolommen, true);
+meld(crmGelezen.contacten.length === 2, "twee contacten", `${crmGelezen.contacten.length}`);
+meld(
+  crmGelezen.contacten[0]!.naam === "Piet van Dam",
+  "voor- en achternaam samengevoegd",
+  crmGelezen.contacten[0]!.naam ?? "(leeg)",
+);
+meld(
+  crmGelezen.contacten[0]!.bedrijf === "Slagerij Van Dam",
+  "bedrijfsnaam op de juiste plek, niet het klantnummer",
+  crmGelezen.contacten[0]!.bedrijf ?? "(leeg)",
+);
+meld(crmGelezen.contacten[0]!.herkomst === "oud_klant", "Klant wordt oud-klant");
+meld(crmGelezen.contacten[1]!.herkomst === "koud", "Prospect wordt koud");
+meld(
+  crmGelezen.contacten[1]!.naam === "Jan Bakker" && !("telefoon" in crmGelezen.contacten[1]!),
+  "lege telefoon blijft weg, naam blijft compleet",
+);
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) console.log("Alles in orde.\n");
 else {
