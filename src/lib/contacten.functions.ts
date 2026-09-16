@@ -1,0 +1,127 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { TablesInsert } from "@/integrations/supabase/types";
+
+/**
+ * Contacten opslaan en teruglezen.
+ *
+ * De import telt drie uitkomsten apart: toegevoegd, stond er al, en
+ * afgemeld. Dat laatste is geen detail. Wie zich heeft afgemeld en later
+ * opnieuw in een aangeleverde lijst opduikt — en dat gebeurt, want die lijst
+ * komt uit een boekhouding die van de afmelding niets weet — mag daardoor niet
+ * stilzwijgend terugkeren in de verzendlijst.
+ */
+
+const contactSchema = z.object({
+  email: z.string().email().max(254),
+  naam: z.string().max(200).optional(),
+  bedrijf: z.string().max(200).optional(),
+  plaats: z.string().max(120).optional(),
+  telefoon: z.string().max(60).optional(),
+});
+
+const importSchema = z.object({
+  agentId: z.string().uuid(),
+  herkomst: z.enum(["oud_klant", "koud"]),
+  contacten: z.array(contactSchema).min(1).max(5000),
+});
+
+export type Importuitkomst = {
+  toegevoegd: number;
+  bestond_al: number;
+  afgemeld_overgeslagen: number;
+  totaal_in_lijst: number;
+};
+
+export const importeerContacten = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => importSchema.parse(d))
+  .handler(async ({ context, data }): Promise<Importuitkomst> => {
+    // Eerst vaststellen dat deze agent van deze gebruiker is. RLS zou het ook
+    // tegenhouden, maar dan als een mislukte insert zonder uitleg; hier kunnen
+    // we zeggen wat er aan de hand is.
+    const { data: agent, error: agentFout } = await context.supabase
+      .from("agents")
+      .select("id")
+      .eq("id", data.agentId)
+      .maybeSingle();
+    if (agentFout) throw new Error(agentFout.message);
+    if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");
+
+    const adressen = data.contacten.map((c) => c.email.toLowerCase());
+
+    // Wat staat er al? In blokken opvragen, want een `in`-filter met
+    // duizenden waarden loopt tegen de lengte van een URL aan.
+    const bestaand = new Map<string, { afgemeld: boolean }>();
+    for (let i = 0; i < adressen.length; i += 200) {
+      const blok = adressen.slice(i, i + 200);
+      const { data: rijen, error } = await context.supabase
+        .from("outbound_contacts")
+        .select("email, afgemeld_op")
+        .eq("agent_id", data.agentId)
+        .in("email", blok);
+      if (error) throw new Error(error.message);
+      for (const r of rijen ?? []) {
+        bestaand.set(r.email.toLowerCase(), { afgemeld: r.afgemeld_op !== null });
+      }
+    }
+
+    let bestond_al = 0;
+    let afgemeld_overgeslagen = 0;
+    const nieuw: TablesInsert<"outbound_contacts">[] = [];
+
+    for (const c of data.contacten) {
+      const bekend = bestaand.get(c.email.toLowerCase());
+      if (bekend) {
+        // Een afgemeld contact dat opnieuw wordt aangeleverd, telt apart. Het
+        // blijft afgemeld; we laten alleen zien dat het is voorgekomen.
+        if (bekend.afgemeld) afgemeld_overgeslagen++;
+        else bestond_al++;
+        continue;
+      }
+      const rij: TablesInsert<"outbound_contacts"> = {
+        agent_id: data.agentId,
+        email: c.email.toLowerCase(),
+        herkomst: data.herkomst,
+      };
+      if (c.naam) rij.naam = c.naam;
+      if (c.bedrijf) rij.bedrijf = c.bedrijf;
+      if (c.plaats) rij.plaats = c.plaats;
+      if (c.telefoon) rij.telefoon = c.telefoon;
+      nieuw.push(rij);
+    }
+
+    let toegevoegd = 0;
+    for (let i = 0; i < nieuw.length; i += 500) {
+      const blok = nieuw.slice(i, i + 500);
+      const { error } = await context.supabase.from("outbound_contacts").insert(blok);
+      if (error) {
+        throw new Error(
+          `Opslaan onderbroken na ${toegevoegd} contacten: ${error.message}. Wat al is opgeslagen blijft staan; opnieuw importeren voegt de rest toe.`,
+        );
+      }
+      toegevoegd += blok.length;
+    }
+
+    return {
+      toegevoegd,
+      bestond_al,
+      afgemeld_overgeslagen,
+      totaal_in_lijst: data.contacten.length,
+    };
+  });
+
+export const haalContacten = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rijen, error } = await context.supabase
+      .from("outbound_contacts")
+      .select("id, email, naam, bedrijf, plaats, herkomst, afgemeld_op, bounce_op, aangemaakt_op")
+      .eq("agent_id", data.agentId)
+      .order("aangemaakt_op", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+    return rijen ?? [];
+  });
