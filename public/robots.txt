@@ -1,16 +1,28 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Eén groep voor alle crawlers, en met opzet geen aparte regels per bot.
+# Een crawler volgt namelijk alleen de groep die het nauwkeurigst op hem past
+# en negeert de rest: stond Googlebot hier apart, dan zou hij de Disallow
+# hieronder niet zien.
+#
+# Het klantportaal staat hier omdat die pagina's voor een bezoeker zonder
+# account toch doorsturen naar het inlogscherm. Ze leveren Google niets op en
+# vervuilen alleen het indexeringsrapport. De losse pagina's die ook niet in
+# de zoekresultaten horen — /auth, /reset-password, /afmelden en /embed — staan
+# hier juist niet: die dragen zelf al een noindex in de pagina, en die kan
+# Google alleen lezen als hij ze wél mag ophalen.
 
 User-agent: *
 Allow: /
+Disallow: /account
+Disallow: /admin
+Disallow: /agents
+Disallow: /antwoorden
+Disallow: /berichten
+Disallow: /bezorgen
+Disallow: /bezorglijst
+Disallow: /campagnes
+Disallow: /contact/
+Disallow: /contacten
+Disallow: /dashboard
+Disallow: /knowledge
 
 Sitemap: https://zakelijkeaiagents.nl/sitemap.xml
