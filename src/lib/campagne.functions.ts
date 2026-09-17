@@ -269,15 +269,7 @@ export const haalTrechter = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    // outbound_trechter bestaat in de database maar nog niet in de gegenereerde
-    // types; die worden opnieuw gemaakt nadat migratie 20260918140000 is
-    // gedraaid. Eén omweg op één plek, en hij mag weg zodra de types bij zijn.
-    const rpc = context.supabase.rpc as unknown as (
-      naam: string,
-      argumenten: Record<string, unknown>,
-    ) => Promise<{ data: Trechter[] | null; error: { message: string } | null }>;
-
-    const { data: rijen, error } = await rpc("outbound_trechter", {
+    const { data: rijen, error } = await context.supabase.rpc("outbound_trechter", {
       _agent_id: data.agentId,
     });
     if (error) throw new Error(error.message);
