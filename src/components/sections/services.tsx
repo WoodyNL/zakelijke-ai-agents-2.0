@@ -42,7 +42,7 @@ export function ServicesSection() {
                   </ul>
                   <a
                     href={c.link.href}
-                    className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-violet transition-colors hover:text-ink"
+                    className="mt-6 inline-flex items-center gap-1.5 py-2.5 -my-2.5 text-[13px] font-semibold text-violet transition-colors hover:text-ink"
                   >
                     {c.link.label}
                     <ArrowRight

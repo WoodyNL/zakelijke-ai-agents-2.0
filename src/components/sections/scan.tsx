@@ -125,7 +125,7 @@ export function BranchesSection() {
             {BRANCHES.footer}{" "}
             <a
               href="#contact"
-              className="group inline-flex items-center gap-1 font-semibold text-violet transition-colors hover:text-ink"
+              className="group inline-flex items-center gap-1 py-2.5 -my-2.5 font-semibold text-violet transition-colors hover:text-ink"
             >
               {BRANCHES.footerLink}
               <ArrowRight

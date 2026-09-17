@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -64,27 +64,27 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-agents-amsterdam")({
   head: () => ({
-    meta: [
-      { title: "AI agents Amsterdam — sales & klantenservice automatiseren" },
+    meta: paginaMeta({
+      pad: "/ai-agents-amsterdam",
+      titel: "AI agents Amsterdam — sales & klantenservice automatiseren",
+      beschrijving:
+        "AI agents voor Amsterdamse bedrijven: leads kwalificeren, e-mail beantwoorden en opvolgen via WhatsApp. Kennismaking online of persoonlijk in Amsterdam.",
+      ogTitel: "AI agents Amsterdam — sales & klantenservice automatiseren",
+      ogBeschrijving:
+        "Wij bouwen AI agents voor bedrijven in Amsterdam. Intake op locatie mogelijk, eerste agent binnen een week live.",
+      ogType: "website",
+    }),
+    links: [canoniek("/ai-agents-amsterdam")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "AI agents voor Amsterdamse bedrijven: leads kwalificeren, e-mail beantwoorden en opvolgen via WhatsApp. Kennismaking online of persoonlijk in Amsterdam.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "AI agents Amsterdam", pad: "/ai-agents-amsterdam" },
+        ]),
       },
-      {
-        property: "og:title",
-        content: "AI agents Amsterdam — sales & klantenservice automatiseren",
-      },
-      {
-        property: "og:description",
-        content:
-          "Wij bouwen AI agents voor bedrijven in Amsterdam. Intake op locatie mogelijk, eerste agent binnen een week live.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-agents-amsterdam") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

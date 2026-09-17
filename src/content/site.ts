@@ -258,7 +258,8 @@ export const METHOD = {
       title: "Beheer & doorontwikkeling",
       badge: "doorlopend",
       body: "Wij monitoren, verbeteren en houden alles compatibel als je systemen of de wetgeving veranderen. Maandelijks opzegbaar na de eerste drie maanden.",
-      result: "Monitoring, een maandrapportage met de KPI's en doorontwikkeling binnen een vast bedrag.",
+      result:
+        "Monitoring, een maandrapportage met de KPI's en doorontwikkeling binnen een vast bedrag.",
     },
   ],
 } as const;
@@ -519,7 +520,12 @@ export const GOVERNANCE = {
 export const PROOF = {
   h2: "Wat het in de praktijk doet",
   stats: [
-    { value: 40, prefix: "~", suffix: " seconden", text: "tot de eerste reactie op een nieuwe lead" },
+    {
+      value: 40,
+      prefix: "~",
+      suffix: " seconden",
+      text: "tot de eerste reactie op een nieuwe lead",
+    },
     { value: 3, suffix: "×", text: "sneller opgevolgd dan daarvoor" },
     { value: 0, text: "gemiste berichten buiten kantooruren" },
   ],
@@ -545,7 +551,6 @@ export const PERSON = {
   ],
   skills: ["Claude Code", "n8n", "Zapier", "Make", "AI-strategie", "Procesautomatisering"],
 } as const;
-
 
 export const FAQ = {
   h2: "Veelgestelde vragen",
@@ -620,5 +625,13 @@ export const FOOTER = {
     { label: "Tarieven", href: "#tarieven" },
     { label: "Veelgestelde vragen", href: "#faq" },
   ],
-  legal: ["Privacyverklaring", "Algemene voorwaarden", "AI-beleid"],
+  // Deze stonden hier als drie losse woorden en werden als <span> gerenderd:
+  // opschriften zonder pagina eronder. Nu zijn het verwijzingen naar teksten
+  // die er echt zijn — vereist door de AVG, en op een site die naleving
+  // verkoopt ook gewoon een kwestie van geloofwaardigheid.
+  legal: [
+    { label: "Privacyverklaring", href: "/privacyverklaring" },
+    { label: "Algemene voorwaarden", href: "/algemene-voorwaarden" },
+    { label: "AI-beleid", href: "/ai-beleid" },
+  ],
 } as const;

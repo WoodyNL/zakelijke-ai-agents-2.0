@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { TekstMetLinks } from "@/components/tekst-met-links";
 import { Reveal } from "@/hooks/use-reveal";
+import { datumInWoorden } from "@/content/blog";
 import { SITE } from "@/content/site";
 import { PAGINA_LABELS, verwantePaginas } from "@/lib/verwante-paginas";
 
@@ -16,6 +17,7 @@ export function SeoPage({
   intro,
   sections,
   faqs,
+  auteur,
   children,
 }: {
   kicker: string;
@@ -23,6 +25,12 @@ export function SeoPage({
   intro: string;
   sections: SeoSection[];
   faqs: { q: string; a: string }[];
+  /**
+   * Naam en datum boven een artikel. Wat in de structured data staat, hoort
+   * ook op de pagina zelf te zien te zijn: een lezer die wil weten wie dit
+   * beweert en wanneer, moet dat niet uit de broncode hoeven halen.
+   */
+  auteur?: { naam: string; gepubliceerd: string; gewijzigd?: string; leestijd?: string };
   children?: ReactNode;
 }) {
   const pad = useRouterState({ select: (staat) => staat.location.pathname });
@@ -31,33 +39,38 @@ export function SeoPage({
   return (
     <div className="theme-dark surface-gradient min-h-screen w-full font-sans text-ink antialiased">
       <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-8 sm:py-8">
+        {/* De merknaam en de volledige knoptekst passen samen niet op een
+            telefoon: de balk liep buiten het scherm en de hele pagina kreeg
+            daardoor een horizontale schuifbalk. Onder sm verdwijnt de naam
+            (het merkteken blijft) en staat er een kortere knoptekst. */}
         <div
-          className="flex items-center justify-between rounded-full border border-white/10 px-4 py-2 backdrop-blur-md sm:px-6"
+          className="flex items-center justify-between gap-2 rounded-full border border-white/10 px-4 py-2 backdrop-blur-md sm:px-6"
           style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
         >
-          <Link to="/" className="flex items-center gap-2">
-            <BrandLogo />
+          <Link to="/" className="flex min-w-0 items-center gap-2">
+            <BrandLogo textClassName="hidden text-[15px] sm:inline" />
           </Link>
           <div className="flex items-center gap-2">
             <Link
               to="/auth"
-              className="inline-flex h-9 items-center rounded-full border border-white/15 bg-white/10 px-4 text-[12px] font-semibold text-white hover:bg-white/20"
+              className="inline-flex h-9 shrink-0 items-center rounded-full border border-white/15 bg-white/10 px-3 text-[12px] font-semibold text-white hover:bg-white/20 sm:px-4"
             >
               Klantlogin
             </Link>
             <Link
               to="/"
               hash="contact"
-              className="inline-flex h-9 items-center whitespace-nowrap rounded-full bg-brand px-4 text-[12px] font-semibold text-primary-foreground cta-lift"
+              className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full bg-brand px-3 text-[12px] font-semibold text-primary-foreground cta-lift sm:px-4"
               style={shadowBrand}
             >
-              {SITE.ctaPrimary}
+              <span className="sm:hidden">Gratis verkenning</span>
+              <span className="hidden sm:inline">{SITE.ctaPrimary}</span>
             </Link>
           </div>
         </div>
 
         <nav aria-label="Kruimelpad" className="mt-6 text-[11px] text-ink/45">
-          <Link to="/" className="hover:text-ink/70">
+          <Link to="/" className="inline-block py-2.5 -my-2.5 hover:text-ink/70">
             Home
           </Link>
           <span className="px-1.5">/</span>
@@ -71,6 +84,27 @@ export function SeoPage({
           <h1 className="mt-2 font-display text-[30px]/[1.15] font-bold tracking-tight text-brand sm:text-[40px]/[1.1]">
             {title}
           </h1>
+          {auteur && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink/50">
+              <span>
+                Door <span className="font-semibold text-ink/70">{auteur.naam}</span>
+              </span>
+              <span aria-hidden="true">·</span>
+              <time dateTime={auteur.gepubliceerd}>{datumInWoorden(auteur.gepubliceerd)}</time>
+              {auteur.gewijzigd && auteur.gewijzigd !== auteur.gepubliceerd && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>bijgewerkt {datumInWoorden(auteur.gewijzigd)}</span>
+                </>
+              )}
+              {auteur.leestijd && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{auteur.leestijd} lezen</span>
+                </>
+              )}
+            </p>
+          )}
           <p className="mt-4 max-w-[62ch] text-[15px]/[1.7] text-ink/65">{intro}</p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
@@ -170,11 +204,38 @@ export function SeoPage({
           </div>
         </Reveal>
 
-        <footer className="mt-10 flex flex-wrap items-center justify-between gap-2 pb-6">
-          <span className="font-display text-[13px] font-semibold text-brand">
-            Zakelijke AI Agents
-          </span>
-          <span className="text-[11px] text-ink/40">Amsterdam · © 2026 Zakelijke AI Agents</span>
+        <footer className="mt-10 grid gap-3 pb-6">
+          {/* De juridische pagina's horen vanaf elke pagina bereikbaar te zijn,
+              niet alleen vanaf de homepage: het is de plek waar een bezoeker
+              nakijkt met wie hij te maken heeft. */}
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            <Link
+              to="/privacyverklaring"
+              className="inline-block py-2.5 -my-2.5 text-[11px] text-ink/40 hover:text-ink/70"
+            >
+              Privacyverklaring
+            </Link>
+            <Link
+              to="/algemene-voorwaarden"
+              className="inline-block py-2.5 -my-2.5 text-[11px] text-ink/40 hover:text-ink/70"
+            >
+              Algemene voorwaarden
+            </Link>
+            <Link
+              to="/ai-beleid"
+              className="inline-block py-2.5 -my-2.5 text-[11px] text-ink/40 hover:text-ink/70"
+            >
+              AI-beleid
+            </Link>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-display text-[13px] font-semibold text-brand">
+              Zakelijke AI Agents
+            </span>
+            <span className="text-[11px] text-ink/40">
+              Amsterdam · KvK {SITE.kvk} · © 2026 Zakelijke AI Agents
+            </span>
+          </div>
         </footer>
       </div>
     </div>

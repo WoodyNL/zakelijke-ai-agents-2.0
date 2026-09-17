@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, dienstJsonLd, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -55,24 +55,36 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-consultancy-mkb")({
   head: () => ({
-    meta: [
-      { title: "AI-consultancy & strategie voor het MKB" },
+    meta: paginaMeta({
+      pad: "/ai-consultancy-mkb",
+      titel: "AI-consultancy & strategie voor het MKB",
+      beschrijving:
+        "AI-consultancy voor het MKB: procesanalyse, toolkeuze, AI-beleid, AI Act-check en een roadmap voor zes maanden. Advies waar je ook zonder ons verder mee kunt.",
+      ogTitel: "AI-consultancy & strategie voor het MKB",
+      ogBeschrijving:
+        "Weten waar AI écht rendement oplevert, inclusief AI Act-naleving — zonder verplichte vervolgopdracht.",
+      ogType: "article",
+    }),
+    links: [canoniek("/ai-consultancy-mkb")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "AI-consultancy voor het MKB: procesanalyse, toolkeuze, AI-beleid, AI Act-naleving en een roadmap voor zes maanden. Advies waar je ook zonder ons verder mee kunt.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "AI-consultancy", pad: "/ai-consultancy-mkb" },
+        ]),
       },
-      { property: "og:title", content: "AI-consultancy & strategie voor het MKB" },
       {
-        property: "og:description",
-        content:
-          "Weten waar AI écht rendement oplevert, inclusief AI Act-naleving — zonder verplichte vervolgopdracht.",
+        type: "application/ld+json",
+        children: dienstJsonLd({
+          naam: "AI-consultancy & strategie",
+          beschrijving:
+            "Procesanalyse, toolkeuze en -sanering, AI-beleid, AI Act-check en een geprioriteerde roadmap voor zes maanden.",
+          pad: "/ai-consultancy-mkb",
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-consultancy-mkb") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

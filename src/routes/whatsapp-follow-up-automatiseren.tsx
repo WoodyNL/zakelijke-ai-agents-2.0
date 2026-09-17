@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, dienstJsonLd, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -58,24 +58,37 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/whatsapp-follow-up-automatiseren")({
   head: () => ({
-    meta: [
-      { title: "WhatsApp follow-up automatiseren met een AI agent" },
+    meta: paginaMeta({
+      pad: "/whatsapp-follow-up-automatiseren",
+      titel: "WhatsApp follow-up automatiseren met een AI agent",
+      beschrijving:
+        "Automatiseer follow-up via WhatsApp: persoonlijke opvolgberichten, instelbare timing en directe overdracht naar een mens. Demo online of in Amsterdam.",
+      ogTitel: "WhatsApp follow-up automatiseren met een AI agent",
+      ogBeschrijving:
+        "Een AI agent die leads en klanten op WhatsApp opvolgt en complexe gesprekken doorzet naar je team.",
+      ogType: "article",
+    }),
+    links: [canoniek("/whatsapp-follow-up-automatiseren")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "Automatiseer follow-up via WhatsApp: persoonlijke opvolgberichten, instelbare timing en directe overdracht naar een mens. Demo online of in Amsterdam.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "WhatsApp follow-up", pad: "/whatsapp-follow-up-automatiseren" },
+        ]),
       },
-      { property: "og:title", content: "WhatsApp follow-up automatiseren met een AI agent" },
       {
-        property: "og:description",
-        content:
-          "Een AI agent die leads en klanten op WhatsApp opvolgt en complexe gesprekken doorzet naar je team.",
+        type: "application/ld+json",
+        children: dienstJsonLd({
+          naam: "WhatsApp Follow-up Agent",
+          beschrijving:
+            "Een AI-agent die leads via WhatsApp opvolgt na een zelf ingestelde vertraging en overdraagt aan een mens zodra het gesprek complex wordt.",
+          pad: "/whatsapp-follow-up-automatiseren",
+          vanafPrijs: 795,
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/whatsapp-follow-up-automatiseren") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, dienstJsonLd, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -64,24 +64,37 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-scan")({
   head: () => ({
-    meta: [
-      { title: "AI-scan voor het MKB — weet binnen 2 weken waar AI geld oplevert" },
+    meta: paginaMeta({
+      pad: "/ai-scan",
+      titel: "AI-scan voor het MKB — weet binnen 2 weken waar AI geld oplevert",
+      beschrijving:
+        "De AI-scan van €1.450 brengt in twee weken in kaart waar AI je geld of tijd oplevert: kansenkaart, toolinventarisatie, AI Act-check en een roadmap.",
+      ogTitel: "AI-scan voor het MKB — vaste prijs, twee weken",
+      ogBeschrijving:
+        "Procesanalyse, kansenkaart en roadmap voordat je in een AI-tool investeert. Vaste prijs €1.450, verrekenbaar bij vervolgopdracht.",
+      ogType: "article",
+    }),
+    links: [canoniek("/ai-scan")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "De AI-scan (€1.450) brengt in twee weken in kaart waar AI in jouw bedrijf geld of tijd oplevert — met kansenkaart, toolinventarisatie, AI Act-check en een roadmap voor zes maanden.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "AI-scan", pad: "/ai-scan" },
+        ]),
       },
-      { property: "og:title", content: "AI-scan voor het MKB — vaste prijs, twee weken" },
       {
-        property: "og:description",
-        content:
-          "Procesanalyse, kansenkaart en roadmap voordat je in een AI-tool investeert. Vaste prijs €1.450, verrekenbaar bij vervolgopdracht.",
+        type: "application/ld+json",
+        children: dienstJsonLd({
+          naam: "AI-scan",
+          beschrijving:
+            "Procesanalyse van drie tot vijf kernprocessen, kansenkaart met terugverdientijd, toolinventarisatie, AI Act-check en een roadmap voor zes maanden.",
+          pad: "/ai-scan",
+          vanafPrijs: 1450,
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-scan") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

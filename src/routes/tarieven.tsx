@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PricingCards, RateSheet } from "@/components/sections/agents-pricing";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
 import { PRICING } from "@/content/site";
-import { absoluteUrl, offerCatalogJsonLd } from "@/lib/seo";
+import { canoniek, kruimelpadJsonLd, offerCatalogJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -78,19 +78,24 @@ const DESCRIPTION =
 
 export const Route = createFileRoute("/tarieven")({
   head: () => ({
-    meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: "Tarieven — wat AI-automatisering kost voor het MKB" },
-      { property: "og:description", content: DESCRIPTION },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/tarieven") },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Tarieven AI-agency voor het MKB" },
-      { name: "twitter:description", content: DESCRIPTION },
-    ],
-    links: [{ rel: "canonical", href: absoluteUrl("/tarieven") }],
+    meta: paginaMeta({
+      pad: "/tarieven",
+      titel: "Tarieven AI-agency | Wat kost AI-automatisering voor het MKB?",
+      beschrijving:
+        "AI-scan €1.450, kant-en-klare agent vanaf €795 + €495 p.m., AI-traject vanaf €4.500 en AI-partner €2.450 p.m. Vaste prijzen vooraf, geen jaarcontract.",
+      ogTitel: "Tarieven — wat AI-automatisering kost voor het MKB",
+      ogBeschrijving:
+        "Alle tarieven op een rij. Vaste prijzen vooraf, geen nacalculatie, geen jaarcontract.",
+    }),
+    links: [canoniek("/tarieven")],
     scripts: [
+      {
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "Tarieven", pad: "/tarieven" },
+        ]),
+      },
       { type: "application/ld+json", children: offerCatalogJsonLd(PRICING.cards) },
       { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],

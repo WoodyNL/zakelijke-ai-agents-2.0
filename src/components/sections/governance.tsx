@@ -91,7 +91,8 @@ export function ProofSection() {
               {PROOF.quote}
             </blockquote>
             <figcaption className="mt-4 text-[13px] text-ink/55">
-              <span className="font-semibold text-ink/80">{PROOF.quoteName}</span> — {PROOF.quoteRole}
+              <span className="font-semibold text-ink/80">{PROOF.quoteName}</span> —{" "}
+              {PROOF.quoteRole}
             </figcaption>
           </figure>
         </Reveal>
@@ -105,8 +106,6 @@ export function ProofSection() {
     </Section>
   );
 }
-
-import wouterAsset from "@/assets/wouter-ransijn.jpg.asset.json";
 
 export function PersonSection() {
   return (
@@ -122,17 +121,24 @@ export function PersonSection() {
                 className="pointer-events-none absolute -inset-3 rounded-[28px] bg-gradient-to-br from-violet/30 via-violet/5 to-transparent opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
               />
               <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 shadow-[0_24px_60px_-20px_oklch(0.2_0.04_285/0.9)] transition-transform duration-500 ease-out group-hover:-translate-y-1.5 group-hover:scale-[1.02]">
-                <img
-                  src={wouterAsset.url}
-                  alt={`Portret van ${PERSON.name}`}
-                  className="aspect-[3/4] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  loading="lazy"
-                />
+                {/* 434 kB JPEG van 1280 px werd hier op ruim een derde daarvan
+                    getoond. Nu 67 kB WebP met een JPEG ernaast voor browsers
+                    die geen WebP lezen, en met de maten erbij tegen verspringen. */}
+                <picture>
+                  <source srcSet="/wouter-ransijn.webp" type="image/webp" />
+                  <img
+                    src="/wouter-ransijn.jpg"
+                    width={840}
+                    height={1120}
+                    alt={`Portret van ${PERSON.name}`}
+                    className="aspect-[3/4] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </picture>
                 {/* Naam-overlay die omhoog schuift bij hover */}
                 <div className="absolute inset-x-0 bottom-0 translate-y-0 bg-gradient-to-t from-white/95 via-white/70 to-transparent p-4 transition-all duration-500 group-hover:translate-y-0">
-                  <p className="font-display text-[18px] font-bold text-black">
-                    {PERSON.name}
-                  </p>
+                  <p className="font-display text-[18px] font-bold text-black">{PERSON.name}</p>
                   <p className="text-[12px] text-black/70">{PERSON.role}</p>
                 </div>
                 {/* Violette rand-gloed bij hover */}

@@ -41,10 +41,21 @@ function RotatingService() {
     return () => window.clearInterval(interval);
   }, []);
 
+  // De breedte van het langste woord wordt gereserveerd door `roterende-dienst`
+  // in styles.css, via pseudo-inhoud. Hier stond eerst een tweede, onzichtbaar
+  // <span> met "Ondersteuning" erin. Dat hield de kop netjes stil, maar het
+  // woord stond wél in de tekst van de pagina: een zoekmachine las de H1 als
+  // "Zakelijke AI OndersteuningAgents". Pseudo-inhoud staat niet in de DOM en
+  // telt dus niet mee in wat er gelezen wordt.
   return (
-    <span className="relative inline-grid max-w-full align-bottom text-violet" aria-hidden="true">
-      <span className="invisible col-start-1 row-start-1">Ondersteuning</span>
-      <span key={ROTATING_SERVICES[activeIndex]} className="animate-word-swap col-start-1 row-start-1">
+    <span
+      className="roterende-dienst relative inline-grid max-w-full align-bottom text-violet"
+      aria-hidden="true"
+    >
+      <span
+        key={ROTATING_SERVICES[activeIndex]}
+        className="animate-word-swap col-start-1 row-start-1"
+      >
         {ROTATING_SERVICES[activeIndex]}
       </span>
     </span>
@@ -142,12 +153,16 @@ export function TrustBar() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet">
               Integraties
             </p>
-            <h2 id="integraties-titel" className="mt-2 font-display text-[22px] font-bold text-brand sm:text-[26px]">
+            <h2
+              id="integraties-titel"
+              className="mt-2 font-display text-[22px] font-bold text-brand sm:text-[26px]"
+            >
               AI die aansluit op wat je al gebruikt
             </h2>
           </div>
           <p className="max-w-[46ch] text-[13px]/[1.65] text-ink/60 md:text-right">
-            Van inbox en CRM tot planning en administratie. Wij verbinden je systemen tot één werkend proces.
+            Van inbox en CRM tot planning en administratie. Wij verbinden je systemen tot één
+            werkend proces.
           </p>
         </div>
 

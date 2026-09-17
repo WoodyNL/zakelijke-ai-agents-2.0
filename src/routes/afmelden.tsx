@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { z } from "zod";
 import { afmelden } from "@/lib/afmelden.functions";
+import { paginaMeta } from "@/lib/seo";
 
 /**
  * De pagina waar een afmeldlink op uitkomt.
@@ -21,7 +22,12 @@ import { afmelden } from "@/lib/afmelden.functions";
 export const Route = createFileRoute("/afmelden")({
   validateSearch: z.object({ s: z.string().optional() }),
   head: () => ({
-    meta: [{ title: "Afmelden" }, { name: "robots", content: "noindex" }],
+    meta: paginaMeta({
+      pad: "/afmelden",
+      titel: "Afmelden — Zakelijke AI Agents",
+      beschrijving: "Meld je af voor berichten van deze afzender.",
+      noindex: true,
+    }),
   }),
   component: AfmeldPagina,
 });
@@ -53,12 +59,10 @@ function AfmeldPagina() {
       <div className="card-glass-lg rounded-3xl p-6 sm:p-8">
         {klaar ? (
           <>
-            <h1 className="font-display text-[22px] font-bold text-brand">
-              Je bent afgemeld
-            </h1>
+            <h1 className="font-display text-[22px] font-bold text-brand">Je bent afgemeld</h1>
             <p className="mt-3 text-[14px]/[1.75] text-ink/70">
-              We sturen je geen post meer. Ook niet als je adres later opnieuw in een lijst
-              wordt aangeleverd — dat hebben we vastgelegd.
+              We sturen je geen post meer. Ook niet als je adres later opnieuw in een lijst wordt
+              aangeleverd — dat hebben we vastgelegd.
             </p>
           </>
         ) : !s ? (
@@ -67,9 +71,8 @@ function AfmeldPagina() {
               Deze link is niet compleet
             </h1>
             <p className="mt-3 text-[14px]/[1.75] text-ink/70">
-              Er ontbreekt een stukje aan de link. Open hem opnieuw vanuit de e-mail, of
-              antwoord gewoon op het bericht met "graag afmelden" — dan doen we het met de
-              hand.
+              Er ontbreekt een stukje aan de link. Open hem opnieuw vanuit de e-mail, of antwoord
+              gewoon op het bericht met "graag afmelden" — dan doen we het met de hand.
             </p>
           </>
         ) : (
@@ -78,8 +81,8 @@ function AfmeldPagina() {
               Geen post meer ontvangen?
             </h1>
             <p className="mt-3 text-[14px]/[1.75] text-ink/70">
-              Eén klik en je staat van de lijst. Je hoeft verder niets in te vullen en er
-              volgt geen bevestigingsmail.
+              Eén klik en je staat van de lijst. Je hoeft verder niets in te vullen en er volgt geen
+              bevestigingsmail.
             </p>
 
             <button

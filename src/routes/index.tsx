@@ -10,53 +10,24 @@ import { ProblemSection, ReasonsSection } from "@/components/sections/problem";
 import { BranchesSection, ScanSection } from "@/components/sections/scan";
 import { MethodSection, ServicesSection } from "@/components/sections/services";
 import { SiteHeader } from "@/components/sections/site-header";
-import { FAQ, PRICING, SITE } from "@/content/site";
-import { GOOGLE_BEDRIJFSPROFIEL, offerCatalogJsonLd } from "@/lib/seo";
+import { FAQ, PRICING } from "@/content/site";
+import { canoniek, offerCatalogJsonLd, paginaMeta } from "@/lib/seo";
 
 const TITLE = "AI-agency voor het MKB | Zakelijke AI Agents";
 const DESCRIPTION =
-  "95% van de AI-pilots levert niets op. Wij zorgen dat het bij jou wél werkt: AI-scan, consultancy, projectondersteuning en maatwerk automatiseringen voor het Nederlandse mkb.";
-const URL = "https://zakelijkeaiagents.nl/";
+  "95% van de AI-pilots levert niets op. Wij zorgen dat het bij jou wél werkt: AI-scan, consultancy en maatwerk AI-automatisering voor het Nederlandse mkb.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESCRIPTION },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: URL },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: TITLE },
-      { name: "twitter:description", content: DESCRIPTION },
-    ],
-    links: [{ rel: "canonical", href: URL }],
+    meta: paginaMeta({ pad: "/", titel: TITLE, beschrijving: DESCRIPTION }),
+    links: [canoniek("/")],
     scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "ProfessionalService",
-          name: SITE.name,
-          description: DESCRIPTION,
-          url: URL,
-          areaServed: "NL",
-          telephone: SITE.phone,
-          email: SITE.email,
-          sameAs: [GOOGLE_BEDRIJFSPROFIEL],
-          address: {
-            "@type": "PostalAddress",
-            addressLocality: "Amsterdam",
-            addressCountry: "NL",
-          },
-          serviceType: ["AI-consultancy", "AI-automatisering", "AI-implementatie"],
-        }),
-      },
-      {
-        type: "application/ld+json",
-        children: offerCatalogJsonLd(PRICING.cards),
-      },
+      // Het bedrijf zelf wordt één keer beschreven, in de root. Hier stond
+      // daarnaast een tweede beschrijving als ProfessionalService zonder
+      // `@id`, en dan ziet een zoekmachine twee bedrijven die toevallig
+      // dezelfde naam hebben. De aanbiedingen hieronder verwijzen nu met
+      // `@id` naar die ene beschrijving in plaats van hem over te schrijven.
+      { type: "application/ld+json", children: offerCatalogJsonLd(PRICING.cards) },
       {
         type: "application/ld+json",
         children: JSON.stringify({

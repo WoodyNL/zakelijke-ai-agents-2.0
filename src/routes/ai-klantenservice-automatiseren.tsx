@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, dienstJsonLd, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -58,24 +58,37 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-klantenservice-automatiseren")({
   head: () => ({
-    meta: [
-      { title: "AI klantenservice automatiseren — concept-antwoorden in je inbox" },
+    meta: paginaMeta({
+      pad: "/ai-klantenservice-automatiseren",
+      titel: "AI klantenservice automatiseren — concept-antwoorden in je inbox",
+      beschrijving:
+        "Automatiseer klantenservice met een AI agent die e-mails leest en concept-antwoorden klaarzet in Gmail of Outlook. Kennismaking online of in Amsterdam.",
+      ogTitel: "AI klantenservice automatiseren",
+      ogBeschrijving:
+        "Een AI agent die klantvragen leest, context ophaalt en concept-antwoorden klaarzet ter goedkeuring.",
+      ogType: "article",
+    }),
+    links: [canoniek("/ai-klantenservice-automatiseren")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "Automatiseer klantenservice met een AI agent die e-mails leest en concept-antwoorden klaarzet in Gmail of Outlook. Kennismaking online of in Amsterdam.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "AI klantenservice", pad: "/ai-klantenservice-automatiseren" },
+        ]),
       },
-      { property: "og:title", content: "AI klantenservice automatiseren" },
       {
-        property: "og:description",
-        content:
-          "Een AI agent die klantvragen leest, context ophaalt en concept-antwoorden klaarzet ter goedkeuring.",
+        type: "application/ld+json",
+        children: dienstJsonLd({
+          naam: "Inbox Draft Assistant — AI-klantenservice",
+          beschrijving:
+            "Een AI-agent die binnenkomende e-mail leest en in Gmail of Outlook een concept-antwoord klaarzet in jouw toon. Verstuurt standaard niets zelf.",
+          pad: "/ai-klantenservice-automatiseren",
+          vanafPrijs: 795,
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-klantenservice-automatiseren") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

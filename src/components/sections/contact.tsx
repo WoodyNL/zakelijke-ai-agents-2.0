@@ -44,8 +44,10 @@ export function ContactSection() {
     message: "",
   });
 
-  const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setValues((v) => ({ ...v, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof values) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setValues((v) => ({ ...v, [k]: e.target.value }));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -222,11 +224,16 @@ export function SiteFooter() {
             <p className="mt-3 max-w-[34ch] text-[12px]/[1.7] text-ink/40">{FOOTER.blurb}</p>
           </div>
           <div>
-            <p className="text-[12px] font-semibold uppercase tracking-wide text-ink/70">Diensten</p>
+            <p className="text-[12px] font-semibold uppercase tracking-wide text-ink/70">
+              Diensten
+            </p>
             <ul className="mt-3 grid gap-2">
               {FOOTER.services.map((s) => (
                 <li key={s}>
-                  <a href="#diensten" className="text-[13px] text-ink/55 hover:text-ink">
+                  <a
+                    href="#diensten"
+                    className="inline-block py-2.5 -my-2.5 text-[13px] text-ink/55 hover:text-ink"
+                  >
                     {s}
                   </a>
                 </li>
@@ -238,7 +245,10 @@ export function SiteFooter() {
             <ul className="mt-3 grid gap-2">
               {FOOTER.company.map((c) => (
                 <li key={c.href}>
-                  <a href={c.href} className="text-[13px] text-ink/55 hover:text-ink">
+                  <a
+                    href={c.href}
+                    className="inline-block py-2.5 -my-2.5 text-[13px] text-ink/55 hover:text-ink"
+                  >
                     {c.label}
                   </a>
                 </li>
@@ -249,18 +259,24 @@ export function SiteFooter() {
             <p className="text-[12px] font-semibold uppercase tracking-wide text-ink/70">Contact</p>
             <ul className="mt-3 grid gap-2 text-[13px] text-ink/55">
               <li>
-                <a href={`tel:${SITE.phone.replace(/\s/g, "")}`} className="hover:text-ink">
+                <a
+                  href={`tel:${SITE.phone.replace(/\s/g, "")}`}
+                  className="inline-block py-2.5 -my-2.5 hover:text-ink"
+                >
                   {SITE.phone}
                 </a>
               </li>
               <li>
-                <a href={`mailto:${SITE.email}`} className="hover:text-ink">
+                <a
+                  href={`mailto:${SITE.email}`}
+                  className="inline-block py-2.5 -my-2.5 hover:text-ink"
+                >
                   {SITE.email}
                 </a>
               </li>
               <li>KvK {SITE.kvk}</li>
               <li>
-                <a href="#contact" className="hover:text-ink">
+                <a href="#contact" className="inline-block py-2.5 -my-2.5 hover:text-ink">
                   Stuur een bericht
                 </a>
               </li>
@@ -269,11 +285,16 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-6">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-ink/70">Meer lezen</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wide text-ink/70">
+            Meer lezen
+          </p>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {SEO_LINKS.map((l) => (
               <li key={l.to}>
-                <Link to={l.to} className="text-[13px] text-ink/55 hover:text-ink">
+                <Link
+                  to={l.to}
+                  className="inline-block py-2.5 -my-2.5 text-[13px] text-ink/55 hover:text-ink"
+                >
                   {l.label}
                 </Link>
               </li>
@@ -285,16 +306,24 @@ export function SiteFooter() {
           <span className="text-[11px] text-ink/40">© 2026 {SITE.name}</span>
           <div className="flex flex-wrap gap-4">
             {FOOTER.legal.map((l) => (
-              <span key={l} className="text-[11px] text-ink/40">
-                {l}
-              </span>
+              <Link
+                key={l.href}
+                to={l.href}
+                className="inline-block py-2.5 -my-2.5 text-[11px] text-ink/40 underline-offset-2 hover:text-ink/70 hover:underline"
+              >
+                {l.label}
+              </Link>
             ))}
           </div>
         </div>
 
         <nav aria-label="Meer pagina's" className="mt-6 flex flex-wrap gap-x-4 gap-y-2">
           {NAV.map((n) => (
-            <a key={n.href} href={n.href} className="text-[11px] text-ink/35 hover:text-ink/70">
+            <a
+              key={n.href}
+              href={n.href}
+              className="inline-block py-2.5 -my-2.5 text-[11px] text-ink/35 hover:text-ink/70"
+            >
               {n.label}
             </a>
           ))}

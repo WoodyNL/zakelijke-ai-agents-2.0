@@ -11,23 +11,36 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { organizationJsonLd } from "../lib/seo";
+import { organizationJsonLd, paginaMeta } from "../lib/seo";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Deze pagina bestaat niet</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          De pagina is verplaatst of heeft nooit bestaan. Hieronder staat waar de meeste bezoekers
+          naartoe willen.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Naar de homepage
+          </Link>
+          <Link
+            to="/tarieven"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            Tarieven
+          </Link>
+          <Link
+            to="/ai-scan"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            AI-scan
           </Link>
         </div>
       </div>
@@ -46,10 +59,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Deze pagina kon niet worden geladen
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Er ging iets mis aan onze kant. Probeer het opnieuw of ga terug naar de homepage.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -59,13 +72,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Opnieuw proberen
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Naar de homepage
           </a>
         </div>
       </div>
@@ -78,31 +91,40 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AI-agency voor het MKB | Zakelijke AI Agents" },
-      {
-        name: "description",
-        content:
+      // Standaardwaarden voor elke pagina die niets eigens meegeeft. Routes
+      // die wél in de zoekresultaten horen, overschrijven dit met hun eigen
+      // paginaMeta(); TanStack vervangt een meta-tag met dezelfde naam.
+      ...paginaMeta({
+        pad: "/",
+        titel: "AI-agency voor het MKB | Zakelijke AI Agents",
+        beschrijving:
           "AI-scan, projectondersteuning en maatwerk AI-automatiseringen voor het MKB. Wij zijn het verschil tussen een AI-experiment en iets dat blijft draaien.",
-      },
-      { property: "og:title", content: "AI-agency voor het MKB | Zakelijke AI Agents" },
-      {
-        property: "og:description",
-        content:
+        ogBeschrijving:
           "95% van de AI-pilots levert nooit een euro op. Wij bouwen AI-automatiseringen die dat wel doen.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      }),
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // De lettertypen staan nu op eigen domein (zie @font-face in styles.css),
+      // dus de twee preconnects en de stylesheet van Google zijn weg. Deze
+      // twee bestanden dekken samen bijna alle tekst op de pagina; ze vooraf
+      // opvragen scheelt de wachttijd tot de browser de CSS heeft gelezen.
       {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap",
+        rel: "preload",
+        as: "font",
+        type: "font/woff2",
+        href: "/fonts/inter-latin.woff2",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preload",
+        as: "font",
+        type: "font/woff2",
+        href: "/fonts/grotesk-latin.woff2",
+        crossOrigin: "anonymous",
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],

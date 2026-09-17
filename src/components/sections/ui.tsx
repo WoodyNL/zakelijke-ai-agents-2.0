@@ -1,7 +1,8 @@
 import * as React from "react";
 
 export const shadowBrand = {
-  boxShadow: "0 10px 30px -10px oklch(0.55 0.22 293 / 0.6), 0 0 24px -6px oklch(0.60 0.20 290 / 0.45)",
+  boxShadow:
+    "0 10px 30px -10px oklch(0.55 0.22 293 / 0.6), 0 0 24px -6px oklch(0.60 0.20 290 / 0.45)",
 } as const;
 
 export function Container({
@@ -106,6 +107,16 @@ function prefersReducedMotion() {
   );
 }
 
+/**
+ * useLayoutEffect op de client, useEffect op de server.
+ *
+ * useLayoutEffect draait vóór de browser tekent — precies wat nodig is om een
+ * waarde terug te zetten zonder dat je het ziet gebeuren. Op de server bestaat
+ * dat moment niet en waarschuwt React erover, vandaar de wissel.
+ */
+const useIsomorfLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
 /** Telt op naar de eindwaarde zodra het getal in beeld komt. */
 export function CountUp({
   value,
@@ -121,29 +132,72 @@ export function CountUp({
   className?: string;
 }) {
   const ref = React.useRef<HTMLSpanElement | null>(null);
-  const [shown, setShown] = React.useState(0);
-  const [done, setDone] = React.useState(false);
 
-  React.useEffect(() => {
+  // Begin op de eindwaarde, niet op nul.
+  //
+  // Dit stond andersom, en dat was niet alleen een gemiste kans: de server
+  // rendert de beginstand, dus in de uitgeserveerde HTML stond negen keer
+  // iets als "0% van de AI-pilots levert geen meetbaar resultaat op". Precies
+  // de omgekeerde bewering van wat de pagina bedoelt — en dat is wat een
+  // crawler, een tekstextractie of een taalmodel te lezen krijgt.
+  //
+  // Nu staat het echte getal in de HTML en is het optellen puur versiering:
+  // na hydratie zet de laag hieronder hem alsnog even op nul en telt op.
+  const [shown, setShown] = React.useState(value);
+  const [done, setDone] = React.useState(true);
+
+  useIsomorfLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (prefersReducedMotion() || typeof IntersectionObserver === "undefined") {
-      setShown(value);
-      setDone(true);
+
+    // Geen animatie mogelijk of gewenst? Dan blijft de eindwaarde staan.
+    //
+    // De controle op een verborgen tabblad is niet theoretisch: in een tabblad
+    // dat op de achtergrond wordt geopend draait requestAnimationFrame niet,
+    // en dan zou het getal op nul blijven hangen terwijl de server het juiste
+    // getal al had meegestuurd. Liever geen animatie dan een verkeerd cijfer.
+    if (
+      prefersReducedMotion() ||
+      typeof IntersectionObserver === "undefined" ||
+      document.visibilityState === "hidden"
+    ) {
       return;
     }
+
+    // Terug naar nul vóór de browser tekent, zodat je geen sprong ziet van het
+    // eindgetal naar nul. Daarom een layout-effect en geen gewoon effect.
+    setShown(0);
+    setDone(false);
+
+    let vangnet: ReturnType<typeof setTimeout> | undefined;
+    const naarEindwaarde = () => {
+      setShown(value);
+      setDone(true);
+    };
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           io.disconnect();
+
+          // Mocht het optellen alsnog stilvallen — tabblad naar de achtergrond
+          // halverwege, een haperende frame-lus — dan staat het juiste getal er
+          // na een seconde of wat sowieso. Een cijfer dat blijft steken op 37%
+          // is een onware bewering, geen schoonheidsfoutje.
+          vangnet = setTimeout(naarEindwaarde, 2500);
+
           const start = performance.now();
           const tick = (now: number) => {
             const t = Math.min(1, (now - start) / 800);
             const eased = 1 - Math.pow(1 - t, 3);
             setShown(Math.round(value * eased));
-            if (t < 1) requestAnimationFrame(tick);
-            else setDone(true);
+            if (t < 1) {
+              requestAnimationFrame(tick);
+            } else {
+              clearTimeout(vangnet);
+              setDone(true);
+            }
           };
           requestAnimationFrame(tick);
         }
@@ -151,7 +205,10 @@ export function CountUp({
       { threshold: 0.4 },
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      clearTimeout(vangnet);
+    };
   }, [value]);
 
   return (

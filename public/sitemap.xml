@@ -2,50 +2,66 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://zakelijkeaiagents.nl/</loc>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/tarieven</loc>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/ai-scan</loc>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/ai-voor-het-mkb-amsterdam</loc>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/ai-automatisering-op-maat</loc>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/ai-project-vastgelopen</loc>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://zakelijkeaiagents.nl/ai-consultancy-mkb</loc>
-    <priority>0.8</priority>
+    <lastmod>2026-09-17</lastmod>
   </url>
   <url>
     <loc>https://zakelijkeaiagents.nl/ai-agents-amsterdam</loc>
-    <priority>0.7</priority>
+    <lastmod>2026-09-17</lastmod>
   </url>
   <url>
-    <loc>https://zakelijkeaiagents.nl/ai-lead-opvolging</loc>
-    <priority>0.7</priority>
+    <loc>https://zakelijkeaiagents.nl/ai-automatisering-op-maat</loc>
+    <lastmod>2026-09-17</lastmod>
   </url>
   <url>
-    <loc>https://zakelijkeaiagents.nl/whatsapp-follow-up-automatiseren</loc>
-    <priority>0.7</priority>
+    <loc>https://zakelijkeaiagents.nl/ai-beleid</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/ai-consultancy-mkb</loc>
+    <lastmod>2026-09-17</lastmod>
   </url>
   <url>
     <loc>https://zakelijkeaiagents.nl/ai-klantenservice-automatiseren</loc>
-    <priority>0.7</priority>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/ai-lead-opvolging</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/ai-project-vastgelopen</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/ai-scan</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/ai-voor-het-mkb-amsterdam</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/algemene-voorwaarden</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/blog</loc>
+    <lastmod>2026-09-17</lastmod>
   </url>
   <url>
     <loc>https://zakelijkeaiagents.nl/blog/waarom-ai-pilots-mislukken</loc>
-    <priority>0.6</priority>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/privacyverklaring</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/tarieven</loc>
+    <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://zakelijkeaiagents.nl/whatsapp-follow-up-automatiseren</loc>
+    <lastmod>2026-09-17</lastmod>
   </url>
 </urlset>

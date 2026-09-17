@@ -96,6 +96,24 @@ export default {
         return new Response("ok", { status: 200 });
       }
 
+      // Een adres met een schuine streep aan het eind is voor een zoekmachine
+      // een ánder adres dan hetzelfde adres zonder. Er werd al doorgestuurd,
+      // maar met een 307, en die zegt "tijdelijk": dan blijven beide adressen
+      // in de index staan en concurreren ze met elkaar. Een 301 vervangt het
+      // oude door het nieuwe.
+      //
+      // Alleen bij GET en HEAD. Een POST doorsturen kost de inhoud van het
+      // verzoek, want browsers maken er bij een 301 een GET van.
+      if (
+        pad.length > 1 &&
+        pad.endsWith("/") &&
+        (request.method === "GET" || request.method === "HEAD")
+      ) {
+        const doel = new URL(request.url);
+        doel.pathname = pad.replace(/\/+$/, "") || "/";
+        return Response.redirect(doel.toString(), 301);
+      }
+
       const opvolger = OPGEHEVEN_PADEN[pad];
       if (opvolger) {
         const doel = new URL(request.url);

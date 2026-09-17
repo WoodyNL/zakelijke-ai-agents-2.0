@@ -2,25 +2,19 @@ import { BrandLogo } from "@/components/brand-logo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-browser";
+import { paginaMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
-    meta: [
-      { title: "Inloggen — Zakelijke AI Agents klantportaal" },
-      {
-        name: "description",
-        content: "Log in op het Zakelijke AI Agents klantportaal en bekijk de prestaties van je AI-agents.",
-      },
-      { property: "og:title", content: "Inloggen — Zakelijke AI Agents klantportaal" },
-      {
-        property: "og:description",
-        content: "Log in en bekijk live status en resultaten van je AI-agents.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: paginaMeta({
+      pad: "/auth",
+      titel: "Inloggen — Zakelijke AI Agents klantportaal",
+      beschrijving:
+        "Log in op het Zakelijke AI Agents klantportaal en bekijk de prestaties van je AI-agents.",
+      ogBeschrijving: "Log in en bekijk live status en resultaten van je AI-agents.",
+      noindex: true,
+    }),
   }),
   component: AuthPage,
 });
@@ -71,7 +65,7 @@ function AuthPage() {
         });
         if (error) throw error;
         setInfo(
-          "Als dit adres bij ons bekend is, ontvang je binnen enkele minuten een herstel-link. Controleer ook je spam-map."
+          "Als dit adres bij ons bekend is, ontvang je binnen enkele minuten een herstel-link. Controleer ook je spam-map.",
         );
       }
     } catch (err) {
@@ -102,7 +96,13 @@ function AuthPage() {
 
           <form onSubmit={onSubmit} className="mt-5 space-y-3">
             {mode === "signup" && (
-              <Field label="Naam" value={name} onChange={setName} type="text" placeholder="Bedrijfsnaam" />
+              <Field
+                label="Naam"
+                value={name}
+                onChange={setName}
+                type="text"
+                placeholder="Bedrijfsnaam"
+              />
             )}
             <Field
               label="E-mailadres"
@@ -121,8 +121,22 @@ function AuthPage() {
               />
             )}
 
-            {error && <p role="alert" className="rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] font-medium text-ink/85">{error}</p>}
-            {info && <p role="status" className="rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-[12px] font-medium text-ink/85">{info}</p>}
+            {error && (
+              <p
+                role="alert"
+                className="rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] font-medium text-ink/85"
+              >
+                {error}
+              </p>
+            )}
+            {info && (
+              <p
+                role="status"
+                className="rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-[12px] font-medium text-ink/85"
+              >
+                {info}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -141,20 +155,32 @@ function AuthPage() {
 
           <div className="mt-4 flex flex-wrap justify-between gap-2 text-[12px] text-ink/55">
             {mode !== "forgot" ? (
-              <button onClick={() => setMode("forgot")} className="transition-colors hover:text-violet">
+              <button
+                onClick={() => setMode("forgot")}
+                className="transition-colors hover:text-violet"
+              >
                 Wachtwoord vergeten?
               </button>
             ) : (
-              <button onClick={() => setMode("login")} className="transition-colors hover:text-violet">
+              <button
+                onClick={() => setMode("login")}
+                className="transition-colors hover:text-violet"
+              >
                 Terug naar inloggen
               </button>
             )}
             {mode === "login" ? (
-              <button onClick={() => setMode("signup")} className="transition-colors hover:text-violet">
+              <button
+                onClick={() => setMode("signup")}
+                className="transition-colors hover:text-violet"
+              >
                 Account aanmaken
               </button>
             ) : mode === "signup" ? (
-              <button onClick={() => setMode("login")} className="transition-colors hover:text-violet">
+              <button
+                onClick={() => setMode("login")}
+                className="transition-colors hover:text-violet"
+              >
                 Ik heb al een account
               </button>
             ) : null}
@@ -173,7 +199,15 @@ function AuthPage() {
           to="/"
           className="mt-4 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/12 bg-white/[0.03] px-6 py-3 text-[13px] font-medium text-ink/70 transition hover:border-violet/45 hover:bg-white/[0.06] hover:text-violet"
         >
-          <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M19 12H5" />
             <path d="M12 19l-7-7 7-7" />
           </svg>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, dienstJsonLd, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -59,24 +59,36 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-project-vastgelopen")({
   head: () => ({
-    meta: [
-      { title: "AI-project vastgelopen? Zo breng je het alsnog naar productie" },
+    meta: paginaMeta({
+      pad: "/ai-project-vastgelopen",
+      titel: "AI-project vastgelopen? Zo breng je het alsnog naar productie",
+      beschrijving:
+        "Een AI-pilot die blijft hangen, een intern project dat vastloopt of een leverancier die niet oplevert. Wij nemen over, draaien mee, of geven een tweede mening.",
+      ogTitel: "AI-project vastgelopen? Wij trekken het los",
+      ogBeschrijving:
+        "46% van de AI-proofs-of-concept haalt de productiefase niet. Diagnose, meedraaien of overname — zonder jaarcontract.",
+      ogType: "article",
+    }),
+    links: [canoniek("/ai-project-vastgelopen")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "Een AI-pilot die blijft hangen, een intern project dat vastloopt of een leverancier die niet oplevert. Wij nemen over, draaien mee, of geven een tweede mening.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "Projectondersteuning", pad: "/ai-project-vastgelopen" },
+        ]),
       },
-      { property: "og:title", content: "AI-project vastgelopen? Wij trekken het los" },
       {
-        property: "og:description",
-        content:
-          "46% van de AI-proofs-of-concept haalt de productiefase niet. Diagnose, meedraaien of overname — zonder jaarcontract.",
+        type: "application/ld+json",
+        children: dienstJsonLd({
+          naam: "Projectondersteuning bij een vastgelopen AI-project",
+          beschrijving:
+            "Diagnose van een vastgelopen AI-project, meedraaien in een lopend traject, interim AI-lead of volledige overname.",
+          pad: "/ai-project-vastgelopen",
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-project-vastgelopen") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

@@ -1,18 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-browser";
+import { paginaMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
-    meta: [
-      { title: "Nieuw wachtwoord — Zakelijke AI Agents" },
-      { name: "description", content: "Stel een nieuw wachtwoord in voor je account." },
-      { property: "og:title", content: "Nieuw wachtwoord — Zakelijke AI Agents" },
-      { property: "og:description", content: "Stel een nieuw wachtwoord in voor je account." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: paginaMeta({
+      pad: "/reset-password",
+      titel: "Nieuw wachtwoord — Zakelijke AI Agents",
+      beschrijving: "Stel een nieuw wachtwoord in voor je account.",
+      noindex: true,
+    }),
   }),
   ssr: false,
   component: ResetPassword,

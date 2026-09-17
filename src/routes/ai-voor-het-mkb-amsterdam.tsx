@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -58,24 +58,27 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-voor-het-mkb-amsterdam")({
   head: () => ({
-    meta: [
-      { title: "AI voor het MKB in Amsterdam — AI-agency, geen los projectje" },
+    meta: paginaMeta({
+      pad: "/ai-voor-het-mkb-amsterdam",
+      titel: "AI voor het MKB in Amsterdam — AI-agency, geen los projectje",
+      beschrijving:
+        "AI-scan, consultancy en maatwerk automatisering voor het MKB in Amsterdam. Slechts 6% van het Nederlandse mkb heeft AI structureel geïmplementeerd.",
+      ogTitel: "AI voor het MKB in Amsterdam",
+      ogBeschrijving:
+        "AI-agency voor het MKB, gevestigd in Amsterdam. Intake op locatie mogelijk, aanpak per stadium van je AI-traject.",
+      ogType: "article",
+    }),
+    links: [canoniek("/ai-voor-het-mkb-amsterdam")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "AI-scan, consultancy en maatwerk automatisering voor het MKB in Amsterdam en omgeving. Slechts 6% van het Nederlandse mkb heeft AI structureel geïmplementeerd — pak die voorsprong.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "AI voor het MKB in Amsterdam", pad: "/ai-voor-het-mkb-amsterdam" },
+        ]),
       },
-      { property: "og:title", content: "AI voor het MKB in Amsterdam" },
-      {
-        property: "og:description",
-        content:
-          "AI-agency voor het MKB, gevestigd in Amsterdam. Intake op locatie mogelijk, aanpak per stadium van je AI-traject.",
-      },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-voor-het-mkb-amsterdam") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

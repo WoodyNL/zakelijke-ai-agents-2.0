@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, dienstJsonLd, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -62,24 +62,37 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-automatisering-op-maat")({
   head: () => ({
-    meta: [
-      { title: "Maatwerk AI-automatisering voor het MKB — kant-en-klaar of op maat" },
+    meta: paginaMeta({
+      pad: "/ai-automatisering-op-maat",
+      titel: "Maatwerk AI-automatisering voor het MKB — kant-en-klaar of op maat",
+      beschrijving:
+        "Kant-en-klare AI-agents voor sales, inbox en WhatsApp binnen een week live, of volledig maatwerk gekoppeld aan je eigen systemen. Jij houdt de controle.",
+      ogTitel: "Maatwerk AI-automatisering voor het MKB",
+      ogBeschrijving:
+        "Van kant-en-klare AI-agent tot volledig maatwerk, gekoppeld aan je CRM, agenda, inbox en WhatsApp.",
+      ogType: "article",
+    }),
+    links: [canoniek("/ai-automatisering-op-maat")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "Kant-en-klare AI-agents voor sales, inbox en WhatsApp binnen een week live, of volledig maatwerk gekoppeld aan je eigen systemen. Jij houdt de controle.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "Maatwerk AI-automatisering", pad: "/ai-automatisering-op-maat" },
+        ]),
       },
-      { property: "og:title", content: "Maatwerk AI-automatisering voor het MKB" },
       {
-        property: "og:description",
-        content:
-          "Van kant-en-klare AI-agent tot volledig maatwerk, gekoppeld aan je CRM, agenda, inbox en WhatsApp.",
+        type: "application/ld+json",
+        children: dienstJsonLd({
+          naam: "Maatwerk AI-automatisering",
+          beschrijving:
+            "Automatiseringen op maat, gekoppeld aan CRM, agenda, inbox, WhatsApp en administratie, inclusief monitoring en doorontwikkeling.",
+          pad: "/ai-automatisering-op-maat",
+          vanafPrijs: 4500,
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-automatisering-op-maat") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

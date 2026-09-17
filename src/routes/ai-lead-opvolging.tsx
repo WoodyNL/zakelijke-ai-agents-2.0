@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { canoniek, dienstJsonLd, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -58,24 +58,37 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/ai-lead-opvolging")({
   head: () => ({
-    meta: [
-      { title: "AI lead opvolging automatiseren — elke lead binnen seconden" },
+    meta: paginaMeta({
+      pad: "/ai-lead-opvolging",
+      titel: "AI lead opvolging automatiseren — elke lead binnen seconden",
+      beschrijving:
+        "Automatiseer lead opvolging met een AI agent: kwalificeren, persoonlijk beantwoorden, in het CRM zetten en automatisch opvolgen. Demo online of in Amsterdam.",
+      ogTitel: "AI lead opvolging automatiseren",
+      ogBeschrijving:
+        "Een AI agent die elke nieuwe lead leest, kwalificeert, beantwoordt en opvolgt — zodat sales alleen warme leads spreekt.",
+      ogType: "article",
+    }),
+    links: [canoniek("/ai-lead-opvolging")],
+    scripts: [
       {
-        name: "description",
-        content:
-          "Automatiseer lead opvolging met een AI agent: leads kwalificeren, persoonlijk beantwoorden, in het CRM zetten en automatisch opvolgen. Demo online of in Amsterdam.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "AI lead opvolging", pad: "/ai-lead-opvolging" },
+        ]),
       },
-      { property: "og:title", content: "AI lead opvolging automatiseren" },
       {
-        property: "og:description",
-        content:
-          "Een AI agent die elke nieuwe lead leest, kwalificeert, beantwoordt en opvolgt — zodat sales alleen warme leads spreekt.",
+        type: "application/ld+json",
+        children: dienstJsonLd({
+          naam: "AI Sales Assistant — leadopvolging",
+          beschrijving:
+            "Een AI-agent die elke nieuwe lead leest, kwalificeert, binnen een minuut persoonlijk beantwoordt, in het CRM zet en de afspraak boekt.",
+          pad: "/ai-lead-opvolging",
+          vanafPrijs: 795,
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/ai-lead-opvolging") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });

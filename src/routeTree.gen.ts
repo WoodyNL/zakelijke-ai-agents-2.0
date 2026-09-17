@@ -14,13 +14,16 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AfmeldenRouteImport } from './routes/afmelden'
 import { Route as AiAgentsAmsterdamRouteImport } from './routes/ai-agents-amsterdam'
 import { Route as AiAutomatiseringOpMaatRouteImport } from './routes/ai-automatisering-op-maat'
+import { Route as AiBeleidRouteImport } from './routes/ai-beleid'
 import { Route as AiConsultancyMkbRouteImport } from './routes/ai-consultancy-mkb'
 import { Route as AiKlantenserviceAutomatiserenRouteImport } from './routes/ai-klantenservice-automatiseren'
 import { Route as AiLeadOpvolgingRouteImport } from './routes/ai-lead-opvolging'
 import { Route as AiProjectVastgelopenRouteImport } from './routes/ai-project-vastgelopen'
 import { Route as AiScanRouteImport } from './routes/ai-scan'
 import { Route as AiVoorHetMkbAmsterdamRouteImport } from './routes/ai-voor-het-mkb-amsterdam'
+import { Route as AlgemeneVoorwaardenRouteImport } from './routes/algemene-voorwaarden'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PrivacyverklaringRouteImport } from './routes/privacyverklaring'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TarievenRouteImport } from './routes/tarieven'
 import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/whatsapp-follow-up-automatiseren'
@@ -34,6 +37,7 @@ import { Route as AuthenticatedCampagnesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedContactenRouteImport } from './routes/_authenticated/contacten'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogWaaromAiPilotsMislukkenRouteImport } from './routes/blog/waarom-ai-pilots-mislukken'
 import { Route as EmbedSlugRouteImport } from './routes/embed.$slug'
 import { Route as AuthenticatedAgentsAgentIdRouteImport } from './routes/_authenticated/agents.$agentId'
@@ -61,6 +65,11 @@ const AiAgentsAmsterdamRoute = AiAgentsAmsterdamRouteImport.update({
 const AiAutomatiseringOpMaatRoute = AiAutomatiseringOpMaatRouteImport.update({
   id: '/ai-automatisering-op-maat',
   path: '/ai-automatisering-op-maat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiBeleidRoute = AiBeleidRouteImport.update({
+  id: '/ai-beleid',
+  path: '/ai-beleid',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiConsultancyMkbRoute = AiConsultancyMkbRouteImport.update({
@@ -94,9 +103,19 @@ const AiVoorHetMkbAmsterdamRoute = AiVoorHetMkbAmsterdamRouteImport.update({
   path: '/ai-voor-het-mkb-amsterdam',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlgemeneVoorwaardenRoute = AlgemeneVoorwaardenRouteImport.update({
+  id: '/algemene-voorwaarden',
+  path: '/algemene-voorwaarden',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyverklaringRoute = PrivacyverklaringRouteImport.update({
+  id: '/privacyverklaring',
+  path: '/privacyverklaring',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -166,6 +185,11 @@ const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogWaaromAiPilotsMislukkenRoute =
   BlogWaaromAiPilotsMislukkenRouteImport.update({
     id: '/blog/waarom-ai-pilots-mislukken',
@@ -195,13 +219,16 @@ export interface FileRoutesByFullPath {
   '/afmelden': typeof AfmeldenRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
+  '/ai-beleid': typeof AiBeleidRoute
   '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
   '/ai-project-vastgelopen': typeof AiProjectVastgelopenRoute
   '/ai-scan': typeof AiScanRoute
   '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
+  '/algemene-voorwaarden': typeof AlgemeneVoorwaardenRoute
   '/auth': typeof AuthRoute
+  '/privacyverklaring': typeof PrivacyverklaringRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tarieven': typeof TarievenRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
@@ -217,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
   '/contact/$contactId': typeof AuthenticatedContactContactIdRoute
 }
@@ -225,13 +253,16 @@ export interface FileRoutesByTo {
   '/afmelden': typeof AfmeldenRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
+  '/ai-beleid': typeof AiBeleidRoute
   '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
   '/ai-project-vastgelopen': typeof AiProjectVastgelopenRoute
   '/ai-scan': typeof AiScanRoute
   '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
+  '/algemene-voorwaarden': typeof AlgemeneVoorwaardenRoute
   '/auth': typeof AuthRoute
+  '/privacyverklaring': typeof PrivacyverklaringRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tarieven': typeof TarievenRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
@@ -247,6 +278,7 @@ export interface FileRoutesByTo {
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
+  '/blog': typeof BlogIndexRoute
   '/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
   '/contact/$contactId': typeof AuthenticatedContactContactIdRoute
 }
@@ -257,13 +289,16 @@ export interface FileRoutesById {
   '/afmelden': typeof AfmeldenRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
+  '/ai-beleid': typeof AiBeleidRoute
   '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
   '/ai-klantenservice-automatiseren': typeof AiKlantenserviceAutomatiserenRoute
   '/ai-lead-opvolging': typeof AiLeadOpvolgingRoute
   '/ai-project-vastgelopen': typeof AiProjectVastgelopenRoute
   '/ai-scan': typeof AiScanRoute
   '/ai-voor-het-mkb-amsterdam': typeof AiVoorHetMkbAmsterdamRoute
+  '/algemene-voorwaarden': typeof AlgemeneVoorwaardenRoute
   '/auth': typeof AuthRoute
+  '/privacyverklaring': typeof PrivacyverklaringRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tarieven': typeof TarievenRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
@@ -279,6 +314,7 @@ export interface FileRoutesById {
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/_authenticated/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
   '/_authenticated/contact/$contactId': typeof AuthenticatedContactContactIdRoute
 }
@@ -289,13 +325,16 @@ export interface FileRouteTypes {
     | '/afmelden'
     | '/ai-agents-amsterdam'
     | '/ai-automatisering-op-maat'
+    | '/ai-beleid'
     | '/ai-consultancy-mkb'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
     | '/ai-project-vastgelopen'
     | '/ai-scan'
     | '/ai-voor-het-mkb-amsterdam'
+    | '/algemene-voorwaarden'
     | '/auth'
+    | '/privacyverklaring'
     | '/reset-password'
     | '/tarieven'
     | '/whatsapp-follow-up-automatiseren'
@@ -311,6 +350,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
+    | '/blog/'
     | '/agents/$agentId'
     | '/contact/$contactId'
   fileRoutesByTo: FileRoutesByTo
@@ -319,13 +359,16 @@ export interface FileRouteTypes {
     | '/afmelden'
     | '/ai-agents-amsterdam'
     | '/ai-automatisering-op-maat'
+    | '/ai-beleid'
     | '/ai-consultancy-mkb'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
     | '/ai-project-vastgelopen'
     | '/ai-scan'
     | '/ai-voor-het-mkb-amsterdam'
+    | '/algemene-voorwaarden'
     | '/auth'
+    | '/privacyverklaring'
     | '/reset-password'
     | '/tarieven'
     | '/whatsapp-follow-up-automatiseren'
@@ -341,6 +384,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
+    | '/blog'
     | '/agents/$agentId'
     | '/contact/$contactId'
   id:
@@ -350,13 +394,16 @@ export interface FileRouteTypes {
     | '/afmelden'
     | '/ai-agents-amsterdam'
     | '/ai-automatisering-op-maat'
+    | '/ai-beleid'
     | '/ai-consultancy-mkb'
     | '/ai-klantenservice-automatiseren'
     | '/ai-lead-opvolging'
     | '/ai-project-vastgelopen'
     | '/ai-scan'
     | '/ai-voor-het-mkb-amsterdam'
+    | '/algemene-voorwaarden'
     | '/auth'
+    | '/privacyverklaring'
     | '/reset-password'
     | '/tarieven'
     | '/whatsapp-follow-up-automatiseren'
@@ -372,6 +419,7 @@ export interface FileRouteTypes {
     | '/_authenticated/knowledge'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
+    | '/blog/'
     | '/_authenticated/agents/$agentId'
     | '/_authenticated/contact/$contactId'
   fileRoutesById: FileRoutesById
@@ -382,18 +430,22 @@ export interface RootRouteChildren {
   AfmeldenRoute: typeof AfmeldenRoute
   AiAgentsAmsterdamRoute: typeof AiAgentsAmsterdamRoute
   AiAutomatiseringOpMaatRoute: typeof AiAutomatiseringOpMaatRoute
+  AiBeleidRoute: typeof AiBeleidRoute
   AiConsultancyMkbRoute: typeof AiConsultancyMkbRoute
   AiKlantenserviceAutomatiserenRoute: typeof AiKlantenserviceAutomatiserenRoute
   AiLeadOpvolgingRoute: typeof AiLeadOpvolgingRoute
   AiProjectVastgelopenRoute: typeof AiProjectVastgelopenRoute
   AiScanRoute: typeof AiScanRoute
   AiVoorHetMkbAmsterdamRoute: typeof AiVoorHetMkbAmsterdamRoute
+  AlgemeneVoorwaardenRoute: typeof AlgemeneVoorwaardenRoute
   AuthRoute: typeof AuthRoute
+  PrivacyverklaringRoute: typeof PrivacyverklaringRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TarievenRoute: typeof TarievenRoute
   WhatsappFollowUpAutomatiserenRoute: typeof WhatsappFollowUpAutomatiserenRoute
   BlogWaaromAiPilotsMislukkenRoute: typeof BlogWaaromAiPilotsMislukkenRoute
   EmbedSlugRoute: typeof EmbedSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -431,6 +483,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-automatisering-op-maat'
       fullPath: '/ai-automatisering-op-maat'
       preLoaderRoute: typeof AiAutomatiseringOpMaatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-beleid': {
+      id: '/ai-beleid'
+      path: '/ai-beleid'
+      fullPath: '/ai-beleid'
+      preLoaderRoute: typeof AiBeleidRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai-consultancy-mkb': {
@@ -475,11 +534,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiVoorHetMkbAmsterdamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/algemene-voorwaarden': {
+      id: '/algemene-voorwaarden'
+      path: '/algemene-voorwaarden'
+      fullPath: '/algemene-voorwaarden'
+      preLoaderRoute: typeof AlgemeneVoorwaardenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacyverklaring': {
+      id: '/privacyverklaring'
+      path: '/privacyverklaring'
+      fullPath: '/privacyverklaring'
+      preLoaderRoute: typeof PrivacyverklaringRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -573,6 +646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/waarom-ai-pilots-mislukken': {
       id: '/blog/waarom-ai-pilots-mislukken'
       path: '/blog/waarom-ai-pilots-mislukken'
@@ -643,18 +723,22 @@ const rootRouteChildren: RootRouteChildren = {
   AfmeldenRoute: AfmeldenRoute,
   AiAgentsAmsterdamRoute: AiAgentsAmsterdamRoute,
   AiAutomatiseringOpMaatRoute: AiAutomatiseringOpMaatRoute,
+  AiBeleidRoute: AiBeleidRoute,
   AiConsultancyMkbRoute: AiConsultancyMkbRoute,
   AiKlantenserviceAutomatiserenRoute: AiKlantenserviceAutomatiserenRoute,
   AiLeadOpvolgingRoute: AiLeadOpvolgingRoute,
   AiProjectVastgelopenRoute: AiProjectVastgelopenRoute,
   AiScanRoute: AiScanRoute,
   AiVoorHetMkbAmsterdamRoute: AiVoorHetMkbAmsterdamRoute,
+  AlgemeneVoorwaardenRoute: AlgemeneVoorwaardenRoute,
   AuthRoute: AuthRoute,
+  PrivacyverklaringRoute: PrivacyverklaringRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TarievenRoute: TarievenRoute,
   WhatsappFollowUpAutomatiserenRoute: WhatsappFollowUpAutomatiserenRoute,
   BlogWaaromAiPilotsMislukkenRoute: BlogWaaromAiPilotsMislukkenRoute,
   EmbedSlugRoute: EmbedSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

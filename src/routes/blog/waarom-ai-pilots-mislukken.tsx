@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SeoPage, faqJsonLd, type SeoSection } from "@/components/seo-page";
-import { absoluteUrl } from "@/lib/seo";
+import { artikelJsonLd, canoniek, kruimelpadJsonLd, paginaMeta } from "@/lib/seo";
+
+const PAD = "/blog/waarom-ai-pilots-mislukken";
+const GEPUBLICEERD = "2026-09-13";
+const GEWIJZIGD = "2026-09-17";
 
 const FAQS = [
   {
@@ -50,24 +54,43 @@ const SECTIONS: SeoSection[] = [
 
 export const Route = createFileRoute("/blog/waarom-ai-pilots-mislukken")({
   head: () => ({
-    meta: [
-      { title: "Waarom 95% van de AI-pilots niets oplevert (en hoe dat anders kan)" },
+    meta: paginaMeta({
+      pad: PAD,
+      titel: "Waarom 95% van de AI-pilots niets oplevert (en hoe dat anders kan)",
+      beschrijving:
+        "95% van de generatieve-AI-pilots levert geen meetbaar resultaat op. De vijf oorzaken die in elk onderzoek terugkomen, en wat er per oorzaak wél werkt.",
+      ogTitel: "Waarom 95% van de AI-pilots niets oplevert",
+      ogBeschrijving:
+        "MIT NANDA, McKinsey, Gartner en S&P Global onderzochten waarom AI-projecten stranden. Vijf oorzaken, en wat elke oorzaak precies kost.",
+      ogType: "article",
+    }),
+    links: [canoniek(PAD)],
+    scripts: [
       {
-        name: "description",
-        content:
-          "95% van de generatieve-AI-pilots levert geen meetbaar resultaat op. De vijf oorzaken die in elk onderzoek terugkomen — en wat er per oorzaak wél werkt, met bronnen.",
+        type: "application/ld+json",
+        children: kruimelpadJsonLd([
+          { naam: "Home", pad: "/" },
+          { naam: "Blog", pad: "/blog" },
+          { naam: "Waarom AI-pilots mislukken", pad: PAD },
+        ]),
       },
-      { property: "og:title", content: "Waarom 95% van de AI-pilots niets oplevert" },
       {
-        property: "og:description",
-        content:
-          "MIT NANDA, McKinsey, Gartner en S&P Global onderzochten waarom AI-projecten stranden. Vijf oorzaken, en wat elke oorzaak precies kost.",
+        // Een artikel dat volledig op geciteerd onderzoek leunt, moet een
+        // auteur en een datum dragen: dat is waaraan een zoekmachine afleest
+        // of een bewering ergens vandaan komt. De datums komen uit de
+        // geschiedenis van dit bestand, niet uit een slag in de lucht.
+        type: "application/ld+json",
+        children: artikelJsonLd({
+          titel: "Waarom 95% van de AI-pilots niets oplevert (en hoe dat anders kan)",
+          beschrijving:
+            "De vijf oorzaken waarom AI-pilots stranden, met cijfers van MIT NANDA, McKinsey, Gartner en S&P Global — en wat er per oorzaak wél werkt.",
+          pad: PAD,
+          gepubliceerd: GEPUBLICEERD,
+          gewijzigd: GEWIJZIGD,
+        }),
       },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
+      { type: "application/ld+json", children: faqJsonLd(FAQS) },
     ],
-    links: [{ rel: "canonical", href: absoluteUrl("/blog/waarom-ai-pilots-mislukken") }],
-    scripts: [{ type: "application/ld+json", children: faqJsonLd(FAQS) }],
   }),
   component: Page,
 });
@@ -76,6 +99,12 @@ function Page() {
   return (
     <SeoPage
       kicker="Blog"
+      auteur={{
+        naam: "Wouter Ransijn",
+        gepubliceerd: GEPUBLICEERD,
+        gewijzigd: GEWIJZIGD,
+        leestijd: "6 minuten",
+      }}
       title="Waarom 95% van de AI-pilots niets oplevert (en hoe dat anders kan)"
       intro="Iedereen is bezig met AI. Bijna niemand haalt er resultaat uit. Dat is geen mening — dat is wat het onderzoek van 2025 en 2026 laat zien. Dit zijn de vijf oorzaken die in elk onderzoek terugkomen, en precies de vijf dingen die wij standaard anders aanpakken."
       sections={SECTIONS}
