@@ -50,10 +50,13 @@ meld(ligtInGebied("") === null, "lege plaats is onbekend, niet buiten");
 meld(ligtInGebied(null) === null, "geen plaats is onbekend, niet buiten");
 meld(ligtInGebied("--") === false, '"--" telt als buiten, want het is geen plaats');
 
+// Amsterdam stond even als "op de rand" in de code maar niet in het
+// kennisbestand. Een uitzondering die maar op één plek staat, laat de agent iets
+// anders zeggen dan wat er is afgesproken — dus valt Amsterdam gewoon buiten.
 const amsterdam = bepaalGebied("Amsterdam");
 meld(
-  amsterdam !== null && !amsterdam.binnen && amsterdam.rand,
-  "Amsterdam ligt op de rand, niet binnen",
+  amsterdam !== null && !amsterdam.binnen && !amsterdam.rand,
+  "Amsterdam ligt buiten het gebied",
 );
 
 const leiden = bepaalGebied("leiden");

@@ -43,8 +43,15 @@ export const BEZORGGEBIED: Record<string, string[]> = {
   ],
 };
 
-/** Net buiten de route: soms te doen, maar nooit zomaar toe te zeggen. */
-export const OP_DE_RAND = ["amsterdam"];
+/**
+ * Plaatsen die net buiten de route liggen en in overleg soms wel kunnen.
+ *
+ * Nu leeg. Amsterdam stond hier even, maar is er bewust uit gehaald: een
+ * uitzondering die alleen in de code staat en niet in de kennisbank, laat de
+ * agent iets anders zeggen dan wat er is afgesproken. Wat hier staat moet ook
+ * in het kennisbestand staan.
+ */
+export const OP_DE_RAND: string[] = [];
 
 /**
  * Maakt van een ingetypte plaatsnaam iets vergelijkbaars.
