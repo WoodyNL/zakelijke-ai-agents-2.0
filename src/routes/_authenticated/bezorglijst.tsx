@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Printer, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Printer, AlertTriangle, Phone } from "lucide-react";
 import { z } from "zod";
 import { listAgents } from "@/lib/dashboard.functions";
-import { haalBezorgingen } from "@/lib/bezorging.functions";
+import { haalBezorgingen, zetBevestiging } from "@/lib/bezorging.functions";
 
 /**
  * De lijst die de chauffeur meeneemt.
@@ -45,8 +45,10 @@ type Bezorging = {
 
 function BezorglijstPagina() {
   const { dag } = useSearch({ from: "/_authenticated/bezorglijst" });
+  const qc = useQueryClient();
   const agentsFn = useServerFn(listAgents);
   const lijstFn = useServerFn(haalBezorgingen);
+  const bevestigFn = useServerFn(zetBevestiging);
 
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
   const agentId = ((agentsQuery.data ?? []) as Array<{ id: string }>)[0]?.id ?? null;
@@ -58,17 +60,44 @@ function BezorglijstPagina() {
   });
 
   const alles = query.data ?? [];
-  // Wie heeft afgezegd staat niet op de lijst. Een naam die je moet overslaan
-  // is een naam waar iemand op vrijdagochtend alsnog naartoe rijdt.
-  const lijst = alles
-    .filter(
-      (b) =>
-        b.status !== "afgezegd" &&
-        b.bevestiging !== "afgezegd" &&
-        b.bevestiging !== "verzet" &&
-        (!dag || b.bezorgdag === dag),
-    )
+
+  /**
+   * Op papier staat alleen wat de bus in gaat.
+   *
+   * De bevestiging van de klant is de sluis: heeft hij niet gezegd dat het
+   * schikt, dan gaat het pakket niet mee. Een naam die de chauffeur moet
+   * overslaan, is een naam waar hij op vrijdagochtend alsnog naartoe rijdt —
+   * en dan is de regel een aantekening geworden in plaats van een regel.
+   *
+   * Een adreswijziging telt als bevestiging: wie de moeite neemt zijn adres
+   * door te geven, wil het pakket.
+   */
+  const bevestigd = (b: Bezorging) =>
+    b.bevestiging === "bevestigd" || b.bevestiging === "ander_adres";
+
+  const opDeDag = alles.filter((b) => b.status !== "afgezegd" && (!dag || b.bezorgdag === dag));
+
+  const lijst = opDeDag
+    .filter(bevestigd)
     .sort((a, b) => (a.outbound_contacts?.plaats ?? "").localeCompare(b.outbound_contacts?.plaats ?? ""));
+
+  // Wat er níét meegaat, en waarom. Alleen op het scherm: op papier zou het
+  // een rij namen zijn die de chauffeur moet negeren.
+  const blijftStaan = opDeDag
+    .filter((b) => !bevestigd(b))
+    .sort((a, b) => (a.outbound_contacts?.plaats ?? "").localeCompare(b.outbound_contacts?.plaats ?? ""));
+
+  /**
+   * Met de hand bevestigen.
+   *
+   * Niet iedereen antwoordt per mail. Wie belt heeft net zo goed bevestigd, en
+   * zonder deze knop zou die klant alsnog afvallen — dan is de regel geen
+   * bescherming meer maar een obstakel.
+   */
+  async function bevestigMetDeHand(id: string) {
+    await bevestigFn({ data: { id, bevestiging: "bevestigd" } });
+    await qc.invalidateQueries({ queryKey: ["bezorgingen", agentId] });
+  }
 
   const dagTekst = dag
     ? new Date(dag + "T12:00:00").toLocaleDateString("nl-NL", {
@@ -117,18 +146,20 @@ function BezorglijstPagina() {
         <p className="mt-1 text-[13px] text-ink/55 print:text-black">
           {lijst.length} {lijst.length === 1 ? "adres" : "adressen"} · FJ Snacks, Lageweg 4 Katwijk
         </p>
-        {/* Hoeveel er bevestigd zijn hoort vóór het wegrijden bekend te zijn,
-            niet bij de derde deur die dicht blijkt. */}
-        {lijst.length > 0 && (
-          <p className="mt-0.5 text-[12.5px] text-ink/45 print:text-black">
-            {lijst.filter((b) => b.bevestiging === "bevestigd" || b.bevestiging === "ander_adres").length}{" "}
-            van {lijst.length} bevestigd
+        {blijftStaan.length > 0 && (
+          <p className="geen-print mt-0.5 text-[12.5px] text-amber-300/85">
+            {blijftStaan.length} {blijftStaan.length === 1 ? "pakket gaat" : "pakketten gaan"} niet
+            mee — geen bevestiging. Ze staan onderaan.
           </p>
         )}
       </header>
 
       {lijst.length === 0 ? (
-        <p className="text-[13px] text-ink/55">Voor deze dag staan er geen bezorgingen.</p>
+        <p className="text-[13px] text-ink/55">
+          {blijftStaan.length > 0
+            ? "Nog niemand heeft bevestigd, dus er gaat nog niets mee. Hieronder staat wie er nog moet reageren."
+            : "Voor deze dag staan er geen bezorgingen."}
+        </p>
       ) : (
         <ol className="grid gap-2.5">
           {lijst.map((b, i) => {
@@ -166,14 +197,6 @@ function BezorglijstPagina() {
                     </p>
                   )}
 
-                  {b.bevestiging !== "bevestigd" && b.bevestiging !== "ander_adres" && (
-                    <p className="mt-1 text-[12px] text-ink/50 print:text-black">
-                      {b.bevestiging === "gevraagd"
-                        ? "niet bevestigd — nog geen antwoord"
-                        : "niet bevestigd"}
-                    </p>
-                  )}
-
                   {adresOnvolledig && (
                     <p className="geen-print mt-1.5 inline-flex items-center gap-1.5 text-[11.5px] text-amber-300">
                       <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -189,6 +212,60 @@ function BezorglijstPagina() {
             );
           })}
         </ol>
+      )}
+
+      {/* Wat er niet meegaat. Alleen op het scherm: op papier zou dit een rij
+          namen zijn die de chauffeur moet overslaan, en dat is precies hoe er
+          alsnog een doos op de verkeerde toonbank belandt. */}
+      {blijftStaan.length > 0 && (
+        <section className="geen-print mt-8 rounded-2xl border border-amber-400/25 bg-amber-400/[0.05] p-5">
+          <h2 className="font-display text-[15px] font-semibold text-amber-200">
+            Gaat niet mee — geen bevestiging
+          </h2>
+          <p className="mt-1 max-w-[62ch] text-[12.5px]/[1.65] text-ink/60">
+            Deze mensen hebben niet laten weten dat het schikt. Ze staan niet op de geprinte lijst.
+            Belt er een, of weet je het zeker, zet hem dan hier alsnog op bevestigd — dan verschijnt
+            hij bovenaan.
+          </p>
+
+          <ul className="mt-4 grid gap-2">
+            {blijftStaan.map((b) => {
+              const c = b.outbound_contacts;
+              return (
+                <li
+                  key={b.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5"
+                >
+                  <span className="min-w-0 text-[12.5px]">
+                    <span className="font-semibold text-brand">
+                      {c?.bedrijf ?? c?.naam ?? "onbekend"}
+                    </span>
+                    {c?.plaats && <span className="ml-2 text-ink/45">{c.plaats}</span>}
+                    <span className="ml-2 text-ink/40">
+                      {b.bevestiging === "gevraagd"
+                        ? "gevraagd, nog geen antwoord"
+                        : b.bevestiging === "verzet"
+                          ? "wil een andere dag"
+                          : b.bevestiging === "afgezegd"
+                            ? "afgezegd"
+                            : "nog niets gevraagd"}
+                    </span>
+                  </span>
+                  {b.bevestiging !== "afgezegd" && (
+                    <button
+                      type="button"
+                      onClick={() => void bevestigMetDeHand(b.id)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-[11.5px] font-semibold text-emerald-300 transition hover:bg-emerald-400/20"
+                    >
+                      <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                      heeft gebeld — gaat mee
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
     </div>
   );

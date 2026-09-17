@@ -232,3 +232,44 @@ export const herstelAdres = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * De bevestiging met de hand zetten.
+ *
+ * Een pakket gaat alleen mee als de klant heeft bevestigd. Maar een klant
+ * bevestigt niet altijd per mail: hij belt, of hij zegt het tegen de chauffeur
+ * die er toch al langsreed. Zonder deze knop zou zo iemand alsnog afvallen, en
+ * dan is de regel geen bescherming meer maar een obstakel.
+ *
+ * Wie het heeft gezet is hier niet te zien, en dat is bewust: dit scherm is van
+ * één bedrijf en er kijkt één man naar. Een logboek dat niemand leest, is
+ * alleen een kolom.
+ */
+export const zetBevestiging = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        bevestiging: z.enum([
+          "niet_gevraagd",
+          "gevraagd",
+          "bevestigd",
+          "ander_adres",
+          "verzet",
+          "afgezegd",
+        ]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("outbound_deliveries")
+      .update({
+        bevestiging: data.bevestiging,
+        bevestiging_op: new Date().toISOString(),
+      } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

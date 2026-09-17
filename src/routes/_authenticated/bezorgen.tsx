@@ -219,11 +219,19 @@ function BezorgenPagina() {
     { stand: "geen_interesse", label: "geen interesse", cls: "border-white/12 text-ink/55 hover:bg-white/10" },
   ];
 
+  /**
+   * De bevestiging is de sluis, niet een aantekening.
+   *
+   * Zonder bevestiging gaat het pakket niet mee, dus moet dat hier staan zoals
+   * het is — "wacht op antwoord" leest als iets waar je niets mee hoeft, en
+   * "gaat niet mee" is wat er werkelijk gebeurt.
+   */
   const BEVESTIGINGSTEKST: Record<string, string> = {
-    gevraagd: "gevraagd of het schikt",
-    bevestigd: "schikt",
-    ander_adres: "ander adres",
-    verzet: "wil een andere dag",
+    niet_gevraagd: "nog niets gevraagd — gaat niet mee",
+    gevraagd: "wacht op antwoord — gaat zo niet mee",
+    bevestigd: "bevestigd",
+    ander_adres: "bevestigd, ander adres",
+    verzet: "wil een andere dag — gaat niet mee",
     afgezegd: "afgezegd",
   };
 
@@ -316,9 +324,20 @@ function BezorgenPagina() {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-display text-[16px] font-semibold text-brand">{dagTekst(d)}</h2>
               <span className="flex items-center gap-3">
+                {/* Niet hoeveel er gepland staan, maar hoeveel er werkelijk in
+                    de bus gaan. Zonder bevestiging gaat een pakket niet mee, en
+                    dan is het aantal geplande pakketten een getal dat niets
+                    zegt over vrijdag. */}
                 <span className="inline-flex items-center gap-1.5 text-[11.5px] text-ink/45">
                   <Truck className="h-3.5 w-3.5" aria-hidden="true" />
-                  {lijst.length} {lijst.length === 1 ? "pakket" : "pakketten"}
+                  {(() => {
+                    const mee = lijst.filter(
+                      (b) => b.bevestiging === "bevestigd" || b.bevestiging === "ander_adres",
+                    ).length;
+                    return mee === lijst.length
+                      ? `${mee} ${mee === 1 ? "pakket" : "pakketten"}`
+                      : `${mee} van ${lijst.length} ${lijst.length === 1 ? "pakket" : "pakketten"} gaat mee`;
+                  })()}
                 </span>
                 {/* De chauffeur staat in een bus, niet achter dit scherm. */}
                 <Link
@@ -383,19 +402,20 @@ function BezorgenPagina() {
                           bezorgd
                         </span>
                       )}
-                      {!af && b.bevestiging && b.bevestiging !== "niet_gevraagd" && (
-                        <span
-                          className={`ml-2 text-[11px] ${
-                            b.bevestiging === "bevestigd"
-                              ? "text-emerald-300"
-                              : b.bevestiging === "gevraagd"
-                                ? "text-ink/40"
-                                : "text-amber-300"
-                          }`}
-                        >
-                          {BEVESTIGINGSTEKST[b.bevestiging] ?? b.bevestiging}
-                        </span>
-                      )}
+                      {!af &&
+                        (() => {
+                          const stand = b.bevestiging ?? "niet_gevraagd";
+                          const gaatMee = stand === "bevestigd" || stand === "ander_adres";
+                          return (
+                            <span
+                              className={`ml-2 text-[11px] ${
+                                gaatMee ? "text-emerald-300" : "text-amber-300/80"
+                              }`}
+                            >
+                              {BEVESTIGINGSTEKST[stand] ?? stand}
+                            </span>
+                          );
+                        })()}
 
                       {/* Het adres is al bijgewerkt — de chauffeur leest de
                           lijst, niet dit scherm. Maar wát er is veranderd en
