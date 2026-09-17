@@ -1,7 +1,11 @@
 import { useServerFn } from "@tanstack/react-start";
-import { Check, FileUp, Loader2, X } from "lucide-react";
+import { Check, FileUp, Globe, Loader2, X } from "lucide-react";
 import * as React from "react";
-import { importeerKennis, type KennisVoorstel } from "@/lib/kennisimport.functions";
+import {
+  importeerKennis,
+  importeerVanWebsite,
+  type KennisVoorstel,
+} from "@/lib/kennisimport.functions";
 
 /**
  * Een bestand omzetten naar kennisitems.
@@ -90,6 +94,40 @@ export function KennisUpload({
   const [sleep, setSleep] = React.useState(false);
   const [uitkomstMelding, setUitkomstMelding] = React.useState<string | null>(null);
   const [opslaan, setOpslaan] = React.useState(false);
+  const [webadres, setWebadres] = React.useState("");
+  const [webBezig, setWebBezig] = React.useState(false);
+  const websiteFn = useServerFn(importeerVanWebsite);
+
+  /**
+   * De website van de klant uitlezen.
+   *
+   * Bijna elke klant heeft er een, en daar staat meestal al precies wat de
+   * agent moet weten. Die tekst met de hand overtypen is werk dat niemand doet,
+   * en dan blijft de kennisbank leeg — terwijl een lege kennisbank betekent dat
+   * de agent niets concreets kan zeggen.
+   */
+  async function haalVanWebsite() {
+    const url = webadres.trim();
+    if (!url) return;
+    setWebBezig(true);
+    setFout(null);
+    setUitkomstMelding(null);
+    try {
+      const uitkomst = await websiteFn({
+        data: { agentId, url: url.startsWith("http") ? url : `https://${url}` },
+      });
+      if (uitkomst.items.length === 0) {
+        setFout("Op die pagina stond niets bruikbaars voor de kennisbank.");
+        return;
+      }
+      setVoorstel((eerder) => [...(eerder ?? []), ...uitkomst.items]);
+      setBron(url);
+    } catch (e) {
+      setFout(e instanceof Error ? e.message : "De pagina kon niet worden gelezen.");
+    } finally {
+      setWebBezig(false);
+    }
+  }
   const invoer = React.useRef<HTMLInputElement>(null);
 
   /** Meerdere bestanden achter elkaar; de voorstellen stapelen op tot één lijst. */
@@ -177,6 +215,39 @@ export function KennisUpload({
         Upload alles wat je agent moet weten: prijslijsten, offertes, folders, voorwaarden,
         veelgestelde vragen. Meerdere bestanden tegelijk mag. We halen de kennis eruit en laten je
         die eerst nakijken voordat er iets wordt opgeslagen.
+      </p>
+
+      {/* De website eerst, want dat is de snelste weg naar een gevulde
+          kennisbank: één adres in plaats van bestanden zoeken. */}
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[16rem] flex-1">
+          <Globe
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-ink/35"
+            aria-hidden="true"
+          />
+          <input
+            id="kennis-webadres"
+            className="w-full rounded-xl border border-white/12 bg-white/[0.04] py-2 pr-3 pl-9 text-[13px] text-ink outline-none placeholder:text-ink/30 focus:border-violet/55"
+            placeholder="www.jouwbedrijf.nl"
+            value={webadres}
+            onChange={(e) => setWebadres(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void haalVanWebsite();
+            }}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={haalVanWebsite}
+          disabled={webBezig || bezig || webadres.trim() === ""}
+          className="rounded-xl border border-violet/35 bg-violet/[0.10] px-4 py-2 text-[13px] font-semibold text-violet transition hover:bg-violet/20 disabled:opacity-40"
+        >
+          {webBezig ? "Bezig met lezen…" : "Van website halen"}
+        </button>
+      </div>
+      <p className="mt-1.5 text-[11px] text-ink/40">
+        Haalt wat er op die pagina staat. Je ziet de voorstellen hieronder voordat er iets wordt
+        opgeslagen.
       </p>
 
       <div
