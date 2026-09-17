@@ -290,6 +290,7 @@ export type Database = {
           herkomst: Database["public"]["Enums"]["contact_herkomst"]
           id: string
           naam: string
+          navraag_na_dagen: number
           ondertekening: string | null
           opvolg_na_dagen: number
           verzendwijze: Database["public"]["Enums"]["verzendwijze"]
@@ -307,6 +308,7 @@ export type Database = {
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
           naam: string
+          navraag_na_dagen?: number
           ondertekening?: string | null
           opvolg_na_dagen?: number
           verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
@@ -324,6 +326,7 @@ export type Database = {
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
           naam?: string
+          navraag_na_dagen?: number
           ondertekening?: string | null
           opvolg_na_dagen?: number
           verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
@@ -409,6 +412,9 @@ export type Database = {
           contact_id: string
           id: string
           notitie: string | null
+          opvolging: Database["public"]["Enums"]["opvolging_stand"]
+          opvolging_notitie: string | null
+          opvolging_op: string | null
           status: string
         }
         Insert: {
@@ -419,6 +425,9 @@ export type Database = {
           contact_id: string
           id?: string
           notitie?: string | null
+          opvolging?: Database["public"]["Enums"]["opvolging_stand"]
+          opvolging_notitie?: string | null
+          opvolging_op?: string | null
           status?: string
         }
         Update: {
@@ -429,6 +438,9 @@ export type Database = {
           contact_id?: string
           id?: string
           notitie?: string | null
+          opvolging?: Database["public"]["Enums"]["opvolging_stand"]
+          opvolging_notitie?: string | null
+          opvolging_op?: string | null
           status?: string
         }
         Relationships: [
@@ -710,7 +722,9 @@ export type Database = {
           bezorgd: number
           contacten: number
           gebouncet: number
+          gesproken: number
           in_gesprek: number
+          klant: number
           opgevolgd: number
         }[]
       }
@@ -754,6 +768,14 @@ export type Database = {
         | "beantwoord"
       campagne_doelgroep: "alles" | "binnen_gebied" | "buiten_gebied"
       contact_herkomst: "oud_klant" | "koud"
+      opvolging_stand:
+        | "open"
+        | "navraag_uit"
+        | "wil_gesprek"
+        | "gebeld"
+        | "bezocht"
+        | "klant"
+        | "geen_interesse"
       verzendwijze: "concept" | "direct"
     }
     CompositeTypes: {
@@ -901,6 +923,15 @@ export const Constants = {
       ],
       campagne_doelgroep: ["alles", "binnen_gebied", "buiten_gebied"],
       contact_herkomst: ["oud_klant", "koud"],
+      opvolging_stand: [
+        "open",
+        "navraag_uit",
+        "wil_gesprek",
+        "gebeld",
+        "bezocht",
+        "klant",
+        "geen_interesse",
+      ],
       verzendwijze: ["concept", "direct"],
     },
   },
