@@ -7,10 +7,12 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
   bereidCampagneVoor,
+  bereidNavraagVoor,
   bereidOpvolgingVoor,
   haalBerichten,
   haalCampagnes,
   verstuurCampagne,
+  verstuurNavraag,
   verstuurOpvolging,
 } from "@/lib/campagne.functions";
 
@@ -66,6 +68,8 @@ function BerichtenPagina() {
   const verstuurFn = useServerFn(verstuurCampagne);
   const opvolgBereidFn = useServerFn(bereidOpvolgingVoor);
   const opvolgVerstuurFn = useServerFn(verstuurOpvolging);
+  const navraagBereidFn = useServerFn(bereidNavraagVoor);
+  const navraagVerstuurFn = useServerFn(verstuurNavraag);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
@@ -87,9 +91,9 @@ function BerichtenPagina() {
   const campagneId = gekozen ?? campagnes[0]?.id ?? null;
   const campagne = campagnes.find((c) => c.id === campagneId) ?? null;
 
-  const [bezig, zetBezig] = useState<null | "bereid" | "verstuur" | "opvolg" | "opvolgVerstuur">(
-    null,
-  );
+  const [bezig, zetBezig] = useState<
+    null | "bereid" | "verstuur" | "opvolg" | "opvolgVerstuur" | "navraag" | "navraagVerstuur"
+  >(null);
   const [melding, zetMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
 
   const berichten = berichtenQuery.data ?? [];
@@ -98,6 +102,7 @@ function BerichtenPagina() {
   // Wie een verstuurd eerste bericht heeft en niet heeft geantwoord, komt in
   // aanmerking voor opvolging. 'beantwoord' valt er dus vanzelf buiten.
   const opTeVolgen = berichten.filter((b) => b.stap === 1 && b.status === "verzonden").length;
+  const navraagConcepten = berichten.filter((b) => b.status === "concept" && b.stap === 3);
 
   async function bereid() {
     if (!campagneId) return;
@@ -152,6 +157,44 @@ function BerichtenPagina() {
       if (r.eerste) delen.push(`eerste op ${moment(r.eerste)}`);
       if (r.mislukt.length > 0) delen.push(`${r.mislukt.length} mislukt`);
       zetMelding({ ok: r.mislukt.length === 0, tekst: delen.join(", ") + "." });
+      await qc.invalidateQueries({ queryKey: ["berichten", agentId] });
+    } catch (e) {
+      zetMelding({ ok: false, tekst: e instanceof Error ? e.message : "Inplannen mislukt." });
+    } finally {
+      zetBezig(null);
+    }
+  }
+
+  async function navraagBereid() {
+    if (!campagneId) return;
+    zetBezig("navraag");
+    zetMelding(null);
+    try {
+      const r = await navraagBereidFn({ data: { campagneId, portie: 10 } });
+      const delen = [`${r.klaargezet} navraagberichten klaargezet`];
+      if (r.resterend > 0) delen.push(`nog ${r.resterend} te gaan`);
+      if (r.overgeslagen.length > 0) delen.push(`${r.overgeslagen.length} overgeslagen`);
+      zetMelding({ ok: true, tekst: delen.join(", ") + "." });
+      await qc.invalidateQueries({ queryKey: ["berichten", agentId] });
+    } catch (e) {
+      zetMelding({ ok: false, tekst: e instanceof Error ? e.message : "Klaarzetten mislukt." });
+    } finally {
+      zetBezig(null);
+    }
+  }
+
+  async function navraagVerstuur() {
+    if (!campagneId) return;
+    zetBezig("navraagVerstuur");
+    zetMelding(null);
+    try {
+      const r = await navraagVerstuurFn({ data: { campagneId } });
+      zetMelding({
+        ok: r.mislukt.length === 0,
+        tekst:
+          `${r.ingepland} navraagberichten ingepland` +
+          (r.mislukt.length > 0 ? `, ${r.mislukt.length} mislukt` : "") + ".",
+      });
       await qc.invalidateQueries({ queryKey: ["berichten", agentId] });
     } catch (e) {
       zetMelding({ ok: false, tekst: e instanceof Error ? e.message : "Inplannen mislukt." });
@@ -299,6 +342,43 @@ function BerichtenPagina() {
                 </button>
               </div>
             </div>
+
+            {/* Na de bezorging. Dit bericht probeert niets af te sluiten: het
+                vraagt hoe het was en of er gebeld mag worden. Daar begint het
+                gesprek waar een proefpakket een klant wordt. */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="text-[11px] font-semibold tracking-wide text-ink/50 uppercase">
+                Navraag na bezorging
+              </p>
+              <p className="mt-1.5 max-w-[62ch] text-[12px]/[1.6] text-ink/55">
+                Vraagt hoe het proefpakket is bevallen en of er gebeld mag worden. Geen prijzen,
+                geen bestelling — dat gesprek voer je zelf, en dat is precies waar dit op uitkomt.
+              </p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={navraagBereid}
+                  disabled={bezig !== null}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.06] px-3.5 py-2 text-[12.5px] font-semibold text-ink/80 transition hover:bg-white/10 disabled:opacity-40"
+                >
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  {bezig === "navraag" ? "Bezig…" : "Tien navragen klaarzetten"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={navraagVerstuur}
+                  disabled={bezig !== null || navraagConcepten.length === 0}
+                  className="inline-flex items-center gap-2 rounded-xl border border-violet/35 bg-violet/[0.10] px-3.5 py-2 text-[12.5px] font-semibold text-violet transition hover:bg-violet/20 disabled:opacity-40"
+                >
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                  {bezig === "navraagVerstuur"
+                    ? "Bezig…"
+                    : `${navraagConcepten.length} navragen inplannen`}
+                </button>
+              </div>
+            </div>
           </section>
         )}
 
@@ -316,7 +396,11 @@ function BerichtenPagina() {
                         {c?.bedrijf && <span className="ml-2 text-ink/50">{c.bedrijf}</span>}
                       </p>
                       <p className="mt-0.5 text-[11.5px] text-ink/45">
-                        {b.stap === 1 ? "eerste bericht" : `opvolging ${b.stap - 1}`}
+                        {b.stap === 1
+                          ? "eerste bericht"
+                          : b.stap === 3
+                            ? "navraag na bezorging"
+                            : `opvolging ${b.stap - 1}`}
                         {b.gepland_voor && (
                           <span className="ml-2 inline-flex items-center gap-1 text-violet">
                             <Clock className="h-3 w-3" aria-hidden="true" />

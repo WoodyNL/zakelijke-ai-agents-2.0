@@ -10,6 +10,7 @@ import {
   haalKandidaten,
   planBezorging,
   zetBezorgingStatus,
+  zetOpvolging,
 } from "@/lib/bezorging.functions";
 
 export const Route = createFileRoute("/_authenticated/bezorgen")({
@@ -30,6 +31,7 @@ type Bezorging = {
   adres: string | null;
   status: string;
   notitie: string | null;
+  opvolging?: string;
   outbound_contacts: Contactje;
 };
 type Kandidaat = { contactId: string; contact: Contactje };
@@ -62,6 +64,7 @@ function BezorgenPagina() {
   const kandFn = useServerFn(haalKandidaten);
   const planFn = useServerFn(planBezorging);
   const statusFn = useServerFn(zetBezorgingStatus);
+  const opvolgFn = useServerFn(zetOpvolging);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
@@ -69,7 +72,10 @@ function BezorgenPagina() {
 
   const bezorgQuery = useQuery({
     queryKey: ["bezorgingen", agentId],
-    queryFn: () => lijstFn({ data: { agentId: agentId! } }) as Promise<Bezorging[]>,
+    // De kolom opvolging bestaat in de database maar nog niet in de gegenereerde
+    // types; die worden opnieuw gemaakt nadat migratie 20260918200000 is
+    // gedraaid. Deze omweg mag daarna weg.
+    queryFn: () => lijstFn({ data: { agentId: agentId! } }) as unknown as Promise<Bezorging[]>,
     enabled: agentId !== null,
   });
   const kandQuery = useQuery({
@@ -126,6 +132,47 @@ function BezorgenPagina() {
   }
 
   const naam = (c: Contactje) => c?.naam ?? c?.bedrijf ?? c?.email ?? "onbekend";
+
+  /**
+   * Wat er ná de bezorging met een mens is gebeurd.
+   *
+   * Dit is het enige stuk van de trechter dat geen software doet, en juist
+   * daarom hoort het hier te staan. Een warme klant die niet is gebeld
+   * verdwijnt tussen de honderd andere, en dat is de klant die het meeste
+   * waard was.
+   */
+  async function zetOpvolgStand(b: Bezorging, stand: string) {
+    zetBezig(b.id);
+    zetFout(null);
+    try {
+      await opvolgFn({ data: { id: b.id, opvolging: stand as never } });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["bezorgingen", agentId] }),
+        qc.invalidateQueries({ queryKey: ["trechter", agentId] }),
+      ]);
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Bijwerken mislukt.");
+    } finally {
+      zetBezig(null);
+    }
+  }
+
+  const OPVOLGKNOPPEN: Array<{ stand: string; label: string; cls: string }> = [
+    { stand: "gebeld", label: "gebeld", cls: "border-sky-400/30 bg-sky-400/10 text-sky-300 hover:bg-sky-400/20" },
+    { stand: "bezocht", label: "bezocht", cls: "border-sky-400/30 bg-sky-400/10 text-sky-300 hover:bg-sky-400/20" },
+    { stand: "klant", label: "klant geworden", cls: "border-emerald-400/35 bg-emerald-400/12 text-emerald-300 hover:bg-emerald-400/22" },
+    { stand: "geen_interesse", label: "geen interesse", cls: "border-white/12 text-ink/55 hover:bg-white/10" },
+  ];
+
+  const OPVOLGTEKST: Record<string, string> = {
+    open: "nog niets mee gedaan",
+    navraag_uit: "navraag verstuurd, wacht op antwoord",
+    wil_gesprek: "wil een gesprek",
+    gebeld: "gebeld",
+    bezocht: "bezocht",
+    klant: "klant geworden",
+    geen_interesse: "geen interesse",
+  };
 
   return (
     <DashboardShell isAdmin={meQuery.data?.isAdmin === true} userName={meQuery.data?.name}>
@@ -234,7 +281,29 @@ function BezorgenPagina() {
                       )}
                     </span>
 
-                    {!af && (
+                    {af ? (
+                      /* Bezorgd. Nu komt het stuk dat geen software doet: bellen
+                         of langsgaan. Zolang dat niet is vastgelegd, staat er
+                         hier dat er niets mee gedaan is — en dat hoort te
+                         schuren. */
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] text-ink/45">
+                          {OPVOLGTEKST[b.opvolging ?? "open"] ?? b.opvolging}
+                        </span>
+                        {b.opvolging !== "klant" &&
+                          OPVOLGKNOPPEN.map((k) => (
+                            <button
+                              key={k.stand}
+                              type="button"
+                              onClick={() => zetOpvolgStand(b, k.stand)}
+                              disabled={bezig !== null || b.opvolging === k.stand}
+                              className={`rounded-xl border px-2.5 py-1 text-[11.5px] font-medium transition disabled:opacity-40 ${k.cls}`}
+                            >
+                              {k.label}
+                            </button>
+                          ))}
+                      </span>
+                    ) : (
                       <span className="flex gap-2">
                         <button
                           type="button"

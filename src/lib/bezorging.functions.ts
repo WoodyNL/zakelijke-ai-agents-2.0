@@ -20,7 +20,9 @@ export const haalBezorgingen = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { data: rijen, error } = await context.supabase
       .from("outbound_deliveries")
-      .select("id, bezorgdag, adres, status, notitie, contact_id, outbound_contacts(naam, bedrijf, plaats, email)")
+      .select(
+        "id, bezorgdag, adres, status, notitie, opvolging, contact_id, outbound_contacts(naam, bedrijf, plaats, email)",
+      )
       .eq("agent_id", data.agentId)
       .order("bezorgdag", { ascending: true })
       .limit(300);
@@ -108,6 +110,46 @@ export const zetBezorgingStatus = createServerFn({ method: "POST" })
     const { error } = await context.supabase
       .from("outbound_deliveries")
       .update({ status: data.status })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Vastleggen wat er ná de bezorging met een mens is gebeurd.
+ *
+ * Dit is het enige stuk van de trechter dat geen software doet, en juist
+ * daarom hoort het bijgehouden te worden. Een warme klant die niet is gebeld,
+ * verdwijnt tussen de honderd andere — en dat is precies de klant die het
+ * meeste waard was.
+ */
+export const zetOpvolging = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        opvolging: z.enum([
+          "open",
+          "navraag_uit",
+          "wil_gesprek",
+          "gebeld",
+          "bezocht",
+          "klant",
+          "geen_interesse",
+        ]),
+        notitie: z.string().max(1000).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("outbound_deliveries")
+      .update({
+        opvolging: data.opvolging,
+        opvolging_op: new Date().toISOString(),
+        ...(data.notitie !== undefined ? { opvolging_notitie: data.notitie } : {}),
+      } as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

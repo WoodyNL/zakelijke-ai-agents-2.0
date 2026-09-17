@@ -288,6 +288,8 @@ export const haalTrechter = createServerFn({ method: "GET" })
         in_gesprek: 0,
         afspraak: 0,
         bezorgd: 0,
+        gesproken: 0,
+        klant: 0,
         afgemeld: 0,
         gebouncet: 0,
       }
@@ -302,6 +304,44 @@ export type Trechter = {
   in_gesprek: number;
   afspraak: number;
   bezorgd: number;
+  gesproken: number;
+  klant: number;
   afgemeld: number;
   gebouncet: number;
 };
+
+/** Navraag klaarzetten voor wie een proefpakket heeft gehad. */
+export const bereidNavraagVoor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({ campagneId: z.string().uuid(), portie: z.number().int().min(1).max(50).default(10) })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: c, error } = await context.supabase
+      .from("outbound_campaigns")
+      .select("id")
+      .eq("id", data.campagneId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!c) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    const mod = await import("@/lib/campagne-uitvoeren.server");
+    return mod.bereidNavraagVoor(data.campagneId, data.portie);
+  });
+
+/** De klaarstaande navraagberichten inplannen. */
+export const verstuurNavraag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ campagneId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: c, error } = await context.supabase
+      .from("outbound_campaigns")
+      .select("id")
+      .eq("id", data.campagneId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!c) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    const mod = await import("@/lib/campagne-uitvoeren.server");
+    return mod.verstuurNavraag(data.campagneId);
+  });

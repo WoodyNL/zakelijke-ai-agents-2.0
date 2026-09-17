@@ -34,6 +34,8 @@ export type Opdracht = {
   aanbod: string;
   /** Wat er is gebeurd bij de vorige mail; leeg bij het eerste bericht. */
   vorigBericht?: string | undefined;
+  /** Welke stap in de reeks; bepaalt waar het bericht op uitkomt. */
+  soort?: "eerste" | "opvolging" | "navraag" | undefined;
 };
 
 export type Concept = { onderwerp: string; tekst: string };
@@ -69,7 +71,41 @@ function watWeWetenVanDeOntvanger(c: ContactGegevens): string {
 function systeemprompt(o: Opdracht): string {
   const oud = o.contact.herkomst === "oud_klant";
 
-  return `Je schrijft namens ${o.bedrijfsnaam} één e-mail aan één persoon. Je schrijft Nederlands.
+  /**
+   * Na de bezorging verandert de opdracht volledig.
+   *
+   * Dit is het bericht waar het geld zit: iemand heeft het product geproefd en
+   * staat dichter bij klant worden dan wie ook in de lijst. Juist daarom mag
+   * deze mail niet proberen af te sluiten. Een bestelling per e-mail regelen
+   * bij iemand die net kennis heeft gemaakt, verspilt het enige moment waarop
+   * een persoonlijk gesprek vanzelfsprekend is.
+   *
+   * De mail doet dus één ding: vragen hoe het was, en aanbieden om te bellen.
+   */
+  const navraag =
+    o.soort === "navraag"
+      ? `
+
+# Dit bericht komt ná de bezorging
+
+Deze persoon heeft het proefpakket gehad en geproefd. Dat verandert alles aan wat je schrijft.
+
+Je vraagt één ding: hoe het bevallen is. Oprecht, en zonder er een verkoopvraag van te maken. Ook een tegenvallend antwoord is waardevol, dus laat merken dat je het eerlijke antwoord wilt horen.
+
+En je biedt aan om te bellen. Dat is waar deze mail op uitkomt — niet op een bestelling, niet op een prijsopgave, niet op een volgende mail. Een gesprek.
+
+Wat je hier niet doet:
+- geen prijzen noemen, ook niet als ernaar gevraagd zou kunnen worden
+- niet vragen of ze willen bestellen
+- geen kortingen, geen aanbiedingen, geen tweede proefpakket aanbieden
+- niet aandringen als het antwoord misschien nee is
+
+Eindig met de vraag of je even mag bellen, en wanneer dat schikt. Meer niet.
+
+En begin niet opnieuw over de overname of het overlijden van de vorige eigenaar. Dat heeft deze persoon inmiddels twee keer gelezen en er is een doos bezorgd; het verhaal is verteld. Val met de deur in huis: de chauffeur is langs geweest, hoe was het?`
+      : "";
+
+  return `Je schrijft namens ${o.bedrijfsnaam} één e-mail aan één persoon. Je schrijft Nederlands.${navraag}
 
 # De belangrijkste regel
 
@@ -84,7 +120,9 @@ Staat er niets bruikbaars in de kennisbank, schrijf dan alleen dat je contact op
 ${watWeWetenVanDeOntvanger(o.contact)}
 
 ${
-  oud
+  o.soort === "navraag"
+    ? `Deze persoon heeft het pakket gehad. Waar hij vandaan komt in de lijst doet er nu niet meer toe; schrijf over wat er bezorgd is en niet over hoe het contact ooit begon.`
+    : oud
     ? `Deze persoon was klant. Dat is de reden dat je schrijft, en dat mag je benoemen.
 
 Wat er speelt: de vorige eigenaar is overleden en het bedrijf is overgenomen. Veel klanten zijn in die periode vertrokken. Benoem dat eerlijk en kort, zonder het te gebruiken als verkoopargument en zonder medelijden te vragen. Het is de aanleiding, niet het verhaal.
@@ -97,11 +135,19 @@ Zeg in de eerste zin wie je bent en waarom je schrijft. Hou het kort — korter 
 Wat je hierboven over de relatie leest, is achtergrond voor jou. Zet het niet in de mail. Schrijf dus nooit dat je ziet dat iemand nog niets heeft besteld, dat hij in je systeem staat, of dat je zijn gegevens hebt: dat wrijft iets in en verraadt dat er een bestand achter zit.`
 }
 
-# Wat je voorstelt
+${
+    o.soort === "navraag"
+      ? `# Waar het pakket over ging
 
 ${o.aanbod}
 
-Dit is het enige dat je aanbiedt. Je verzint er geen korting, geen actie en geen extra bij.
+Dat is geweest. Je biedt het niet opnieuw aan.`
+      : `# Wat je voorstelt
+
+${o.aanbod}
+
+Dit is het enige dat je aanbiedt. Je verzint er geen korting, geen actie en geen extra bij.`
+  }
 
 # Hoe je schrijft
 

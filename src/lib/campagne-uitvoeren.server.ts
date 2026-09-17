@@ -381,14 +381,19 @@ export async function bereidOpvolgingVoor(campagneId: string, portie = 10): Prom
   return { klaargezet, overgeslagen, resterend: Math.max(teDoen.length - nu.length, 0) };
 }
 
+/** Plant de klaarstaande opvolgingen in, elk op zijn eigen moment. */
+export async function verstuurOpvolging(campagneId: string): Promise<Verzending> {
+  return verstuurStap(campagneId, 2);
+}
+
 /**
- * Plant de klaarstaande opvolgingen in, elk op zijn eigen moment.
+ * Plant de klaarstaande berichten van één stap in.
  *
  * Er wordt hier bewust niet opnieuw over dagen verdeeld: dat moment stond al
- * vast toen het bericht werd klaargezet, geteld vanaf de eigen eerste mail van
- * dat contact.
+ * vast toen het bericht werd klaargezet, geteld vanaf de eigen eerste mail of
+ * de eigen bezorgdag van dat contact.
  */
-export async function verstuurOpvolging(campagneId: string): Promise<Verzending> {
+async function verstuurStap(campagneId: string, stap: number): Promise<Verzending> {
   const d = db();
 
   const [campagne] = await haal<Campagne>(d, `outbound_campaigns?id=eq.${campagneId}`);
@@ -407,7 +412,7 @@ export async function verstuurOpvolging(campagneId: string): Promise<Verzending>
   }>(
     d,
     `outbound_messages?select=id,onderwerp,tekst,gepland_voor,outbound_contacts(email,afmeldsleutel)` +
-      `&campaign_id=eq.${campagneId}&stap=eq.2&status=eq.concept&order=gepland_voor`,
+      `&campaign_id=eq.${campagneId}&stap=eq.${stap}&status=eq.concept&order=gepland_voor`,
   );
 
   if (concepten.length === 0) return { ingepland: 0, mislukt: [] };
@@ -452,4 +457,140 @@ export async function verstuurOpvolging(campagneId: string): Promise<Verzending>
   }
 
   return { ingepland, ...(eerste ? { eerste } : {}), ...(laatste ? { laatste } : {}), mislukt };
+}
+
+type BezorgdPakket = {
+  id: string;
+  contact_id: string;
+  bezorgdag: string;
+  opvolging: string;
+  outbound_contacts: {
+    id: string;
+    email: string;
+    naam: string | null;
+    bedrijf: string | null;
+    plaats: string | null;
+    herkomst: string;
+  } | null;
+};
+
+/**
+ * Navraag klaarzetten voor wie een pakket heeft gehad.
+ *
+ * Dit is het bericht waar het geld zit. Iemand die het product heeft geproefd
+ * staat dichter bij klant worden dan wie ook in de lijst — maar alleen als er
+ * daarna iemand belt. De mail probeert dus niets af te sluiten; hij vraagt hoe
+ * het was en of er gebeld mag worden.
+ *
+ * Alleen bezorgde pakketten tellen. Een afspraak die nog moet plaatsvinden of
+ * is afgezegd levert niets om naar te vragen.
+ */
+export async function bereidNavraagVoor(campagneId: string, portie = 10): Promise<Voorbereiding> {
+  const d = db();
+
+  const [campagne] = await haal<Campagne & { navraag_na_dagen?: number }>(
+    d,
+    `outbound_campaigns?id=eq.${campagneId}`,
+  );
+  if (!campagne) throw new Error("Deze campagne bestaat niet.");
+  if (!campagne.aanbod || !campagne.ondertekening) {
+    throw new Error("Vul eerst het aanbod en de ondertekening in bij de campagne.");
+  }
+
+  const kennis = await haal<KennisRegel>(
+    d,
+    `knowledge_items?select=category,title,content&agent_id=eq.${campagne.agent_id}&is_active=eq.true&order=sort_order`,
+  );
+
+  const bezorgd = await haal<BezorgdPakket>(
+    d,
+    `outbound_deliveries?select=id,contact_id,bezorgdag,opvolging,` +
+      `outbound_contacts(id,email,naam,bedrijf,plaats,herkomst)` +
+      `&agent_id=eq.${campagne.agent_id}&status=eq.bezorgd&order=bezorgdag&limit=500`,
+  );
+
+  const heeftNavraag = new Set(
+    (
+      await haal<{ contact_id: string }>(
+        d,
+        `outbound_messages?select=contact_id&agent_id=eq.${campagne.agent_id}&stap=eq.3`,
+      )
+    ).map((m) => m.contact_id),
+  );
+
+  const teDoen = bezorgd.filter((b) => !heeftNavraag.has(b.contact_id) && b.outbound_contacts);
+  const nu = teDoen.slice(0, portie);
+
+  const overgeslagen: Voorbereiding["overgeslagen"] = [];
+  let klaargezet = 0;
+
+  for (const b of nu) {
+    const c = b.outbound_contacts!;
+    try {
+      const concept = await stelBerichtOp({
+        contact: {
+          naam: c.naam ?? undefined,
+          bedrijf: c.bedrijf ?? undefined,
+          plaats: c.plaats ?? undefined,
+          herkomst: c.herkomst as "oud_klant" | "koud",
+        },
+        kennis,
+        bedrijfsnaam:
+          campagne.afzender_naam ??
+          campagne.ondertekening.split(",").pop()?.trim() ??
+          campagne.ondertekening,
+        ondertekening: campagne.ondertekening,
+        aanbod: campagne.aanbod,
+        soort: "navraag",
+      });
+
+      const wanneer = opvolgmoment(
+        new Date(b.bezorgdag + "T12:00:00"),
+        campagne.navraag_na_dagen ?? 7,
+      );
+
+      const res = await fetch(`${d.url}/rest/v1/outbound_messages`, {
+        method: "POST",
+        headers: { ...d.headers, Prefer: "return=minimal" },
+        body: JSON.stringify({
+          agent_id: campagne.agent_id,
+          campaign_id: campagne.id,
+          contact_id: c.id,
+          stap: 3,
+          status: "concept",
+          onderwerp: concept.onderwerp,
+          tekst: concept.tekst,
+          gepland_voor: wanneer.toISOString(),
+        }),
+      });
+
+      if (!res.ok) {
+        const melding = res.status === 409 ? "had al een navraag" : await res.text();
+        overgeslagen.push({ email: c.email, reden: melding.slice(0, 120) });
+        continue;
+      }
+
+      // De bezorging onthoudt dat er is nagevraagd, zodat het scherm kan laten
+      // zien wie er nog niets heeft gehoord.
+      await fetch(`${d.url}/rest/v1/outbound_deliveries?id=eq.${b.id}&opvolging=eq.open`, {
+        method: "PATCH",
+        headers: { ...d.headers, Prefer: "return=minimal" },
+        body: JSON.stringify({ opvolging: "navraag_uit" }),
+      });
+
+      klaargezet++;
+    } catch (e) {
+      overgeslagen.push({
+        email: c.email,
+        reden: e instanceof Error ? e.message.slice(0, 120) : "opstellen mislukt",
+      });
+    }
+  }
+
+  return { klaargezet, overgeslagen, resterend: Math.max(teDoen.length - nu.length, 0) };
+}
+
+/** De klaarstaande navraagberichten inplannen, elk op zijn eigen moment. */
+export async function verstuurNavraag(campagneId: string): Promise<Verzending> {
+  return verstuurStap(campagneId, 3);
 }

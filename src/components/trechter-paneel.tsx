@@ -1,4 +1,13 @@
-import { Users, Mail, Clock, MessageSquare, CalendarCheck, PackageCheck } from "lucide-react";
+import {
+  Users,
+  Mail,
+  Clock,
+  MessageSquare,
+  CalendarCheck,
+  PackageCheck,
+  Phone,
+  Handshake,
+} from "lucide-react";
 import type { Trechter } from "@/lib/campagne.functions";
 
 /**
@@ -53,6 +62,21 @@ const STAPPEN: Stap[] = [
     uitleg: "hebben het pakket gehad",
     icoon: <PackageCheck className="h-4 w-4" aria-hidden="true" />,
   },
+  // De laatste twee zijn mensenwerk, en staan er juist daarom bij. Wat niemand
+  // meet, doet niemand — en dit is de stap waar een proefpakket een klant
+  // wordt of blijft liggen.
+  {
+    sleutel: "gesproken",
+    label: "gebeld of bezocht",
+    uitleg: "hebben persoonlijk contact gehad",
+    icoon: <Phone className="h-4 w-4" aria-hidden="true" />,
+  },
+  {
+    sleutel: "klant",
+    label: "klant geworden",
+    uitleg: "waar het allemaal om begonnen was",
+    icoon: <Handshake className="h-4 w-4" aria-hidden="true" />,
+  },
 ];
 
 export function TrechterPaneel({ t }: { t: Trechter }) {
@@ -63,7 +87,7 @@ export function TrechterPaneel({ t }: { t: Trechter }) {
     <section className="card-glass-lg rounded-3xl p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-display text-[16px] font-semibold text-brand">
-          Van lijst tot proefpakket
+          Van lijst tot klant
         </h2>
         <span className="text-[11.5px] text-ink/45">
           {t.contacten.toLocaleString("nl-NL")} contacten
@@ -91,7 +115,11 @@ export function TrechterPaneel({ t }: { t: Trechter }) {
                     {s.label}
                   </span>
                   <span className="text-[12.5px] tabular-nums">
-                    <strong className="font-display font-bold text-brand">
+                    <strong
+                      className={`font-display font-bold ${
+                        s.sleutel === "klant" ? "text-emerald-300" : "text-brand"
+                      }`}
+                    >
                       {n.toLocaleString("nl-NL")}
                     </strong>
                     <span className="ml-1.5 text-ink/40">{pct}%</span>
@@ -99,7 +127,9 @@ export function TrechterPaneel({ t }: { t: Trechter }) {
                 </div>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/8">
                   <div
-                    className="h-full rounded-full bg-violet transition-[width] duration-500"
+                    className={`h-full rounded-full transition-[width] duration-500 ${
+                      s.sleutel === "klant" ? "bg-emerald-400" : "bg-violet"
+                    }`}
                     style={{ width: `${Math.max(pct, n > 0 ? 2 : 0)}%` }}
                   />
                 </div>
