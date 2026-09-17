@@ -199,9 +199,13 @@ export function Klantreis({ g }: { g: Reisgegevens }) {
   const c = g.contact;
 
   return (
-    <div className="grid gap-5">
-      <section className="card-glass-lg rounded-3xl p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+    /* Naast elkaar zodra er ruimte is. De reis is een smalle kolom tekst; die
+       over de volle breedte uitrekken maakt hem niet leesbaarder, alleen leger.
+       De gegevens blijven meelopen terwijl je door de tijdlijn scrolt, want dat
+       is precies wat je erbij wilt zien: over wie gaat dit ook alweer. */
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+      <section className="card-glass-lg rounded-3xl p-5 sm:p-6 lg:sticky lg:top-24">
+        <div className="flex flex-wrap items-start justify-between gap-3 lg:block">
           <div>
             <h2 className="font-display text-[19px] font-bold text-brand">
               {c.naam ?? c.bedrijf ?? c.email}
@@ -215,7 +219,7 @@ export function Klantreis({ g }: { g: Reisgegevens }) {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 lg:mt-3.5">
             <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10.5px] text-ink/60">
               {c.herkomst === "oud_klant" ? "oud-klant" : "koud"}
             </span>
