@@ -104,6 +104,11 @@ export function ContactImport({
   const [uitkomst, zetUitkomst] = React.useState<Importuitkomst | null>(null);
   const [aanvul, zetAanvul] = React.useState<Aanvuluitkomst | null>(null);
   const [herkomstMee, zetHerkomstMee] = React.useState(false);
+  // Een eigen keuze, los van "Wat voor lijst is dit?" hierboven. Die lijst
+  // bepaalt wat nieuwe contacten worden; dit bepaalt wat bestaande worden, en
+  // dat is niet vanzelfsprekend hetzelfde — je corrigeert juist omdat er eerder
+  // iets anders is gekozen.
+  const [herkomstNaar, zetHerkomstNaar] = React.useState<"oud_klant" | "koud">("koud");
 
   const invoer = React.useRef<HTMLInputElement>(null);
 
@@ -157,7 +162,7 @@ export function ContactImport({
     zetUitkomst(null);
     zetAanvul(null);
     try {
-      zetAanvul(await onAanvullen(gelezen.contacten, herkomstMee ? herkomst : undefined));
+      zetAanvul(await onAanvullen(gelezen.contacten, herkomstMee ? herkomstNaar : undefined));
       zetRijen([]);
       zetKolommen([]);
       zetBestandsnaam("");
@@ -453,46 +458,25 @@ export function ContactImport({
               />
               <span>
                 bij aanvullen ook de soort relatie zetten op{" "}
-                <strong className="font-semibold text-ink/80">
-                  {herkomst === "oud_klant" ? "oud-klant" : "koud"}
-                </strong>
+                <select
+                  value={herkomstNaar}
+                  onChange={(e) => zetHerkomstNaar(e.target.value as "oud_klant" | "koud")}
+                  onClick={(e) => e.stopPropagation()}
+                  className="rounded-lg border border-white/12 bg-white/[0.06] px-1.5 py-0.5 text-[11.5px] font-semibold text-ink/85 outline-none focus:border-violet/55"
+                >
+                  <option value="koud" className="bg-[#12121a]">
+                    koud
+                  </option>
+                  <option value="oud_klant" className="bg-[#12121a]">
+                    oud-klant
+                  </option>
+                </select>
                 <span className="block text-ink/40">
                   overschrijft wat er nu staat, alleen voor de contacten uit dit bestand
                 </span>
               </span>
             </label>
 
-            {aanvul && (
-              <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
-                <span>
-                  {aanvul.aangevuld} contacten aangevuld
-                  {aanvul.herkomstGewijzigd > 0 &&
-                    `, waarvan ${aanvul.herkomstGewijzigd} op een andere soort relatie gezet`}
-                  {aanvul.ongewijzigd > 0 && `, ${aanvul.ongewijzigd} waren al compleet`}
-                  {aanvul.nietGevonden > 0 && `, ${aanvul.nietGevonden} stonden er nog niet in`}.
-                </span>
-              </p>
-            )}
-
-            {uitkomst && (
-              <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
-                <span>
-                  {uitkomst.toegevoegd} toegevoegd
-                  {uitkomst.bestond_al > 0 && `, ${uitkomst.bestond_al} stonden er al`}
-                  {uitkomst.afgemeld_overgeslagen > 0 && (
-                    <>
-                      ,{" "}
-                      <span className="text-amber-300">
-                        {uitkomst.afgemeld_overgeslagen} afgemeld en dus overgeslagen
-                      </span>
-                    </>
-                  )}
-                  .
-                </span>
-              </p>
-            )}
 
             {fout && (
               <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-rose-300">
@@ -502,6 +486,29 @@ export function ContactImport({
             )}
           </div>
         </div>
+      )}
+
+      {/* Buiten het blok hierboven, want dat verdwijnt zodra het gelukt is. Stond
+          de melding erbinnen, dan zie je nooit wat er is gebeurd en lijkt het
+          alsof er niets gebeurde. Dat is in dit project nu drie keer misgegaan;
+          een uitkomst hoort te overleven wat hem heeft veroorzaakt. */}
+      {rijen.length === 0 && aanvul && (
+        <p className="mt-4 inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
+          <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+          <span>
+            {aanvul.aangevuld} contacten aangevuld
+            {aanvul.herkomstGewijzigd > 0
+              ? `, waarvan ${aanvul.herkomstGewijzigd} op een andere soort relatie gezet`
+              : ""}
+            {aanvul.ongewijzigd > 0 && `, ${aanvul.ongewijzigd} hadden al alles`}
+            {aanvul.nietGevonden > 0 && `, ${aanvul.nietGevonden} stonden er nog niet in`}.
+            {aanvul.aangevuld === 0 && aanvul.herkomstGewijzigd === 0 && (
+              <span className="block text-ink/50">
+                Er viel niets bij te werken. Stond de soort relatie hierboven wel goed?
+              </span>
+            )}
+          </span>
+        </p>
       )}
 
       {rijen.length === 0 && uitkomst && (
