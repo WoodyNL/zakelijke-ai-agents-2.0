@@ -9,6 +9,8 @@ import { getMaandstand, getMe, listAgents } from "@/lib/dashboard.functions";
 import { downloadRapport } from "@/lib/rapport";
 import { soortVan } from "@/lib/agent-soorten";
 import { OpbrengstPaneel, type AgentStand } from "@/components/opbrengst-paneel";
+import { TrechterPaneel } from "@/components/trechter-paneel";
+import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -30,6 +32,17 @@ function Dashboard() {
   const agentsFn = useServerFn(listAgents);
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => me() });
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
+
+  // De trechter hangt aan één agent. Een klant met een e-mailagent heeft er
+  // meestal één; heeft hij er meer, dan is de eerste de juiste tot er een
+  // keuze nodig blijkt.
+  const trechterFn = useServerFn(haalTrechter);
+  const eersteAgentId = ((agentsQuery.data ?? []) as Array<{ id: string }>)[0]?.id ?? null;
+  const trechterQuery = useQuery({
+    queryKey: ["trechter", eersteAgentId],
+    queryFn: () => trechterFn({ data: { agentId: eersteAgentId! } }) as Promise<Trechter>,
+    enabled: eersteAgentId !== null,
+  });
 
   const maandFn = useServerFn(getMaandstand);
   const maandQuery = useQuery({ queryKey: ["maandstand"], queryFn: () => maandFn() });
@@ -91,6 +104,15 @@ function Dashboard() {
       {(maandQuery.data ?? []).length > 0 && (
         <div className="mt-4">
           <OpbrengstPaneel standen={maandQuery.data as AgentStand[]} />
+        </div>
+      )}
+
+      {/* De trechter alleen tonen als er werkelijk een lijst is. Een scherm vol
+          nullen voegt niets toe voor een klant met een chat-assistent, die
+          helemaal geen contacten heeft. */}
+      {trechterQuery.data && trechterQuery.data.contacten > 0 && (
+        <div className="mt-4">
+          <TrechterPaneel t={trechterQuery.data} />
         </div>
       )}
 

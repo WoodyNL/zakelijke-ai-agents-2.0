@@ -263,3 +263,50 @@ export const verstuurOpvolging = createServerFn({ method: "POST" })
     const mod = await import("@/lib/campagne-uitvoeren.server");
     return mod.verstuurOpvolging(data.campagneId);
   });
+
+/** De trechter: van lijst tot doos op de toonbank. */
+export const haalTrechter = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    // outbound_trechter bestaat in de database maar nog niet in de gegenereerde
+    // types; die worden opnieuw gemaakt nadat migratie 20260918140000 is
+    // gedraaid. Eén omweg op één plek, en hij mag weg zodra de types bij zijn.
+    const rpc = context.supabase.rpc as unknown as (
+      naam: string,
+      argumenten: Record<string, unknown>,
+    ) => Promise<{ data: Trechter[] | null; error: { message: string } | null }>;
+
+    const { data: rijen, error } = await rpc("outbound_trechter", {
+      _agent_id: data.agentId,
+    });
+    if (error) throw new Error(error.message);
+    // Geen rij betekent geen toegang of geen gegevens; in beide gevallen is
+    // nul tonen eerlijker dan een foutmelding op het dashboard.
+    const r = rijen?.[0];
+    return (
+      r ?? {
+        contacten: 0,
+        bereikbaar: 0,
+        aangeschreven: 0,
+        opgevolgd: 0,
+        in_gesprek: 0,
+        afspraak: 0,
+        bezorgd: 0,
+        afgemeld: 0,
+        gebouncet: 0,
+      }
+    );
+  });
+
+export type Trechter = {
+  contacten: number;
+  bereikbaar: number;
+  aangeschreven: number;
+  opgevolgd: number;
+  in_gesprek: number;
+  afspraak: number;
+  bezorgd: number;
+  afgemeld: number;
+  gebouncet: number;
+};
