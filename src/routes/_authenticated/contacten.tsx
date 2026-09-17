@@ -46,6 +46,9 @@ function ContactenPagina() {
   const gebiedFn = useServerFn(bepaalGebiedOpnieuw);
   const aanvulFn = useServerFn(vulContactenAan);
   const [gebiedBezig, zetGebiedBezig] = useState(false);
+  const [filter, zetFilter] = useState<"alles" | "route" | "buiten" | "oud" | "koud" | "uit">(
+    "alles",
+  );
   const [gebiedMelding, zetGebiedMelding] = useState<string | null>(null);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
@@ -68,6 +71,42 @@ function ContactenPagina() {
   const contacten = contactenQuery.data ?? [];
   const afgemeld = contacten.filter((c) => c.afgemeld_op !== null).length;
   const buitenGebied = contacten.filter((c) => c.in_bezorggebied === false).length;
+
+  /**
+   * Eén filter, geen combinaties.
+   *
+   * Filters die je kunt stapelen lijken krachtiger maar leveren een lijst op
+   * waarvan je niet meer weet waaróm iemand er wel of niet in staat. Bij een
+   * lijst die bepaalt wie er post krijgt, is dat de verkeerde soort
+   * onduidelijkheid.
+   */
+  const FILTERS = [
+    { sleutel: "alles", label: "alle" },
+    { sleutel: "route", label: "op de route" },
+    { sleutel: "buiten", label: "buiten het gebied" },
+    { sleutel: "oud", label: "oud-klanten" },
+    { sleutel: "koud", label: "koud" },
+    { sleutel: "uit", label: "afgemeld of onbestelbaar" },
+  ] as const;
+
+  const telt = (c: Contact, welk: (typeof FILTERS)[number]["sleutel"]) => {
+    switch (welk) {
+      case "route":
+        return c.in_bezorggebied === true;
+      case "buiten":
+        return c.in_bezorggebied === false;
+      case "oud":
+        return c.herkomst === "oud_klant";
+      case "koud":
+        return c.herkomst === "koud";
+      case "uit":
+        return c.afgemeld_op !== null || c.bounce_op !== null;
+      default:
+        return true;
+    }
+  };
+
+  const zichtbaar = contacten.filter((c) => telt(c, filter));
 
   async function herbepaalGebied() {
     if (!actieveId) return;
@@ -171,19 +210,52 @@ function ContactenPagina() {
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="font-display text-[16px] font-semibold text-brand">In de lijst</h2>
                 <span className="text-[11.5px] text-ink/45">
-                  {contacten.length.toLocaleString("nl-NL")}
-                  {buitenGebied > 0 && ` · ${buitenGebied} buiten het gebied`}
-                  {afgemeld > 0 && ` · ${afgemeld} afgemeld`}
+                  {filter === "alles"
+                    ? contacten.length.toLocaleString("nl-NL")
+                    : `${zichtbaar.length.toLocaleString("nl-NL")} van ${contacten.length.toLocaleString("nl-NL")}`}
+                  {filter === "alles" && buitenGebied > 0 && ` · ${buitenGebied} buiten het gebied`}
+                  {filter === "alles" && afgemeld > 0 && ` · ${afgemeld} afgemeld`}
                 </span>
               </div>
 
+              {/* De knoppen staan boven de tabel en niet in een uitklapmenu:
+                  welke selectie je voor je hebt, bepaalt wie er straks post
+                  krijgt. Dat moet je zien zonder ergens op te klikken. */}
+              {contacten.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {FILTERS.map((f) => {
+                    // Het aantal staat op de knop zelf, zodat je ziet wat een
+                    // selectie oplevert vóór je erop drukt.
+                    const aantal = contacten.filter((c) => telt(c, f.sleutel)).length;
+
+                    return (
+                      <button
+                        key={f.sleutel}
+                        type="button"
+                        onClick={() => zetFilter(f.sleutel)}
+                        className={`rounded-full border px-3 py-1.5 text-[11.5px] transition ${
+                          filter === f.sleutel
+                            ? "border-violet/45 bg-violet/[0.12] text-violet"
+                            : "border-white/10 bg-white/[0.03] text-ink/55 hover:bg-white/[0.07]"
+                        }`}
+                      >
+                        {f.label}
+                        <span className="ml-1.5 opacity-60 tabular-nums">{aantal}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {contactenQuery.isLoading ? (
                 <p className="mt-4 text-[12.5px] text-ink/50">Bezig met laden…</p>
-              ) : contacten.length === 0 ? (
+              ) : zichtbaar.length === 0 ? (
                 <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center">
                   <Users className="mx-auto h-5 w-5 text-ink/30" aria-hidden="true" />
                   <p className="mt-2 text-[12.5px] text-ink/50">
-                    Nog geen contacten. Laad hierboven een lijst in.
+                    {contacten.length === 0
+                      ? "Nog geen contacten. Laad hierboven een lijst in."
+                      : "Geen contacten in deze selectie."}
                   </p>
                 </div>
               ) : (
@@ -200,7 +272,7 @@ function ContactenPagina() {
                       </tr>
                     </thead>
                     <tbody>
-                      {contacten.map((c) => {
+                      {zichtbaar.map((c) => {
                         const uit = c.afgemeld_op !== null || c.bounce_op !== null;
                         return (
                           <tr key={c.id} className="border-t border-white/8">

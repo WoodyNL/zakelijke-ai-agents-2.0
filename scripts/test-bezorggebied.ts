@@ -66,6 +66,29 @@ meld(
   leiden !== null && leiden.binnen ? leiden.streek : "",
 );
 
+console.log("\nToevoegingen tussen haakjes");
+
+// Uit de echte leadlijst. Zonder dit viel heel Scheveningen en Kijkduin buiten
+// het bezorggebied, terwijl de chauffeur er langsrijdt.
+for (const p of [
+  "Den Haag (Kijkduin)",
+  "Den Haag (Scheveningen)",
+  "Rijnsburg (standplaatsen Oegstgeest & Katwijk)",
+  "Noordwijk (Langevelderslag)",
+]) {
+  meld(ligtInGebied(p) === true, `${p}`);
+}
+
+// Een buurtschap met de gemeente tussen haakjes: de haakjes redden hem.
+meld(ligtInGebied("Lisserbroek (Lisse)") === true, "Lisserbroek (Lisse) telt mee via Lisse");
+
+// Maar een toevoeging mag een plaats niet naar binnen praten die er niet ligt.
+meld(ligtInGebied("Tilburg (centrum)") === false, "Tilburg (centrum) blijft buiten");
+meld(
+  ligtInGebied("Amsterdam (Zuid)") === false,
+  "Amsterdam met een wijk erbij blijft ook buiten",
+);
+
 console.log("\n" + "=".repeat(54));
 if (gezakt === 0) console.log("Alles in orde.\n");
 else { console.log(`${gezakt} controle(s) gezakt.\n`); process.exit(1); }

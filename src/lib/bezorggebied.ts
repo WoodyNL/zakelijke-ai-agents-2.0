@@ -62,6 +62,11 @@ export const OP_DE_RAND: string[] = [];
  */
 export function normaliseerPlaats(ruw: string): string {
   let t = ruw.trim().toLowerCase();
+  // Een toevoeging tussen haakjes hoort niet bij de plaatsnaam. In een
+  // leadlijst staat "Den Haag (Kijkduin)" of "Rijnsburg (standplaatsen
+  // Oegstgeest & Katwijk)"; zonder dit weghalen valt heel Scheveningen en
+  // Kijkduin buiten het bezorggebied, terwijl de chauffeur er langsrijdt.
+  t = t.replace(/\([^)]*\)/g, " ");
   t = t.replace(/^['’`]s[- ]/, "s-"); // 's-Gravenhage → s-gravenhage
   t = t.replace(/[.,]/g, " ");
   // Provincieaanduidingen die achter een plaatsnaam staan: Katwijk ZH,
@@ -86,9 +91,32 @@ export type Gebiedsuitkomst =
 export function bepaalGebied(plaats: string | null | undefined): Gebiedsuitkomst | null {
   if (!plaats || !plaats.trim()) return null; // onbekend is iets anders dan buiten
   const p = normaliseerPlaats(plaats);
-  const streek = ALLE.get(p) ?? ALLE.get(p.replace(/-/g, " "));
+  const zoek = (naam: string) => ALLE.get(naam) ?? ALLE.get(naam.replace(/-/g, " "));
+
+  const streek = zoek(p);
   if (streek) return { binnen: true, streek };
+
+  // Staat de plaats zelf er niet in, kijk dan naar wat er tussen haakjes stond.
+  // "Lisserbroek (Lisse)" is een buurtschap bij een plaats die wél op de route
+  // ligt; wie dat weggooit, sluit iemand uit om een schrijfwijze.
+  const tussenHaakjes = ruwTussenHaakjes(plaats);
+  if (tussenHaakjes) {
+    const streekVan = zoek(normaliseerPlaats(tussenHaakjes));
+    if (streekVan) return { binnen: true, streek: streekVan };
+  }
+
   return { binnen: false, rand: OP_DE_RAND.includes(p) };
+}
+
+/** Wat er tussen de haakjes stond, als dat één plaatsnaam lijkt. */
+function ruwTussenHaakjes(ruw: string): string | null {
+  const m = ruw.match(/\(([^)]*)\)/);
+  if (!m?.[1]) return null;
+  const inhoud = m[1].trim();
+  // Meerdere plaatsen of een hele zin: dan is het geen alternatieve naam maar
+  // een toelichting, en raden we niet.
+  if (/[,&]| en /i.test(inhoud) || inhoud.split(/\s+/).length > 2) return null;
+  return inhoud;
 }
 
 /** Kort antwoord voor wie alleen wil weten of de chauffeur kan komen. */
