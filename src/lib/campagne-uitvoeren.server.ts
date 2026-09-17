@@ -101,6 +101,9 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
         ? "&in_bezorggebied=is.false"
         : "";
 
+  // Op prioriteit eerst, dan op volgorde van inlezen. Bij een dagmaximum van
+  // tien duurt het anders twaalf dagen voordat de best onderzochte leads aan de
+  // beurt zijn, en dan is het seizoen voorbij.
   const contacten = await haal<{
     id: string;
     email: string;
@@ -108,12 +111,13 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
     bedrijf: string | null;
     plaats: string | null;
     herkomst: string;
+    notitie: string | null;
   }>(
     d,
-    `outbound_contacts?select=id,email,naam,bedrijf,plaats,herkomst` +
+    `outbound_contacts?select=id,email,naam,bedrijf,plaats,herkomst,notitie` +
       `&agent_id=eq.${campagne.agent_id}&herkomst=eq.${campagne.herkomst}` +
       `&afgemeld_op=is.null&bounce_op=is.null${gebiedsfilter}` +
-      `&order=aangemaakt_op&limit=500`,
+      `&order=prioriteit.asc.nullslast,aangemaakt_op.asc&limit=500`,
   );
 
   const teDoen = contacten.filter((c) => !gehad.has(c.id));
@@ -130,6 +134,7 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
           bedrijf: c.bedrijf ?? undefined,
           plaats: c.plaats ?? undefined,
           herkomst: c.herkomst as "oud_klant" | "koud",
+          notitie: c.notitie ?? undefined,
         },
         kennis,
         bedrijfsnaam:

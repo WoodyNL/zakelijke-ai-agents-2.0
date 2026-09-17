@@ -22,6 +22,8 @@ export type Kolomsoort =
   | "plaats"
   | "telefoon"
   | "herkomst"
+  | "notitie"
+  | "prioriteit"
   | "negeren";
 
 /**
@@ -41,6 +43,8 @@ const KOPPEN: Record<Exclude<Kolomsoort, "negeren">, string[]> = {
   plaats: ["plaats", "stad", "woonplaats", "vestigingsplaats", "city", "gemeente"],
   telefoon: ["telefoon", "tel", "telefoonnummer", "mobiel", "phone", "gsm"],
   herkomst: ["prospect/klant", "prospect / klant", "soort relatie", "relatiesoort", "type relatie"],
+  notitie: ["notitie", "notities", "opmerking", "opmerkingen", "toelichting", "bijzonderheden"],
+  prioriteit: ["prioriteit", "priority", "score"],
 };
 
 /**
@@ -194,7 +198,24 @@ export type GelezenContact = {
   telefoon?: string;
   /** Alleen gevuld als het bestand zelf per rij zegt wat voor relatie het is. */
   herkomst?: Herkomst;
+  /**
+   * Wat er over deze zaak bekend is. Achtergrond voor het bericht, geen tekst
+   * die er letterlijk in komt.
+   */
+  notitie?: string;
+  /** 1 is het hoogst; zo geeft oplopend sorteren vanzelf de beste eerst. */
+  prioriteit?: 1 | 2 | 3;
 };
+
+/** "Hoog", "Midden", "Laag" — of een cijfer dat er al staat. */
+export function leesPrioriteit(cel: string): 1 | 2 | 3 | null {
+  const t = cel.trim().toLowerCase();
+  if (!t) return null;
+  if (t.startsWith("hoog") || t.startsWith("high") || t === "1") return 1;
+  if (t.startsWith("midden") || t.startsWith("middel") || t.startsWith("med") || t === "2") return 2;
+  if (t.startsWith("laag") || t.startsWith("low") || t === "3") return 3;
+  return null;
+}
 
 /**
  * Leest uit een cel of dit een oud-klant is of een prospect.
@@ -289,6 +310,10 @@ export function leesContacten(
     }
     const herkomst = leesHerkomst(pak("herkomst") ?? "");
     if (herkomst) contact.herkomst = herkomst;
+    const notitie = pak("notitie");
+    if (notitie) contact.notitie = notitie.slice(0, 600);
+    const prioriteit = leesPrioriteit(pak("prioriteit") ?? "");
+    if (prioriteit) contact.prioriteit = prioriteit;
     contacten.push(contact);
   });
 

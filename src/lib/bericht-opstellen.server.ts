@@ -22,6 +22,8 @@ export type ContactGegevens = {
   bedrijf?: string | undefined;
   plaats?: string | undefined;
   herkomst: "oud_klant" | "koud";
+  /** Wat er over deze zaak bekend is; achtergrond, geen citaat. */
+  notitie?: string | undefined;
 };
 
 export type Opdracht = {
@@ -54,6 +56,26 @@ function kennisAlsTekst(kennis: KennisRegel[]): string {
     )
     .join("\n\n");
 }
+
+/**
+ * Hoe de agent mag omgaan met wat er over een zaak bekend is.
+ *
+ * Deze notities komen uit onderzoek en zijn goud waard: "maakt saté zelf",
+ * "bekend om spareribs", "familiebedrijf sinds 1992". Een bericht dat daarop
+ * aansluit leest als een mens die heeft gekeken, en niet als een rondzendbrief.
+ *
+ * Maar er zitten drie manieren in waarop het misgaat, en alle drie zijn ze
+ * pijnlijk bij een eerste contact.
+ */
+const NOTITIEREGELS = `
+Wat je hier leest is achtergrond, geen tekst om over te nemen.
+
+- Zeg nooit dát je informatie over ze hebt. Geen "ik zag dat u...", geen "volgens onze gegevens". Laat het blijken uit waar je het over hebt, niet uit een verwijzing naar een bestand.
+- Staat er iets bij als "niet bevestigd" of "mogelijk", gebruik het dan niet. Een aanname die je als feit opschrijft over iemands eigen zaak, valt onmiddellijk op.
+- Gebruik hooguit één ding uit deze notitie, en alleen als het de zin natuurlijker maakt. Alles erin verwerken maakt van een kort bericht een dossier.
+
+Staat er iets in wat tegen je pleit — ze maken het zelf, ze hebben al een leverancier — dan is dat geen reden om het te verzwijgen of om ertegenin te gaan. Laat het aanbod gewoon staan; proeven kan altijd.
+`;
 
 function watWeWetenVanDeOntvanger(c: ContactGegevens): string {
   const regels: string[] = [];
@@ -117,7 +139,14 @@ Staat er niets bruikbaars in de kennisbank, schrijf dan alleen dat je contact op
 
 # Aan wie je schrijft
 
-${watWeWetenVanDeOntvanger(o.contact)}
+${watWeWetenVanDeOntvanger(o.contact)}${
+    o.contact.notitie ? `
+
+## Wat we over deze zaak weten
+
+${o.contact.notitie}
+${NOTITIEREGELS}` : ""
+  }
 
 ${
   o.soort === "navraag"
@@ -167,6 +196,7 @@ Dat is met opzet geen "Geachte heer/mevrouw". Dit gaat naar strandtenten, snackb
         : "Je kent de naam niet en de zaak ook niet. Gebruik dan geen aanhef met een naam erin en schrijf niet 'Geachte heer/mevrouw'; begin gewoon met je eerste zin."
   }
 - Eindig met één concrete vraag waar ja of nee op past.
+- Noem geen specifieke datum of "komende vrijdag". Welke vrijdag het wordt, wordt later ingepland en hangt af van hoeveel er die dag mee kan. Zeg "op een vrijdag" en niets preciezers; een datum die niet gereserveerd is, is een toezegging die je niet kunt nakomen.
 - Spreek de lezer aan met "u", en hou dat de hele mail vol. Dit zijn horecaondernemers en slagers die het bedrijf van vroeger kenden.
 
 # Nederlands

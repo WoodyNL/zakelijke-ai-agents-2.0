@@ -20,6 +20,9 @@ const contactSchema = z.object({
   bedrijf: z.string().max(200).optional(),
   plaats: z.string().max(120).optional(),
   telefoon: z.string().max(60).optional(),
+  /** Achtergrond over deze zaak; de agent leest het mee maar citeert het niet. */
+  notitie: z.string().max(600).optional(),
+  prioriteit: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   /** Staat er in het bestand zelf of dit een klant of een prospect is, dan wint dat. */
   herkomst: z.enum(["oud_klant", "koud"]).optional(),
 });
@@ -102,6 +105,8 @@ export const importeerContacten = createServerFn({ method: "POST" })
       if (c.bedrijf) rij.bedrijf = c.bedrijf;
       if (c.plaats) rij.plaats = c.plaats;
       if (c.telefoon) rij.telefoon = c.telefoon;
+      if (c.notitie) rij.notitie = c.notitie;
+      if (c.prioriteit) (rij as Record<string, unknown>)["prioriteit"] = c.prioriteit;
       if (inGebied !== null) {
         (rij as Record<string, unknown>)["in_bezorggebied"] = inGebied;
       }

@@ -32,6 +32,8 @@ const KOLOMNAMEN: Record<Kolomsoort, string> = {
   plaats: "Plaats",
   telefoon: "Telefoon",
   herkomst: "Klant of prospect",
+  notitie: "Notitie over de zaak",
+  prioriteit: "Prioriteit",
   negeren: "— niet gebruiken —",
 };
 
