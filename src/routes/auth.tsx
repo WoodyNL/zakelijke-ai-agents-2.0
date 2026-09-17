@@ -168,6 +168,17 @@ function AuthPage() {
           </Link>
           .
         </p>
+
+        <Link
+          to="/"
+          className="mt-4 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/12 bg-white/[0.03] px-6 py-3 text-[13px] font-medium text-ink/70 transition hover:border-violet/45 hover:bg-white/[0.06] hover:text-violet"
+        >
+          <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+          Terug naar de website
+        </Link>
       </div>
     </div>
   );
