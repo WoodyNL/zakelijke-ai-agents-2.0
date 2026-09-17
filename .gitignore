@@ -38,3 +38,6 @@ dist-ssr
 # Dit project installeert met bun; bun.lock is de lockfile die telt.
 # Een npm-lockfile ernaast raakt uit de pas en geeft alleen verwarring.
 package-lock.json
+
+# Persoonlijk planningsdocument, hoort niet in de repo
+seo-plan.md
