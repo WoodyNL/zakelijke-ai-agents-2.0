@@ -59,7 +59,10 @@ function ContactenPagina() {
 
   const contactenQuery = useQuery({
     queryKey: ["contacten", actieveId],
-    queryFn: () => lijstFn({ data: { agentId: actieveId! } }) as Promise<Contact[]>,
+    // in_bezorggebied bestaat in de database maar nog niet in de gegenereerde
+    // types; die worden opnieuw gemaakt nadat migratie 20260918170000 is
+    // gedraaid. Deze omweg mag daarna weg.
+    queryFn: () => lijstFn({ data: { agentId: actieveId! } }) as unknown as Promise<Contact[]>,
     enabled: actieveId !== null,
   });
 
