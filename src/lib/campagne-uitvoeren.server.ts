@@ -189,10 +189,10 @@ export async function verstuurKlaarstaande(campagneId: string): Promise<Verzendi
     id: string;
     onderwerp: string;
     tekst: string;
-    outbound_contacts: { email: string } | null;
+    outbound_contacts: { email: string; afmeldsleutel: string } | null;
   }>(
     d,
-    `outbound_messages?select=id,onderwerp,tekst,outbound_contacts(email)` +
+    `outbound_messages?select=id,onderwerp,tekst,outbound_contacts(email,afmeldsleutel)` +
       `&campaign_id=eq.${campagneId}&status=eq.concept&order=aangemaakt_op`,
   );
 
@@ -211,8 +211,12 @@ export async function verstuurKlaarstaande(campagneId: string): Promise<Verzendi
   for (let i = 0; i < concepten.length; i++) {
     const c = concepten[i]!;
     const email = c.outbound_contacts?.email;
-    if (!email) {
-      mislukt.push({ email: "(onbekend)", reden: "geen adres bij dit bericht" });
+    const sleutel = c.outbound_contacts?.afmeldsleutel;
+    if (!email || !sleutel) {
+      // Zonder afmeldsleutel gaat er niets weg. Een commerciele mail zonder
+      // uitweg mag wettelijk niet, en het is precies de mail waarop mensen
+      // "spam" drukken.
+      mislukt.push({ email: email ?? "(onbekend)", reden: "geen adres of afmeldsleutel" });
       continue;
     }
 
@@ -222,6 +226,7 @@ export async function verstuurKlaarstaande(campagneId: string): Promise<Verzendi
         naar: email,
         onderwerp: c.onderwerp,
         tekst: c.tekst,
+        afmeldsleutel: sleutel,
         wanneer: momenten[i]!,
       },
       afzender,
@@ -383,10 +388,10 @@ export async function verstuurOpvolging(campagneId: string): Promise<Verzending>
     onderwerp: string;
     tekst: string;
     gepland_voor: string | null;
-    outbound_contacts: { email: string } | null;
+    outbound_contacts: { email: string; afmeldsleutel: string } | null;
   }>(
     d,
-    `outbound_messages?select=id,onderwerp,tekst,gepland_voor,outbound_contacts(email)` +
+    `outbound_messages?select=id,onderwerp,tekst,gepland_voor,outbound_contacts(email,afmeldsleutel)` +
       `&campaign_id=eq.${campagneId}&stap=eq.2&status=eq.concept&order=gepland_voor`,
   );
 
@@ -405,13 +410,21 @@ export async function verstuurOpvolging(campagneId: string): Promise<Verzending>
 
   for (const c of concepten) {
     const email = c.outbound_contacts?.email;
-    if (!email) {
-      mislukt.push({ email: "(onbekend)", reden: "geen adres bij dit bericht" });
+    const sleutel = c.outbound_contacts?.afmeldsleutel;
+    if (!email || !sleutel) {
+      mislukt.push({ email: email ?? "(onbekend)", reden: "geen adres of afmeldsleutel" });
       continue;
     }
     const wanneer = c.gepland_voor ? new Date(c.gepland_voor) : new Date(Date.now() + 5 * 60_000);
     const uitkomst = await planBericht(
-      { berichtId: c.id, naar: email, onderwerp: c.onderwerp, tekst: c.tekst, wanneer },
+      {
+        berichtId: c.id,
+        naar: email,
+        onderwerp: c.onderwerp,
+        tekst: c.tekst,
+        afmeldsleutel: sleutel,
+        wanneer,
+      },
       afzender,
     );
     if (uitkomst.ok) {

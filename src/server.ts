@@ -47,6 +47,9 @@ function isH3SwallowedErrorBody(body: string): boolean {
 /** Het pad waarop Resend binnengekomen antwoorden meldt. */
 const INBOUND_PAD = "/api/inbound";
 
+/** Waar een afmeldlink op uitkomt; ook het adres in List-Unsubscribe. */
+const AFMELD_PAD = "/afmelden";
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -57,7 +60,25 @@ export default {
       // aangeroepen. En de handtekening wordt berekend over de ruwe tekst van
       // het verzoek, dus die mag onderweg niet ontleed of opnieuw opgebouwd
       // worden. De echtheidscontrole zit in verwerkInboundWebhook zelf.
-      if (new URL(request.url).pathname === INBOUND_PAD) {
+      const pad = new URL(request.url).pathname;
+
+      // De afmeldknop die Gmail en Outlook zelf boven de mail tonen, stuurt een
+      // POST naar de afmeldlink. Die moet meteen werken, zonder scherm en
+      // zonder klik: dat is de afspraak achter List-Unsubscribe-Post.
+      //
+      // Een GET komt hier niet terecht en belandt op de gewone pagina, met een
+      // knop ertussen. Dat is met opzet: beveiligingssoftware van bedrijven
+      // opent elke link in een binnenkomende mail alvast, en zou anders mensen
+      // afmelden die de mail nog niet eens gelezen hadden.
+      if (pad === AFMELD_PAD && request.method === "POST") {
+        const sleutel = new URL(request.url).searchParams.get("s");
+        if (!sleutel) return new Response("ok", { status: 200 });
+        const { meldAf } = await import("./lib/afmelden.functions");
+        await meldAf(sleutel);
+        return new Response("ok", { status: 200 });
+      }
+
+      if (pad === INBOUND_PAD) {
         const { verwerkInboundWebhook } = await import("./lib/inbound.server");
         return await verwerkInboundWebhook(request);
       }

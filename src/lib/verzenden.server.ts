@@ -20,6 +20,32 @@
 
 const RESEND = "https://api.resend.com";
 
+/**
+ * Waar iemand landt die zich wil afmelden.
+ *
+ * Hardgecodeerd en niet uit een instelling: dit adres moet werken voor iemand
+ * die het over een half jaar aanklikt, ook als er intussen van alles is
+ * veranderd. Een afmeldlink die naar niets wijst is erger dan geen link.
+ */
+const AFMELDBASIS = "https://zakelijkeaiagents.nl/afmelden";
+
+/**
+ * De afmeldregel onder een bericht.
+ *
+ * Twee dingen tegelijk. De zichtbare regel is wettelijk verplicht bij
+ * commerciele e-mail, en de kopregel List-Unsubscribe zorgt dat er in Gmail en
+ * Outlook een eigen afmeldknop boven de mail verschijnt.
+ *
+ * Die tweede is geen extraatje. Wie geen knop ziet en toch van de lijst af wil,
+ * drukt op "dit is spam" — en dat beschadigt het verzenddomein veel harder dan
+ * een afmelding. De makkelijkste uitweg bieden is dus in je eigen belang.
+ */
+function afmeldregel(sleutel: string): string {
+  return (
+    `\n\n—\nWil je geen post meer van ons? Meld je af via ${AFMELDBASIS}?s=${sleutel}`
+  );
+}
+
 function sleutel(): string {
   const k = process.env["RESEND_API_KEY"];
   if (!k) throw new Error("RESEND_API_KEY ontbreekt op de server.");
@@ -41,6 +67,8 @@ export type TePlannen = {
   naar: string;
   onderwerp: string;
   tekst: string;
+  /** De afmeldsleutel van dit contact; zonder gaat er geen bericht weg. */
+  afmeldsleutel: string;
   /** Wanneer het weg mag. Leeg betekent: meteen. */
   wanneer?: Date;
 };
@@ -136,12 +164,20 @@ export async function planBericht(
   bericht: TePlannen,
   afzender: Afzender,
 ): Promise<{ ok: true; providerId: string } | { ok: false; fout: string }> {
+  // De afmeldlink wordt hier toegevoegd en niet bij het opstellen, zodat er
+  // geen bericht kan bestaan dat wél is verstuurd maar géén uitweg bood.
+  const afmeldlink = `${AFMELDBASIS}?s=${bericht.afmeldsleutel}`;
+
   const lichaam: Record<string, unknown> = {
     from: `${afzender.naam} <${afzender.email}>`,
     to: [bericht.naar],
     reply_to: afzender.antwoordNaar,
     subject: bericht.onderwerp,
-    text: bericht.tekst,
+    text: bericht.tekst + afmeldregel(bericht.afmeldsleutel),
+    headers: {
+      "List-Unsubscribe": `<${afmeldlink}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
   };
   if (bericht.wanneer) lichaam["scheduled_at"] = bericht.wanneer.toISOString();
 

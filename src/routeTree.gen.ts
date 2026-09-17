@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AfmeldenRouteImport } from './routes/afmelden'
 import { Route as AiAgentsAmsterdamRouteImport } from './routes/ai-agents-amsterdam'
 import { Route as AiAutomatiseringOpMaatRouteImport } from './routes/ai-automatisering-op-maat'
 import { Route as AiConsultancyMkbRouteImport } from './routes/ai-consultancy-mkb'
@@ -42,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AfmeldenRoute = AfmeldenRouteImport.update({
+  id: '/afmelden',
+  path: '/afmelden',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AiAgentsAmsterdamRoute = AiAgentsAmsterdamRouteImport.update({
@@ -166,6 +172,7 @@ const AuthenticatedAgentsAgentIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/afmelden': typeof AfmeldenRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
   '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/afmelden': typeof AfmeldenRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
   '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/afmelden': typeof AfmeldenRoute
   '/ai-agents-amsterdam': typeof AiAgentsAmsterdamRoute
   '/ai-automatisering-op-maat': typeof AiAutomatiseringOpMaatRoute
   '/ai-consultancy-mkb': typeof AiConsultancyMkbRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/afmelden'
     | '/ai-agents-amsterdam'
     | '/ai-automatisering-op-maat'
     | '/ai-consultancy-mkb'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/afmelden'
     | '/ai-agents-amsterdam'
     | '/ai-automatisering-op-maat'
     | '/ai-consultancy-mkb'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/afmelden'
     | '/ai-agents-amsterdam'
     | '/ai-automatisering-op-maat'
     | '/ai-consultancy-mkb'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AfmeldenRoute: typeof AfmeldenRoute
   AiAgentsAmsterdamRoute: typeof AiAgentsAmsterdamRoute
   AiAutomatiseringOpMaatRoute: typeof AiAutomatiseringOpMaatRoute
   AiConsultancyMkbRoute: typeof AiConsultancyMkbRoute
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/afmelden': {
+      id: '/afmelden'
+      path: '/afmelden'
+      fullPath: '/afmelden'
+      preLoaderRoute: typeof AfmeldenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ai-agents-amsterdam': {
@@ -555,6 +575,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AfmeldenRoute: AfmeldenRoute,
   AiAgentsAmsterdamRoute: AiAgentsAmsterdamRoute,
   AiAutomatiseringOpMaatRoute: AiAutomatiseringOpMaatRoute,
   AiConsultancyMkbRoute: AiConsultancyMkbRoute,

@@ -111,7 +111,9 @@ Dit is het enige dat je aanbiedt. Je verzint er geen korting, geen actie en geen
 - Geen opsommingstekens; dit is een bericht, geen folder.
 - ${
     o.contact.naam
-      ? `De naam zoals wij hem hebben is "${o.contact.naam}". Gebruik de voornaam alleen als die er voluit staat. Staat er een initiaal of alleen een achternaam, verzin er dan geen voornaam bij — dat valt onmiddellijk op en is pijnlijk. Schrijf dan "Beste meneer/mevrouw ${o.contact.naam.split(" ").slice(1).join(" ") || o.contact.naam}" of laat de naam weg en begin gewoon.`
+      ? `De naam zoals wij hem hebben is "${o.contact.naam}". Staat de voornaam er voluit, gebruik dan alléén die: "Beste ${o.contact.naam.split(" ")[0]}," en niet de hele naam. Voor- en achternaam samen in de aanhef klinkt als een brief van een instantie.
+
+Staat er een initiaal of alleen een achternaam, verzin er dan geen voornaam bij — dat valt onmiddellijk op en is pijnlijk. Schrijf dan "Beste meneer/mevrouw ${o.contact.naam.split(" ").slice(1).join(" ") || o.contact.naam}" of laat de naam weg en begin gewoon.`
       : "Je kent de naam niet. Gebruik geen aanhef met een naam erin en schrijf niet 'Beste heer/mevrouw'; begin gewoon."
   }
 - Eindig met één concrete vraag waar ja of nee op past.
@@ -123,6 +125,9 @@ Dit gaat naar mensen die hun eigen taal goed kennen; één kromme zin doet meer 
 
 - Let op lidwoorden en geslacht. Het is "onze kip", niet "ons kip". Twijfel je bij de of het, kies dan een andere formulering.
 - Geen vertaald Engels. Schrijf zoals iemand in Nederland het zou zeggen, niet zoals een handleiding het opschrijft.
+- Korte zinnen. Twee gedachten aan elkaar plakken met een komma levert bijna altijd een zin op die je hardop niet zou zeggen; maak er dan twee zinnen van of laat de tweede weg.
+- Herhaal binnen twee zinnen niet hetzelfde zelfstandig naamwoord. Staat "proefpakket" er al, schrijf dan "dat" of "het".
+- Let op wie in een zin de handelende partij is. Een bedrijf raakt klanten kwijt; klanten raken geen bedrijf kwijt. Schrijf dus "zijn wij veel klanten kwijtgeraakt" of "zijn veel klanten vertrokken", nooit "zijn veel klanten ons kwijtgeraakt".
 - Lees elke zin terug voordat je hem opschrijft: klinkt dit als een mens die dit typt, of als een tekst die is samengesteld?
 - Onderteken met: ${o.ondertekening}
 - Geen afmeldregel; die wordt er automatisch onder gezet.

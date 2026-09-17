@@ -132,7 +132,7 @@ function CampagnesPagina() {
           antwoordNaar: v.antwoordNaar.trim() || null,
           aanbod: v.aanbod.trim() || null,
           ondertekening: v.ondertekening.trim() || null,
-          dagmaximum: Number(v.dagmaximum) || 10,
+          dagmaximum: perDag,
           actief: v.actief,
         },
       });
@@ -173,6 +173,14 @@ function CampagnesPagina() {
   }
 
   const kanVoorbeeld = v.aanbod.trim().length > 5 && v.ondertekening.trim().length > 1;
+
+  // Een leeg of onmogelijk dagmaximum werd stilzwijgend 10. Dat is precies het
+  // soort stille correctie waardoor je denkt dat je iets hebt ingesteld terwijl
+  // er iets anders staat — en hier bepaalt dat getal hoeveel post er per dag
+  // de deur uit gaat.
+  const perDag = Number(v.dagmaximum);
+  const dagmaximumFout =
+    v.dagmaximum.trim() === "" || !Number.isInteger(perDag) || perDag < 1 || perDag > 500;
   const campagnes = campagnesQuery.data ?? [];
 
   return (
@@ -281,9 +289,16 @@ function CampagnesPagina() {
                       </option>
                     </select>
                   </Veld>
-                  <Veld label="Per dag" hint="Rustig beginnen beschermt je verzenddomein">
+                  <Veld
+                    label="Per dag"
+                    hint={
+                      dagmaximumFout
+                        ? "Vul een aantal in tussen 1 en 500"
+                        : "Rustig beginnen beschermt je verzenddomein"
+                    }
+                  >
                     <input
-                      className={veld}
+                      className={`${veld} ${dagmaximumFout ? "border-amber-400/60" : ""}`}
                       inputMode="numeric"
                       value={v.dagmaximum}
                       onChange={(e) => zet("dagmaximum")(e.target.value)}
@@ -377,7 +392,7 @@ function CampagnesPagina() {
                 <button
                   type="button"
                   onClick={opslaan}
-                  disabled={bezig || v.naam.trim() === ""}
+                  disabled={bezig || v.naam.trim() === "" || dagmaximumFout}
                   className="rounded-xl bg-violet px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-violet/90 disabled:opacity-40"
                 >
                   {bezig ? "Bezig…" : bewerktId ? "Wijzigingen opslaan" : "Campagne aanmaken"}
