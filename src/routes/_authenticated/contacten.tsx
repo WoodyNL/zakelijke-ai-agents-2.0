@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -194,8 +194,17 @@ function ContactenPagina() {
                         const uit = c.afgemeld_op !== null || c.bounce_op !== null;
                         return (
                           <tr key={c.id} className="border-t border-white/8">
+                            {/* Het adres is de ingang naar de reis van dit
+                                contact. Een tabel zegt hoeveel er zijn; die
+                                pagina zegt hoe het met iemand staat. */}
                             <td className={`py-2 pr-3 ${uit ? "text-ink/35" : "text-ink/85"}`}>
-                              {c.email}
+                              <Link
+                                to="/contact/$contactId"
+                                params={{ contactId: c.id }}
+                                className="underline decoration-ink/20 underline-offset-2 transition hover:text-violet hover:decoration-violet/50"
+                              >
+                                {c.email}
+                              </Link>
                               {c.afgemeld_op && (
                                 <span className="ml-2 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10.5px] text-amber-300">
                                   afgemeld

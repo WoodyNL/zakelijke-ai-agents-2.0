@@ -36,6 +36,7 @@ import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authentica
 import { Route as BlogWaaromAiPilotsMislukkenRouteImport } from './routes/blog/waarom-ai-pilots-mislukken'
 import { Route as EmbedSlugRouteImport } from './routes/embed.$slug'
 import { Route as AuthenticatedAgentsAgentIdRouteImport } from './routes/_authenticated/agents.$agentId'
+import { Route as AuthenticatedContactContactIdRouteImport } from './routes/_authenticated/contact.$contactId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -175,6 +176,12 @@ const AuthenticatedAgentsAgentIdRoute =
     path: '/agents/$agentId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContactContactIdRoute =
+  AuthenticatedContactContactIdRouteImport.update({
+    id: '/contact/$contactId',
+    path: '/contact/$contactId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
+  '/contact/$contactId': typeof AuthenticatedContactContactIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -231,6 +239,7 @@ export interface FileRoutesByTo {
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
+  '/contact/$contactId': typeof AuthenticatedContactContactIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -261,6 +270,7 @@ export interface FileRoutesById {
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/_authenticated/agents/$agentId': typeof AuthenticatedAgentsAgentIdRoute
+  '/_authenticated/contact/$contactId': typeof AuthenticatedContactContactIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/agents/$agentId'
+    | '/contact/$contactId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/agents/$agentId'
+    | '/contact/$contactId'
   id:
     | '__root__'
     | '/'
@@ -348,6 +360,7 @@ export interface FileRouteTypes {
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/_authenticated/agents/$agentId'
+    | '/_authenticated/contact/$contactId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -561,6 +574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgentsAgentIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contact/$contactId': {
+      id: '/_authenticated/contact/$contactId'
+      path: '/contact/$contactId'
+      fullPath: '/contact/$contactId'
+      preLoaderRoute: typeof AuthenticatedContactContactIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -575,6 +595,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedAgentsAgentIdRoute: typeof AuthenticatedAgentsAgentIdRoute
+  AuthenticatedContactContactIdRoute: typeof AuthenticatedContactContactIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -588,6 +609,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedAgentsAgentIdRoute: AuthenticatedAgentsAgentIdRoute,
+  AuthenticatedContactContactIdRoute: AuthenticatedContactContactIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

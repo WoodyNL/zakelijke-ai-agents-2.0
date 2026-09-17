@@ -235,3 +235,53 @@ export const bepaalGebiedOpnieuw = createServerFn({ method: "POST" })
 
     return { binnen, buiten, onbekend, totaal: rijen?.length ?? 0 };
   });
+
+/**
+ * Alles wat er met één contact is gebeurd, op volgorde.
+ *
+ * In één verzoek en niet in vier, want dit is een scherm dat je openslaat om
+ * snel te zien waar iemand staat. Vier losse vragen zouden ook kunnen, maar dan
+ * zie je de tijdlijn stukje bij beetje opbouwen en dat leest slechter dan hem
+ * in één keer compleet te krijgen.
+ */
+export const haalContactReis = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ contactId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: contact, error } = await context.supabase
+      .from("outbound_contacts")
+      .select("*")
+      .eq("id", data.contactId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!contact) throw new Error("Dit contact bestaat niet, of is niet van jou.");
+
+    const [berichten, antwoorden, bezorgingen] = await Promise.all([
+      context.supabase
+        .from("outbound_messages")
+        .select("id, stap, status, onderwerp, tekst, gepland_voor, verzonden_op, fout, aangemaakt_op")
+        .eq("contact_id", data.contactId)
+        .order("stap"),
+      context.supabase
+        .from("outbound_replies")
+        .select("id, onderwerp, tekst, ontvangen_op, afgehandeld_op")
+        .eq("contact_id", data.contactId)
+        .order("ontvangen_op"),
+      context.supabase
+        .from("outbound_deliveries")
+        .select("id, bezorgdag, status, opvolging, opvolging_notitie, opvolging_op, notitie")
+        .eq("contact_id", data.contactId)
+        .order("bezorgdag"),
+    ]);
+
+    if (berichten.error) throw new Error(berichten.error.message);
+    if (antwoorden.error) throw new Error(antwoorden.error.message);
+    if (bezorgingen.error) throw new Error(bezorgingen.error.message);
+
+    return {
+      contact,
+      berichten: berichten.data ?? [],
+      antwoorden: antwoorden.data ?? [],
+      bezorgingen: bezorgingen.data ?? [],
+    };
+  });
