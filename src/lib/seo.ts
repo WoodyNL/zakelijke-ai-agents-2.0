@@ -1,6 +1,32 @@
 /** Canonical production domain. Update here when the domain changes. */
 export const SITE_URL = "https://zakelijkeaiagents.nl";
 
+/**
+ * Het Google Bedrijfsprofiel, in de vorm met het vaste profiel-ID.
+ *
+ * Google deelt zo'n vermelding ook als verkorte link (maps.app.goo.gl/...),
+ * maar dat is een omleiding van een dienst die Google kan opheffen. Deze vorm
+ * wijst rechtstreeks naar de vermelding zelf en blijft geldig.
+ *
+ * Het staat in sameAs, en dat is geen sierlijkheid: het is de manier waarop je
+ * tegen een zoekmachine zegt dat de site en het bedrijfsprofiel hetzelfde
+ * bedrijf zijn. Zonder die verklaring zijn het twee losse vermeldingen die
+ * elkaar niet versterken.
+ */
+export const GOOGLE_BEDRIJFSPROFIEL = "https://www.google.com/maps?cid=6204411132456829216";
+
+/** Het servicegebied, gelijk aan wat er in het Google Bedrijfsprofiel staat. */
+export const SERVICEGEBIED = [
+  "Amsterdam",
+  "Amstelveen",
+  "Diemen",
+  "Zaanstad",
+  "Haarlem",
+  "Hoofddorp",
+  "Almere",
+  "Weesp",
+] as const;
+
 export function absoluteUrl(path: string) {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
@@ -13,10 +39,9 @@ export function organizationJsonLd() {
     name: "Zakelijke AI Agents",
     url: SITE_URL,
     email: "wouter@zakelijkeaiagents.nl",
-    areaServed: {
-      "@type": "City",
-      name: "Amsterdam",
-    },
+    telephone: "+31 6 14486257",
+    sameAs: [GOOGLE_BEDRIJFSPROFIEL],
+    areaServed: SERVICEGEBIED.map((plaats) => ({ "@type": "City", name: plaats })),
     address: {
       "@type": "PostalAddress",
       addressLocality: "Amsterdam",

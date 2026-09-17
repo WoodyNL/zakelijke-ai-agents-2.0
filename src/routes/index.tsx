@@ -11,7 +11,7 @@ import { BranchesSection, ScanSection } from "@/components/sections/scan";
 import { MethodSection, ServicesSection } from "@/components/sections/services";
 import { SiteHeader } from "@/components/sections/site-header";
 import { FAQ, PRICING, SITE } from "@/content/site";
-import { offerCatalogJsonLd } from "@/lib/seo";
+import { GOOGLE_BEDRIJFSPROFIEL, offerCatalogJsonLd } from "@/lib/seo";
 
 const TITLE = "AI-agency voor het MKB | Zakelijke AI Agents";
 const DESCRIPTION =
@@ -44,6 +44,12 @@ export const Route = createFileRoute("/")({
           areaServed: "NL",
           telephone: SITE.phone,
           email: SITE.email,
+          sameAs: [GOOGLE_BEDRIJFSPROFIEL],
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Amsterdam",
+            addressCountry: "NL",
+          },
           serviceType: ["AI-consultancy", "AI-automatisering", "AI-implementatie"],
         }),
       },
