@@ -6,7 +6,11 @@ import { Users } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { ContactImport } from "@/components/contact-import";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
-import { haalContacten, importeerContacten } from "@/lib/contacten.functions";
+import {
+  bepaalGebiedOpnieuw,
+  haalContacten,
+  importeerContacten,
+} from "@/lib/contacten.functions";
 import type { GelezenContact } from "@/lib/contactimport";
 
 export const Route = createFileRoute("/_authenticated/contacten")({
@@ -27,6 +31,7 @@ type Contact = {
   bedrijf: string | null;
   plaats: string | null;
   herkomst: string;
+  in_bezorggebied?: boolean | null;
   afgemeld_op: string | null;
   bounce_op: string | null;
 };
@@ -37,6 +42,9 @@ function ContactenPagina() {
   const agentsFn = useServerFn(listAgents);
   const importFn = useServerFn(importeerContacten);
   const lijstFn = useServerFn(haalContacten);
+  const gebiedFn = useServerFn(bepaalGebiedOpnieuw);
+  const [gebiedBezig, zetGebiedBezig] = useState(false);
+  const [gebiedMelding, zetGebiedMelding] = useState<string | null>(null);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
@@ -57,6 +65,25 @@ function ContactenPagina() {
 
   const contacten = contactenQuery.data ?? [];
   const afgemeld = contacten.filter((c) => c.afgemeld_op !== null).length;
+  const buitenGebied = contacten.filter((c) => c.in_bezorggebied === false).length;
+
+  async function herbepaalGebied() {
+    if (!actieveId) return;
+    zetGebiedBezig(true);
+    zetGebiedMelding(null);
+    try {
+      const r = await gebiedFn({ data: { agentId: actieveId } });
+      zetGebiedMelding(
+        `${r.binnen} binnen het bezorggebied, ${r.buiten} erbuiten` +
+          (r.onbekend > 0 ? `, ${r.onbekend} zonder plaats` : "") + ".",
+      );
+      await qc.invalidateQueries({ queryKey: ["contacten", actieveId] });
+    } catch (e) {
+      zetGebiedMelding(e instanceof Error ? e.message : "Bepalen mislukt.");
+    } finally {
+      zetGebiedBezig(false);
+    }
+  }
 
   async function opslaan(gelezen: GelezenContact[], herkomst: "oud_klant" | "koud") {
     if (!actieveId) throw new Error("Kies eerst een agent.");
@@ -111,11 +138,31 @@ function ContactenPagina() {
 
             <ContactImport onOpslaan={opslaan} />
 
+            {/* De route is pas vastgelegd toen er al een lijst in stond, en een
+                route kan veranderen. Dan moet de hele lijst opnieuw langs de
+                meetlat, zonder opnieuw te importeren. */}
+            {contacten.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={herbepaalGebied}
+                  disabled={gebiedBezig}
+                  className="rounded-xl border border-white/12 bg-white/[0.06] px-3.5 py-2 text-[12.5px] text-ink/75 transition hover:bg-white/10 disabled:opacity-40"
+                >
+                  {gebiedBezig ? "Bezig…" : "Bezorggebied opnieuw bepalen"}
+                </button>
+                {gebiedMelding && (
+                  <p className="text-[12px] text-ink/60">{gebiedMelding}</p>
+                )}
+              </div>
+            )}
+
             <section className="card-glass-lg rounded-3xl p-5 sm:p-6">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="font-display text-[16px] font-semibold text-brand">In de lijst</h2>
                 <span className="text-[11.5px] text-ink/45">
                   {contacten.length.toLocaleString("nl-NL")}
+                  {buitenGebied > 0 && ` · ${buitenGebied} buiten het gebied`}
                   {afgemeld > 0 && ` · ${afgemeld} afgemeld`}
                 </span>
               </div>
@@ -139,6 +186,7 @@ function ContactenPagina() {
                         <th className="pb-2 font-medium">Bedrijf</th>
                         <th className="pb-2 font-medium">Plaats</th>
                         <th className="pb-2 font-medium">Herkomst</th>
+                        <th className="pb-2 font-medium">Bezorging</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -167,8 +215,20 @@ function ContactenPagina() {
                             </td>
                             <td className="py-2 pr-3 text-ink/55">{c.bedrijf ?? "—"}</td>
                             <td className="py-2 pr-3 text-ink/55">{c.plaats ?? "—"}</td>
-                            <td className="py-2 text-ink/45">
+                            <td className="py-2 pr-3 text-ink/45">
                               {c.herkomst === "oud_klant" ? "oud-klant" : "koud"}
+                            </td>
+                            {/* Of de chauffeur er kan komen. Dit bepaalt of de
+                                agent een bezorging mag toezeggen, dus het hoort
+                                zichtbaar te zijn en niet alleen in een filter. */}
+                            <td className="py-2 text-[11.5px]">
+                              {c.in_bezorggebied === true ? (
+                                <span className="text-emerald-300/80">op de route</span>
+                              ) : c.in_bezorggebied === false ? (
+                                <span className="text-amber-300/80">buiten gebied</span>
+                              ) : (
+                                <span className="text-ink/30">onbekend</span>
+                              )}
                             </td>
                           </tr>
                         );

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { TablesInsert } from "@/integrations/supabase/types";
+import { ligtInGebied } from "@/lib/bezorggebied";
 
 /**
  * Contacten opslaan en teruglezen.
@@ -83,6 +84,12 @@ export const importeerContacten = createServerFn({ method: "POST" })
         else bestond_al++;
         continue;
       }
+      // Ligt dit contact op de vrijdagroute? Dat bepaalt of de agent straks een
+      // bezorging mag toezeggen. Onbekend blijft leeg: dat is iets anders dan
+      // buiten het gebied, en iemand buitensluiten om een ontbrekend veld is
+      // erger dan het niet weten.
+      const inGebied = ligtInGebied(c.plaats);
+
       const rij: TablesInsert<"outbound_contacts"> = {
         agent_id: data.agentId,
         email: c.email.toLowerCase(),
@@ -95,6 +102,9 @@ export const importeerContacten = createServerFn({ method: "POST" })
       if (c.bedrijf) rij.bedrijf = c.bedrijf;
       if (c.plaats) rij.plaats = c.plaats;
       if (c.telefoon) rij.telefoon = c.telefoon;
+      if (inGebied !== null) {
+        (rij as Record<string, unknown>)["in_bezorggebied"] = inGebied;
+      }
       nieuw.push(rij);
     }
 
@@ -124,7 +134,9 @@ export const haalContacten = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { data: rijen, error } = await context.supabase
       .from("outbound_contacts")
-      .select("id, email, naam, bedrijf, plaats, herkomst, afgemeld_op, bounce_op, aangemaakt_op")
+      .select(
+        "id, email, naam, bedrijf, plaats, herkomst, in_bezorggebied, afgemeld_op, bounce_op, aangemaakt_op",
+      )
       .eq("agent_id", data.agentId)
       .order("aangemaakt_op", { ascending: false })
       .limit(500);
@@ -169,4 +181,52 @@ export const zetAntwoordAf = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Het bezorggebied opnieuw bepalen voor alle contacten van een agent.
+ *
+ * Nodig omdat de route pas is vastgelegd toen er al een lijst in stond, en
+ * nodig blijft: een chauffeur die er een dorp bij neemt verandert de route, en
+ * dan moet de hele lijst opnieuw langs de meetlat.
+ */
+export const bepaalGebiedOpnieuw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rijen, error } = await context.supabase
+      .from("outbound_contacts")
+      .select("id, plaats")
+      .eq("agent_id", data.agentId)
+      .limit(5000);
+    if (error) throw new Error(error.message);
+
+    let binnen = 0;
+    let buiten = 0;
+    let onbekend = 0;
+
+    // Per uitkomst één opdracht in plaats van één per contact: bij honderden
+    // contacten is dat het verschil tussen drie verzoeken en driehonderd.
+    const groepen = new Map<string, string[]>();
+    for (const r of rijen ?? []) {
+      const uit = ligtInGebied(r.plaats);
+      if (uit === null) onbekend++;
+      else if (uit) binnen++;
+      else buiten++;
+      const sleutel = uit === null ? "leeg" : String(uit);
+      groepen.set(sleutel, [...(groepen.get(sleutel) ?? []), r.id]);
+    }
+
+    for (const [sleutel, ids] of groepen) {
+      const waarde = sleutel === "leeg" ? null : sleutel === "true";
+      for (let i = 0; i < ids.length; i += 200) {
+        const { error: bijwerkFout } = await context.supabase
+          .from("outbound_contacts")
+          .update({ in_bezorggebied: waarde } as never)
+          .in("id", ids.slice(i, i + 200));
+        if (bijwerkFout) throw new Error(bijwerkFout.message);
+      }
+    }
+
+    return { binnen, buiten, onbekend, totaal: rijen?.length ?? 0 };
   });

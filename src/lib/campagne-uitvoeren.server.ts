@@ -45,6 +45,7 @@ export type Campagne = {
   naam: string;
   herkomst: "oud_klant" | "koud";
   verzendwijze: "concept" | "direct";
+  doelgroep?: "alles" | "binnen_gebied" | "buiten_gebied";
   afzender_naam: string | null;
   afzender_email: string | null;
   antwoord_naar: string | null;
@@ -87,6 +88,19 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
   );
   const gehad = new Set(alVerstuurd.map((m) => m.contact_id));
 
+  // Het filter op bezorggebied is geen netheid maar een belofte die je wel of
+  // niet kunt waarmaken. "Onze chauffeur brengt vrijdag een proefpakket langs"
+  // is naar iemand in Groningen een toezegging die niemand nakomt.
+  //
+  // Onbekend telt mee bij "binnen": iemand buitensluiten omdat er geen plaats
+  // is ingevuld, is erger dan hem een bericht sturen dat misschien niet past.
+  const gebiedsfilter =
+    campagne.doelgroep === "binnen_gebied"
+      ? "&or=(in_bezorggebied.is.true,in_bezorggebied.is.null)"
+      : campagne.doelgroep === "buiten_gebied"
+        ? "&in_bezorggebied=is.false"
+        : "";
+
   const contacten = await haal<{
     id: string;
     email: string;
@@ -98,7 +112,8 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
     d,
     `outbound_contacts?select=id,email,naam,bedrijf,plaats,herkomst` +
       `&agent_id=eq.${campagne.agent_id}&herkomst=eq.${campagne.herkomst}` +
-      `&afgemeld_op=is.null&bounce_op=is.null&order=aangemaakt_op&limit=500`,
+      `&afgemeld_op=is.null&bounce_op=is.null${gebiedsfilter}` +
+      `&order=aangemaakt_op&limit=500`,
   );
 
   const teDoen = contacten.filter((c) => !gehad.has(c.id));

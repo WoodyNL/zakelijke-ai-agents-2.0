@@ -19,6 +19,8 @@ const campagneSchema = z.object({
   naam: z.string().min(1).max(120),
   herkomst: z.enum(["oud_klant", "koud"]),
   verzendwijze: z.enum(["concept", "direct"]),
+  /** Voor wie deze campagne bedoeld is; zie de kolom in_bezorggebied. */
+  doelgroep: z.enum(["alles", "binnen_gebied", "buiten_gebied"]).default("alles"),
   afzenderNaam: z.string().max(120).nullable().optional(),
   afzenderEmail: z.string().email().max(254).nullable().optional(),
   antwoordNaar: z.string().email().max(254).nullable().optional(),
@@ -67,7 +69,8 @@ export const bewaarCampagne = createServerFn({ method: "POST" })
       ondertekening: data.ondertekening ?? null,
       dagmaximum: data.dagmaximum,
       actief: data.actief,
-    };
+      doelgroep: data.doelgroep,
+    } as TablesInsert<"outbound_campaigns">;
 
     const { error } = data.id
       ? await context.supabase.from("outbound_campaigns").update(rij).eq("id", data.id)

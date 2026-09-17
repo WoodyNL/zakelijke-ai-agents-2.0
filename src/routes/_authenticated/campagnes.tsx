@@ -23,6 +23,7 @@ type Campagne = {
   naam: string;
   herkomst: "oud_klant" | "koud";
   verzendwijze: "concept" | "direct";
+  doelgroep?: "alles" | "binnen_gebied" | "buiten_gebied";
   afzender_naam: string | null;
   afzender_email: string | null;
   antwoord_naar: string | null;
@@ -46,6 +47,7 @@ type Formulier = {
   naam: string;
   herkomst: "oud_klant" | "koud";
   verzendwijze: "concept" | "direct";
+  doelgroep: "alles" | "binnen_gebied" | "buiten_gebied";
   afzenderNaam: string;
   afzenderEmail: string;
   antwoordNaar: string;
@@ -59,6 +61,7 @@ const leeg: Formulier = {
   naam: "",
   herkomst: "oud_klant",
   verzendwijze: "concept",
+  doelgroep: "alles",
   afzenderNaam: "",
   afzenderEmail: "",
   antwoordNaar: "",
@@ -105,6 +108,7 @@ function CampagnesPagina() {
       naam: c.naam,
       herkomst: c.herkomst,
       verzendwijze: c.verzendwijze,
+      doelgroep: c.doelgroep ?? "alles",
       afzenderNaam: c.afzender_naam ?? "",
       afzenderEmail: c.afzender_email ?? "",
       antwoordNaar: c.antwoord_naar ?? "",
@@ -127,6 +131,7 @@ function CampagnesPagina() {
           naam: v.naam.trim(),
           herkomst: v.herkomst,
           verzendwijze: v.verzendwijze,
+          doelgroep: v.doelgroep,
           afzenderNaam: v.afzenderNaam.trim() || null,
           afzenderEmail: v.afzenderEmail.trim() || null,
           antwoordNaar: v.antwoordNaar.trim() || null,
@@ -223,6 +228,11 @@ function CampagnesPagina() {
                           <span className="text-[13px] font-semibold text-brand">{c.naam}</span>
                           <span className="ml-2 text-[11.5px] text-ink/45">
                             {c.herkomst === "oud_klant" ? "oud-klanten" : "koud"} ·{" "}
+                            {c.doelgroep === "binnen_gebied"
+                              ? "binnen gebied"
+                              : c.doelgroep === "buiten_gebied"
+                                ? "buiten gebied"
+                                : "iedereen"} ·{" "}
                             {c.dagmaximum} per dag ·{" "}
                             {c.verzendwijze === "direct" ? "verstuurt zelf" : "zet concepten klaar"}
                           </span>
@@ -305,6 +315,30 @@ function CampagnesPagina() {
                     />
                   </Veld>
                 </div>
+
+                {/* Wie op de vrijdagroute ligt kan een bezorging krijgen, wie
+                    daarbuiten woont niet. Die twee door elkaar aanschrijven
+                    levert beloftes op die niemand kan waarmaken. */}
+                <Veld
+                  label="Wie krijgt dit bericht?"
+                  hint="De chauffeur rijdt maar één route; buiten dat gebied kun je geen bezorging toezeggen"
+                >
+                  <select
+                    className={veld}
+                    value={v.doelgroep}
+                    onChange={(e) => zet("doelgroep")(e.target.value)}
+                  >
+                    <option value="alles" className="bg-[#12121a]">
+                      Iedereen in de lijst
+                    </option>
+                    <option value="binnen_gebied" className="bg-[#12121a]">
+                      Alleen binnen het bezorggebied — de chauffeur kan langskomen
+                    </option>
+                    <option value="buiten_gebied" className="bg-[#12121a]">
+                      Alleen buiten het bezorggebied — voor een ander aanbod
+                    </option>
+                  </select>
+                </Veld>
 
                 <Veld
                   label="Wat bied je aan?"
