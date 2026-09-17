@@ -72,10 +72,7 @@ function BezorgenPagina() {
 
   const bezorgQuery = useQuery({
     queryKey: ["bezorgingen", agentId],
-    // De kolom opvolging bestaat in de database maar nog niet in de gegenereerde
-    // types; die worden opnieuw gemaakt nadat migratie 20260918200000 is
-    // gedraaid. Deze omweg mag daarna weg.
-    queryFn: () => lijstFn({ data: { agentId: agentId! } }) as unknown as Promise<Bezorging[]>,
+    queryFn: () => lijstFn({ data: { agentId: agentId! } }) as Promise<Bezorging[]>,
     enabled: agentId !== null,
   });
   const kandQuery = useQuery({
