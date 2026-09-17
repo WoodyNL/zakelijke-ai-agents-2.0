@@ -357,6 +357,7 @@ export type Database = {
           naam: string | null
           notitie: string | null
           plaats: string | null
+          prioriteit: number | null
           telefoon: string | null
         }
         Insert: {
@@ -374,6 +375,7 @@ export type Database = {
           naam?: string | null
           notitie?: string | null
           plaats?: string | null
+          prioriteit?: number | null
           telefoon?: string | null
         }
         Update: {
@@ -391,6 +393,7 @@ export type Database = {
           naam?: string | null
           notitie?: string | null
           plaats?: string | null
+          prioriteit?: number | null
           telefoon?: string | null
         }
         Relationships: [
