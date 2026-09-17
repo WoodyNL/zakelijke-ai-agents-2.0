@@ -5,7 +5,12 @@ import { useState } from "react";
 import { Eye, AlertTriangle, Check, Megaphone } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
-import { bewaarCampagne, haalCampagnes, maakVoorbeeld } from "@/lib/campagne.functions";
+import {
+  bewaarCampagne,
+  haalCampagnes,
+  maakVoorbeeld,
+  verwijderCampagne,
+} from "@/lib/campagne.functions";
 
 export const Route = createFileRoute("/_authenticated/campagnes")({
   head: () => ({
@@ -78,6 +83,7 @@ function CampagnesPagina() {
   const lijstFn = useServerFn(haalCampagnes);
   const bewaarFn = useServerFn(bewaarCampagne);
   const voorbeeldFn = useServerFn(maakVoorbeeld);
+  const verwijderFn = useServerFn(verwijderCampagne);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
@@ -149,6 +155,38 @@ function CampagnesPagina() {
       }
     } catch (e) {
       zetMelding({ ok: false, tekst: e instanceof Error ? e.message : "Opslaan mislukt." });
+    } finally {
+      zetBezig(false);
+    }
+  }
+
+  /**
+   * Een campagne weggooien.
+   *
+   * De knop staat alleen bij een campagne die je hebt opengeklikt, niet in de
+   * lijst. Een verwijderknop naast elke regel is één misklik van een campagne
+   * verwijderd; hem eerst moeten kiezen is precies genoeg drempel.
+   */
+  async function verwijder() {
+    if (!bewerktId) return;
+    const zeker = window.confirm(
+      `Campagne "${v.naam}" verwijderen?\n\n` +
+        "Klaargezette berichten die nog niet zijn verstuurd gaan mee. " +
+        "Dit kan niet ongedaan worden gemaakt.",
+    );
+    if (!zeker) return;
+
+    zetBezig(true);
+    zetMelding(null);
+    try {
+      const r = await verwijderFn({ data: { campagneId: bewerktId } });
+      zetBewerktId(null);
+      zetV(leeg);
+      zetVoorbeeld(null);
+      zetMelding({ ok: true, tekst: `Campagne "${r.naam}" verwijderd.` });
+      await qc.invalidateQueries({ queryKey: ["campagnes", agentId] });
+    } catch (e) {
+      zetMelding({ ok: false, tekst: e instanceof Error ? e.message : "Verwijderen mislukt." });
     } finally {
       zetBezig(false);
     }
@@ -431,6 +469,17 @@ function CampagnesPagina() {
                 >
                   {bezig ? "Bezig…" : bewerktId ? "Wijzigingen opslaan" : "Campagne aanmaken"}
                 </button>
+
+                {bewerktId && (
+                  <button
+                    type="button"
+                    onClick={verwijder}
+                    disabled={bezig}
+                    className="rounded-xl border border-destructive/40 px-4 py-2 text-[13px] font-semibold text-destructive transition hover:bg-destructive/10 disabled:opacity-40"
+                  >
+                    Verwijderen
+                  </button>
+                )}
 
                 {melding && (
                   <p

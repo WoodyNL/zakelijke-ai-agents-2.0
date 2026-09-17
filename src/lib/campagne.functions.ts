@@ -345,3 +345,59 @@ export const verstuurNavraag = createServerFn({ method: "POST" })
     const mod = await import("@/lib/campagne-uitvoeren.server");
     return mod.verstuurNavraag(data.campagneId);
   });
+
+/**
+ * Een campagne verwijderen.
+ *
+ * Berichten overleven dit: die hangen er met ON DELETE SET NULL aan, dus ze
+ * blijven staan en raken alleen hun campagne kwijt. Dat is precies waarom er
+ * een grendel op zit. Een campagne waarvan al post is vertrokken, is de enige
+ * uitleg bij die berichten — wie hem weggooit, houdt een geschiedenis over
+ * waarvan niemand meer weet waar hij bij hoorde.
+ *
+ * Klaargezette concepten mogen wel weg. Die zijn nooit verstuurd en niemand
+ * heeft ze gezien.
+ */
+export const verwijderCampagne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ campagneId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: campagne, error } = await context.supabase
+      .from("outbound_campaigns")
+      .select("id, naam")
+      .eq("id", data.campagneId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+
+    const { data: verstuurd, error: telFout } = await context.supabase
+      .from("outbound_messages")
+      .select("id")
+      .eq("campaign_id", data.campagneId)
+      .in("status", ["gepland", "verzonden", "beantwoord"])
+      .limit(1);
+    if (telFout) throw new Error(telFout.message);
+
+    if (verstuurd && verstuurd.length > 0) {
+      throw new Error(
+        `Uit "${campagne.naam}" is al post vertrokken of ingepland. Die campagne is de enige uitleg bij die berichten, dus hij blijft staan. Zet hem op uit als je hem niet meer wilt gebruiken.`,
+      );
+    }
+
+    // Klaargezette concepten horen mee te gaan: zonder campagne zijn ze
+    // stuurloos, en niemand heeft ze ooit gezien.
+    const { error: conceptFout } = await context.supabase
+      .from("outbound_messages")
+      .delete()
+      .eq("campaign_id", data.campagneId)
+      .eq("status", "concept");
+    if (conceptFout) throw new Error(conceptFout.message);
+
+    const { error: wegFout } = await context.supabase
+      .from("outbound_campaigns")
+      .delete()
+      .eq("id", data.campagneId);
+    if (wegFout) throw new Error(wegFout.message);
+
+    return { ok: true, naam: campagne.naam };
+  });
