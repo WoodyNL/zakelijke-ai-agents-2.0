@@ -74,11 +74,36 @@ export const planBezorging = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
+    // Het adres wordt hier overgenomen en niet later opgezocht. Een bezorging is
+    // een afspraak voor een bepaalde dag; verhuist een zaak daarna, dan moet de
+    // chauffeur nog steeds het adres zien waar hij naartoe zou gaan.
+    let adres = data.adres ?? null;
+    if (!adres) {
+      // De kolommen adres en postcode bestaan in de database maar nog niet in
+      // de gegenereerde types; die worden opnieuw gemaakt nadat migratie
+      // 20260919090000 is gedraaid. Deze omweg mag daarna weg.
+      const { data: rij } = await context.supabase
+        .from("outbound_contacts")
+        .select("adres, postcode, plaats")
+        .eq("id", data.contactId)
+        .maybeSingle();
+      const c = rij as unknown as {
+        adres: string | null;
+        postcode: string | null;
+        plaats: string | null;
+      } | null;
+      const delen = [
+        c?.adres,
+        [c?.postcode, c?.plaats].filter(Boolean).join(" "),
+      ].filter(Boolean);
+      adres = delen.length > 0 ? delen.join(", ") : null;
+    }
+
     const { error } = await context.supabase.from("outbound_deliveries").insert({
       agent_id: data.agentId,
       contact_id: data.contactId,
       bezorgdag: data.bezorgdag,
-      adres: data.adres ?? null,
+      adres,
       notitie: data.notitie ?? null,
       status: "afgesproken",
     });

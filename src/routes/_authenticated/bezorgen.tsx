@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Truck, Check, AlertTriangle, PackageCheck } from "lucide-react";
+import { Truck, Check, AlertTriangle, PackageCheck, Printer } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
@@ -249,9 +249,20 @@ function BezorgenPagina() {
           <section key={d} className="card-glass-lg rounded-3xl p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-display text-[16px] font-semibold text-brand">{dagTekst(d)}</h2>
-              <span className="inline-flex items-center gap-1.5 text-[11.5px] text-ink/45">
-                <Truck className="h-3.5 w-3.5" aria-hidden="true" />
-                {lijst.length} {lijst.length === 1 ? "pakket" : "pakketten"}
+              <span className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1.5 text-[11.5px] text-ink/45">
+                  <Truck className="h-3.5 w-3.5" aria-hidden="true" />
+                  {lijst.length} {lijst.length === 1 ? "pakket" : "pakketten"}
+                </span>
+                {/* De chauffeur staat in een bus, niet achter dit scherm. */}
+                <Link
+                  to="/bezorglijst"
+                  search={{ dag: d }}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[11.5px] font-medium text-ink/75 transition hover:bg-white/10"
+                >
+                  <Printer className="h-3.5 w-3.5" aria-hidden="true" />
+                  lijst voor de chauffeur
+                </Link>
               </span>
             </div>
 

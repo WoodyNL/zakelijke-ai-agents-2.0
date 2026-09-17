@@ -73,6 +73,7 @@ Wat je hier leest is achtergrond, geen tekst om over te nemen.
 - Zeg nooit dát je informatie over ze hebt. Geen "ik zag dat u...", geen "volgens onze gegevens". Laat het blijken uit waar je het over hebt, niet uit een verwijzing naar een bestand.
 - Staat er iets bij als "niet bevestigd" of "mogelijk", gebruik het dan niet. Een aanname die je als feit opschrijft over iemands eigen zaak, valt onmiddellijk op.
 - Gebruik hooguit één ding uit deze notitie, en alleen als het de zin natuurlijker maakt. Alles erin verwerken maakt van een kort bericht een dossier.
+- Neem nooit een bedrag uit deze notitie over. Wat daar staat is wat iemand ooit betaalde, soms jaren geleden. Prijzen komen uitsluitend uit de kennisbank; een oude prijs die je als huidige noemt, is een belofte waar je aan wordt gehouden.
 
 Staat er iets in wat tegen je pleit — ze maken het zelf, ze hebben al een leverancier — dan is dat geen reden om het te verzwijgen of om ertegenin te gaan. Laat het aanbod gewoon staan; proeven kan altijd.
 `;

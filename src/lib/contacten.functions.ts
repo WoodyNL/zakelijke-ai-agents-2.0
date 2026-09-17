@@ -19,6 +19,8 @@ const contactSchema = z.object({
   naam: z.string().max(200).optional(),
   bedrijf: z.string().max(200).optional(),
   plaats: z.string().max(120).optional(),
+  adres: z.string().max(200).optional(),
+  postcode: z.string().max(20).optional(),
   telefoon: z.string().max(60).optional(),
   /** Achtergrond over deze zaak; de agent leest het mee maar citeert het niet. */
   notitie: z.string().max(600).optional(),
@@ -104,6 +106,8 @@ export const importeerContacten = createServerFn({ method: "POST" })
       if (c.naam) rij.naam = c.naam;
       if (c.bedrijf) rij.bedrijf = c.bedrijf;
       if (c.plaats) rij.plaats = c.plaats;
+      if (c.adres) (rij as Record<string, unknown>)["adres"] = c.adres;
+      if (c.postcode) (rij as Record<string, unknown>)["postcode"] = c.postcode;
       if (c.telefoon) rij.telefoon = c.telefoon;
       if (c.notitie) rij.notitie = c.notitie;
       if (c.prioriteit) (rij as Record<string, unknown>)["prioriteit"] = c.prioriteit;

@@ -30,6 +30,8 @@ const KOLOMNAMEN: Record<Kolomsoort, string> = {
   achternaam: "Achternaam",
   bedrijf: "Bedrijf",
   plaats: "Plaats",
+  adres: "Straat en huisnummer",
+  postcode: "Postcode",
   telefoon: "Telefoon",
   herkomst: "Klant of prospect",
   notitie: "Notitie over de zaak",

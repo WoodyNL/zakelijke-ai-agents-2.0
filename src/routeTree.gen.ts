@@ -29,6 +29,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAntwoordenRouteImport } from './routes/_authenticated/antwoorden'
 import { Route as AuthenticatedBerichtenRouteImport } from './routes/_authenticated/berichten'
 import { Route as AuthenticatedBezorgenRouteImport } from './routes/_authenticated/bezorgen'
+import { Route as AuthenticatedBezorglijstRouteImport } from './routes/_authenticated/bezorglijst'
 import { Route as AuthenticatedCampagnesRouteImport } from './routes/_authenticated/campagnes'
 import { Route as AuthenticatedContactenRouteImport } from './routes/_authenticated/contacten'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -139,6 +140,12 @@ const AuthenticatedBezorgenRoute = AuthenticatedBezorgenRouteImport.update({
   path: '/bezorgen',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBezorglijstRoute =
+  AuthenticatedBezorglijstRouteImport.update({
+    id: '/bezorglijst',
+    path: '/bezorglijst',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCampagnesRoute = AuthenticatedCampagnesRouteImport.update({
   id: '/campagnes',
   path: '/campagnes',
@@ -203,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/berichten': typeof AuthenticatedBerichtenRoute
   '/bezorgen': typeof AuthenticatedBezorgenRoute
+  '/bezorglijst': typeof AuthenticatedBezorglijstRoute
   '/campagnes': typeof AuthenticatedCampagnesRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -232,6 +240,7 @@ export interface FileRoutesByTo {
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/berichten': typeof AuthenticatedBerichtenRoute
   '/bezorgen': typeof AuthenticatedBezorgenRoute
+  '/bezorglijst': typeof AuthenticatedBezorglijstRoute
   '/campagnes': typeof AuthenticatedCampagnesRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -263,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/_authenticated/berichten': typeof AuthenticatedBerichtenRoute
   '/_authenticated/bezorgen': typeof AuthenticatedBezorgenRoute
+  '/_authenticated/bezorglijst': typeof AuthenticatedBezorglijstRoute
   '/_authenticated/campagnes': typeof AuthenticatedCampagnesRoute
   '/_authenticated/contacten': typeof AuthenticatedContactenRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/antwoorden'
     | '/berichten'
     | '/bezorgen'
+    | '/bezorglijst'
     | '/campagnes'
     | '/contacten'
     | '/dashboard'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/antwoorden'
     | '/berichten'
     | '/bezorgen'
+    | '/bezorglijst'
     | '/campagnes'
     | '/contacten'
     | '/dashboard'
@@ -353,6 +365,7 @@ export interface FileRouteTypes {
     | '/_authenticated/antwoorden'
     | '/_authenticated/berichten'
     | '/_authenticated/bezorgen'
+    | '/_authenticated/bezorglijst'
     | '/_authenticated/campagnes'
     | '/_authenticated/contacten'
     | '/_authenticated/dashboard'
@@ -525,6 +538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBezorgenRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/bezorglijst': {
+      id: '/_authenticated/bezorglijst'
+      path: '/bezorglijst'
+      fullPath: '/bezorglijst'
+      preLoaderRoute: typeof AuthenticatedBezorglijstRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/campagnes': {
       id: '/_authenticated/campagnes'
       path: '/campagnes'
@@ -590,6 +610,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAntwoordenRoute: typeof AuthenticatedAntwoordenRoute
   AuthenticatedBerichtenRoute: typeof AuthenticatedBerichtenRoute
   AuthenticatedBezorgenRoute: typeof AuthenticatedBezorgenRoute
+  AuthenticatedBezorglijstRoute: typeof AuthenticatedBezorglijstRoute
   AuthenticatedCampagnesRoute: typeof AuthenticatedCampagnesRoute
   AuthenticatedContactenRoute: typeof AuthenticatedContactenRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -604,6 +625,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAntwoordenRoute: AuthenticatedAntwoordenRoute,
   AuthenticatedBerichtenRoute: AuthenticatedBerichtenRoute,
   AuthenticatedBezorgenRoute: AuthenticatedBezorgenRoute,
+  AuthenticatedBezorglijstRoute: AuthenticatedBezorglijstRoute,
   AuthenticatedCampagnesRoute: AuthenticatedCampagnesRoute,
   AuthenticatedContactenRoute: AuthenticatedContactenRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,

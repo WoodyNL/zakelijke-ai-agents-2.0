@@ -20,6 +20,8 @@ export type Kolomsoort =
   | "achternaam"
   | "bedrijf"
   | "plaats"
+  | "adres"
+  | "postcode"
   | "telefoon"
   | "herkomst"
   | "notitie"
@@ -41,6 +43,8 @@ const KOPPEN: Record<Exclude<Kolomsoort, "negeren">, string[]> = {
   naam: ["naam", "contactpersoon", "contact", "name", "volledige naam"],
   bedrijf: ["bedrijf", "bedrijfsnaam", "relatienaam", "klantnaam", "company", "zaak", "handelsnaam"],
   plaats: ["plaats", "stad", "woonplaats", "vestigingsplaats", "city", "gemeente"],
+  adres: ["adres", "straat", "straatnaam", "address", "street"],
+  postcode: ["postcode", "postcodes", "zip", "postal code"],
   telefoon: ["telefoon", "tel", "telefoonnummer", "mobiel", "phone", "gsm"],
   herkomst: ["prospect/klant", "prospect / klant", "soort relatie", "relatiesoort", "type relatie"],
   notitie: ["notitie", "notities", "opmerking", "opmerkingen", "toelichting", "bijzonderheden"],
@@ -142,6 +146,21 @@ export function raadKolommen(rijen: string[][]): Kolomsoort[] {
         if (kern === woord) beste = Math.max(beste, 100);
         else if (heelWoord(kern, woord)) beste = Math.max(beste, 50 + woord.length);
       }
+
+      // Een export heeft vaak twee adressen: waar de factuur heen gaat en waar
+      // de goederen heen gaan. Voor een bezorging is dat tweede het juiste, ook
+      // al scoren de kopregels gelijk omdat er in beide gevallen "Adres" staat.
+      // Bij Frank verschillen ze elf keer, en juist die elf zijn de plek waar de
+      // doos moet zijn.
+      const volledig = (kop[i] ?? "").toLowerCase();
+      if (
+        beste > 0 &&
+        (soort === "adres" || soort === "postcode") &&
+        /verzend|aflever|bezorg/.test(volledig)
+      ) {
+        beste += 10;
+      }
+
       if (beste > 0) kandidaten.push({ kolom: i, soort, score: beste });
     }
   }
@@ -195,6 +214,8 @@ export type GelezenContact = {
   naam?: string;
   bedrijf?: string;
   plaats?: string;
+  adres?: string;
+  postcode?: string;
   telefoon?: string;
   /** Alleen gevuld als het bestand zelf per rij zegt wat voor relatie het is. */
   herkomst?: Herkomst;
@@ -304,7 +325,7 @@ export function leesContacten(
     // maakt van "onbekend" een bewering.
     const contact: GelezenContact = { email };
     if (naam) contact.naam = naam;
-    for (const soort of ["bedrijf", "plaats", "telefoon"] as const) {
+    for (const soort of ["bedrijf", "plaats", "adres", "postcode", "telefoon"] as const) {
       const waarde = pak(soort);
       if (waarde) contact[soort] = waarde;
     }
