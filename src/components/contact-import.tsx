@@ -74,6 +74,7 @@ export type Importuitkomst = {
 export type Aanvuluitkomst = {
   aangevuld: number;
   ongewijzigd: number;
+  herkomstGewijzigd: number;
   nietGevonden: number;
   inLijst: number;
 };
@@ -87,7 +88,10 @@ export function ContactImport({
     herkomst: "oud_klant" | "koud",
   ) => Promise<Importuitkomst>;
   /** Bestaande contacten bijwerken met wat er nog ontbreekt. */
-  onAanvullen: (contacten: GelezenContact[]) => Promise<Aanvuluitkomst>;
+  onAanvullen: (
+    contacten: GelezenContact[],
+    herkomst?: "oud_klant" | "koud",
+  ) => Promise<Aanvuluitkomst>;
 }) {
   const [rijen, zetRijen] = React.useState<string[][]>([]);
   const [kolommen, zetKolommen] = React.useState<Kolomsoort[]>([]);
@@ -99,6 +103,7 @@ export function ContactImport({
   const [bezig, zetBezig] = React.useState(false);
   const [uitkomst, zetUitkomst] = React.useState<Importuitkomst | null>(null);
   const [aanvul, zetAanvul] = React.useState<Aanvuluitkomst | null>(null);
+  const [herkomstMee, zetHerkomstMee] = React.useState(false);
 
   const invoer = React.useRef<HTMLInputElement>(null);
 
@@ -152,7 +157,7 @@ export function ContactImport({
     zetUitkomst(null);
     zetAanvul(null);
     try {
-      zetAanvul(await onAanvullen(gelezen.contacten));
+      zetAanvul(await onAanvullen(gelezen.contacten, herkomstMee ? herkomst : undefined));
       zetRijen([]);
       zetKolommen([]);
       zetBestandsnaam("");
@@ -435,11 +440,35 @@ export function ContactImport({
               Bestaande aanvullen
             </button>
 
+            {/* Het enige veld dat overschreven mag worden, en alleen op verzoek.
+                Het bestaat omdat een lijst met één verkeerde keuze kan worden
+                ingelezen — en dan krijgen honderd strandtenten het verhaal over
+                een overleden eigenaar die ze nooit hebben gekend. */}
+            <label className="inline-flex items-start gap-2 text-[11.5px]/[1.5] text-ink/60">
+              <input
+                type="checkbox"
+                checked={herkomstMee}
+                onChange={(e) => zetHerkomstMee(e.target.checked)}
+                className="mt-0.5 accent-violet"
+              />
+              <span>
+                bij aanvullen ook de soort relatie zetten op{" "}
+                <strong className="font-semibold text-ink/80">
+                  {herkomst === "oud_klant" ? "oud-klant" : "koud"}
+                </strong>
+                <span className="block text-ink/40">
+                  overschrijft wat er nu staat, alleen voor de contacten uit dit bestand
+                </span>
+              </span>
+            </label>
+
             {aanvul && (
               <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
                 <span>
                   {aanvul.aangevuld} contacten aangevuld
+                  {aanvul.herkomstGewijzigd > 0 &&
+                    `, waarvan ${aanvul.herkomstGewijzigd} op een andere soort relatie gezet`}
                   {aanvul.ongewijzigd > 0 && `, ${aanvul.ongewijzigd} waren al compleet`}
                   {aanvul.nietGevonden > 0 && `, ${aanvul.nietGevonden} stonden er nog niet in`}.
                 </span>

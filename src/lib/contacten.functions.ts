@@ -310,6 +310,17 @@ export const vulContactenAan = createServerFn({ method: "POST" })
       .object({
         agentId: z.string().uuid(),
         contacten: z.array(contactSchema).min(1).max(5000),
+        /**
+         * Zet de soort relatie op deze waarde voor iedereen uit dit bestand.
+         *
+         * Dit is het enige veld dat wél overschreven mag worden, en alleen als
+         * je er uitdrukkelijk om vraagt. Het bestaat omdat een lijst met één
+         * verkeerde keuze kan worden ingelezen — en dan krijgen honderd
+         * strandtenten het verhaal over een overleden eigenaar die ze nooit
+         * hebben gekend. Het bestand zelf is de beste afbakening van wie het
+         * betreft: precies de rijen die erin staan.
+         */
+        herkomst: z.enum(["oud_klant", "koud"]).optional(),
       })
       .parse(d),
   )
@@ -335,13 +346,14 @@ export const vulContactenAan = createServerFn({ method: "POST" })
       notitie: string | null;
       adres: string | null;
       postcode: string | null;
+      herkomst: string;
     };
 
     const bestaand: Rij[] = [];
     for (let i = 0; i < adressen.length; i += 200) {
       const { data: rijen, error } = await context.supabase
         .from("outbound_contacts")
-        .select("id, email, naam, bedrijf, plaats, telefoon, notitie, adres, postcode")
+        .select("id, email, naam, bedrijf, plaats, telefoon, notitie, adres, postcode, herkomst")
         .eq("agent_id", data.agentId)
         .in("email", adressen.slice(i, i + 200));
       if (error) throw new Error(error.message);
@@ -350,6 +362,7 @@ export const vulContactenAan = createServerFn({ method: "POST" })
 
     let aangevuld = 0;
     let ongewijzigd = 0;
+    let herkomstGewijzigd = 0;
     const velden = [
       "naam",
       "bedrijf",
@@ -371,10 +384,19 @@ export const vulContactenAan = createServerFn({ method: "POST" })
         if (nieuw && (huidig === null || String(huidig).trim() === "")) bij[veld] = nieuw;
       }
 
+      // De rij in het bestand mag zijn eigen herkomst meebrengen; die wint,
+      // want daar staat het per contact. Anders geldt de keuze voor het hele
+      // bestand.
+      const nieuweHerkomst = bron.herkomst ?? data.herkomst;
+      if (nieuweHerkomst && nieuweHerkomst !== rij.herkomst) {
+        bij["herkomst"] = nieuweHerkomst;
+      }
+
       if (Object.keys(bij).length === 0) {
         ongewijzigd++;
         continue;
       }
+      if (bij["herkomst"]) herkomstGewijzigd++;
 
       const { error } = await context.supabase
         .from("outbound_contacts")
@@ -387,6 +409,7 @@ export const vulContactenAan = createServerFn({ method: "POST" })
     return {
       aangevuld,
       ongewijzigd,
+      herkomstGewijzigd,
       nietGevonden: perEmail.size - bestaand.length,
       inLijst: perEmail.size,
     };

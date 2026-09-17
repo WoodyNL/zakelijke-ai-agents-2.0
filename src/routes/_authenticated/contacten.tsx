@@ -179,9 +179,15 @@ function ContactenPagina() {
 
             <ContactImport
               onOpslaan={opslaan}
-              onAanvullen={async (gelezen) => {
+              onAanvullen={async (gelezen, herkomst) => {
                 if (!actieveId) throw new Error("Kies eerst een agent.");
-                const r = await aanvulFn({ data: { agentId: actieveId, contacten: gelezen } });
+                const r = await aanvulFn({
+                  data: {
+                    agentId: actieveId,
+                    contacten: gelezen,
+                    ...(herkomst ? { herkomst } : {}),
+                  },
+                });
                 await qc.invalidateQueries({ queryKey: ["contacten", actieveId] });
                 return r;
               }}
