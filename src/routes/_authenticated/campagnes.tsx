@@ -9,6 +9,7 @@ import {
   bewaarCampagne,
   haalCampagnes,
   maakVoorbeeld,
+  telDoelgroep,
   verwijderCampagne,
 } from "@/lib/campagne.functions";
 
@@ -83,6 +84,7 @@ function CampagnesPagina() {
   const lijstFn = useServerFn(haalCampagnes);
   const bewaarFn = useServerFn(bewaarCampagne);
   const voorbeeldFn = useServerFn(maakVoorbeeld);
+  const telFn = useServerFn(telDoelgroep);
   const verwijderFn = useServerFn(verwijderCampagne);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
@@ -97,6 +99,23 @@ function CampagnesPagina() {
   });
 
   const [v, zetV] = useState(leeg);
+
+  /**
+   * Het getal dat de twee keuzelijsten hierboven concreet maakt.
+   *
+   * Het telt op de server, met precies dezelfde filters als het klaarzetten,
+   * zodat hier nooit een ander aantal staat dan er daadwerkelijk weggaat.
+   */
+  const bereikQuery = useQuery({
+    queryKey: ["doelgroep", agentId, v.herkomst, v.doelgroep],
+    queryFn: () =>
+      telFn({
+        data: { agentId: agentId!, herkomst: v.herkomst, doelgroep: v.doelgroep },
+      }) as Promise<{ aantal: number }>,
+    enabled: agentId !== null,
+  });
+  const bereik = bereikQuery.data?.aantal ?? null;
+
   const [bewerktId, zetBewerktId] = useState<string | null>(null);
   const [bezig, zetBezig] = useState(false);
   const [melding, zetMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
@@ -217,6 +236,7 @@ function CampagnesPagina() {
 
   const kanVoorbeeld = v.aanbod.trim().length > 5 && v.ondertekening.trim().length > 1;
 
+
   // Een leeg of onmogelijk dagmaximum werd stilzwijgend 10. Dat is precies het
   // soort stille correctie waardoor je denkt dat je iets hebt ingesteld terwijl
   // er iets anders staat — en hier bepaalt dat getal hoeveel post er per dag
@@ -312,8 +332,20 @@ function CampagnesPagina() {
                 )}
               </div>
 
+              {/* Wat een campagne is, in één zin. Zonder dit lijkt "Naam" een
+                  veld waar de naam van de ontvanger in moet, en dat is precies
+                  omgekeerd aan wat er gebeurt. */}
+              <p className="mt-1.5 max-w-[66ch] text-[12.5px]/[1.65] text-ink/55">
+                Eén reeks berichten aan één groep. Elk contact krijgt zijn eigen bericht, met zijn
+                eigen naam en zijn eigen zaak erin — je schrijft hier dus geen tekst, maar de
+                afspraken waaronder die berichten worden opgesteld.
+              </p>
+
               <div className="mt-4 grid gap-3">
-                <Veld label="Naam" hint="Alleen voor jezelf, de ontvanger ziet dit niet">
+                <Veld
+                  label="Naam van deze campagne"
+                  hint="Hoe jij hem noemt in dit scherm. De ontvanger ziet deze naam nooit."
+                >
                   <input
                     className={veld}
                     placeholder="bijv. Oud-klanten najaar"
@@ -323,7 +355,7 @@ function CampagnesPagina() {
                 </Veld>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Veld label="Aan wie" hint="Bepaalt de toon van het eerste bericht">
+                  <Veld label="Welke groep?" hint="Bepaalt de toon van het eerste bericht">
                     <select
                       className={veld}
                       value={v.herkomst}
@@ -358,8 +390,8 @@ function CampagnesPagina() {
                     daarbuiten woont niet. Die twee door elkaar aanschrijven
                     levert beloftes op die niemand kan waarmaken. */}
                 <Veld
-                  label="Wie krijgt dit bericht?"
-                  hint="De chauffeur rijdt maar één route; buiten dat gebied kun je geen bezorging toezeggen"
+                  label="Beperken tot het bezorggebied?"
+                  hint="De chauffeur rijdt maar één route; daarbuiten kun je geen bezorging toezeggen"
                 >
                   <select
                     className={veld}
@@ -377,6 +409,32 @@ function CampagnesPagina() {
                     </option>
                   </select>
                 </Veld>
+
+                {/* Het getal dat de twee keuzelijsten hierboven concreet maakt,
+                    en de laatste controle vóór het klaarzetten. */}
+                {bereik !== null && (
+                  <p className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[12.5px]/[1.65] text-ink/70">
+                    Deze instellingen raken{" "}
+                    <strong className="font-display font-bold text-brand tabular-nums">
+                      {bereik}
+                    </strong>{" "}
+                    {bereik === 1 ? "contact" : "contacten"}
+                    {v.doelgroep === "binnen_gebied" && " waar de chauffeur kan komen"}
+                    {v.doelgroep === "buiten_gebied" && " buiten het bezorggebied"}.
+                    {bereik === 0 && (
+                      <span className="block text-amber-300/80">
+                        Met deze selectie gaat er niets weg. Klopt de groep hierboven?
+                      </span>
+                    )}
+                    {bereik > 0 && (
+                      <span className="block text-ink/45">
+                        Bij {v.dagmaximum || "?"} per dag zijn dat{" "}
+                        {Math.ceil(bereik / Math.max(Number(v.dagmaximum) || 1, 1))} werkdagen.
+                      </span>
+                    )}
+                  </p>
+                )}
+
 
                 <Veld
                   label="Wat bied je aan?"

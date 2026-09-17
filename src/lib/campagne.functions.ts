@@ -51,6 +51,53 @@ export const haalCampagnes = createServerFn({ method: "GET" })
     return rijen ?? [];
   });
 
+/**
+ * Hoeveel contacten raakt deze selectie?
+ *
+ * Twee keuzelijsten die "oud-klanten" en "binnen het bezorggebied" zeggen,
+ * blijven abstract tot er een getal onder staat. Dat getal is ook de laatste
+ * controle vóór het klaarzetten: staat er 211 waar je 37 verwachtte, dan klopt
+ * er iets niet aan je selectie, en dat merk je nu in plaats van achteraf.
+ *
+ * De filters zijn met opzet letterlijk dezelfde als in bereidVoor. Twee keer
+ * dezelfde regel op twee plekken opschrijven is een risico, maar een getal dat
+ * anders telt dan er verstuurd wordt is erger dan een risico: dat is een
+ * belofte die niet klopt.
+ */
+export const telDoelgroep = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        agentId: z.string().uuid(),
+        herkomst: z.enum(["oud_klant", "koud"]),
+        doelgroep: z.enum(["alles", "binnen_gebied", "buiten_gebied"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    let q = context.supabase
+      .from("outbound_contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("agent_id", data.agentId)
+      .eq("herkomst", data.herkomst)
+      .is("afgemeld_op", null)
+      .is("bounce_op", null);
+
+    // Onbekend gebied telt mee bij "binnen": iemand buitensluiten omdat er geen
+    // plaats is ingevuld, is erger dan hem een bericht sturen dat misschien
+    // niet past.
+    if (data.doelgroep === "binnen_gebied") {
+      q = q.or("in_bezorggebied.is.true,in_bezorggebied.is.null");
+    } else if (data.doelgroep === "buiten_gebied") {
+      q = q.is("in_bezorggebied", false);
+    }
+
+    const { count, error } = await q;
+    if (error) throw new Error(error.message);
+    return { aantal: count ?? 0 };
+  });
+
 export const bewaarCampagne = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => campagneSchema.parse(d))
