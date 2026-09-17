@@ -28,7 +28,7 @@ const FAQS = [
 const SECTIONS: SeoSection[] = [
   {
     heading: "Voor wie wil weten waar AI écht iets oplevert — en waar niet",
-    body: "AI-projecten stranden bijna nooit op de techniek. Ze stranden op alles eromheen: een tool geplakt op een kapot proces, geen meting, te veel losse abonnementen, zelf bouwen zonder ervaring, en geen beleid voor wat de AI wel en niet mag.",
+    body: "AI-projecten stranden bijna nooit op de techniek. Ze stranden op alles eromheen: een tool geplakt op een kapot proces, geen meting, te veel losse abonnementen, zelf bouwen zonder ervaring, en geen beleid voor wat de AI wel en niet mag. Alle vijf staan uitgewerkt in [waarom AI-pilots mislukken](/blog/waarom-ai-pilots-mislukken).",
     bullets: [
       "AI-scan: procesanalyse en kansenkaart met business case per kans",
       "Toolkeuze en -sanering: wat schaf je aan, wat zeg je op",
@@ -49,7 +49,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Advies dat je ook zonder ons verder helpt",
-    body: "Je krijgt een rapport waar je ook zonder vervolgopdracht iets aan hebt. Kies je toch voor een vervolg, dan is de scan volledig verrekenbaar. We zeggen het ook als AI voor jouw proces geen oplossing is — dat scheelt regelmatig een hoop geld.",
+    body: "Je krijgt een rapport waar je ook zonder vervolgopdracht iets aan hebt. Kies je toch voor een vervolg, dan is de [AI-scan](/ai-scan) volledig verrekenbaar. We zeggen het ook als AI voor jouw proces geen oplossing is — dat scheelt regelmatig een hoop geld.",
   },
 ];
 

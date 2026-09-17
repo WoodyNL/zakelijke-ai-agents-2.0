@@ -34,14 +34,14 @@ const SECTIONS: SeoSection[] = [
     heading: "Drie agents die je binnen een week live hebt",
     body: "Niet elk bedrijf heeft maatwerk nodig. Deze drie lossen de meest voorkomende knelpunten op in sales, inbox en opvolging — en staan meestal binnen een week te draaien.",
     bullets: [
-      "AI Sales Assistant — leest elke nieuwe lead, kwalificeert, reageert binnen een minuut, boekt zelf de afspraak",
-      "Inbox Draft Assistant — concept-antwoorden in Gmail of Outlook, geen autosend, jij beslist",
-      "WhatsApp Follow-up Agent — volgt leads op via WhatsApp, draagt over aan een mens zodra het complex wordt",
+      "[AI Sales Assistant](/ai-lead-opvolging) — leest elke nieuwe lead, kwalificeert, reageert binnen een minuut, boekt zelf de afspraak",
+      "[Inbox Draft Assistant](/ai-klantenservice-automatiseren) — concept-antwoorden in Gmail of Outlook, geen autosend, jij beslist",
+      "[WhatsApp Follow-up Agent](/whatsapp-follow-up-automatiseren) — volgt leads op via WhatsApp, draagt over aan een mens zodra het complex wordt",
     ],
   },
   {
     heading: "Of volledig op maat gebouwd",
-    body: "Werkt jouw proces net anders, of moet de automatisering aansluiten op een systeem dat niet standaard gekoppeld is? Dan bouwen we het op maat, gekoppeld aan wat je al gebruikt.",
+    body: "Werkt jouw proces net anders, of moet de automatisering aansluiten op een systeem dat niet standaard gekoppeld is? Dan bouwen we het op maat, gekoppeld aan wat je al gebruikt. Weet je nog niet welk proces het meeste oplevert, begin dan met de [AI-scan](/ai-scan).",
     bullets: [
       "Koppelingen met CRM, agenda, inbox, WhatsApp en administratie",
       "Automatiseringen op maat voor jouw specifieke werkproces",

@@ -32,7 +32,7 @@ const FAQS = [
 const SECTIONS: SeoSection[] = [
   {
     heading: "Herkenbare symptomen van een vastgelopen AI-project",
-    body: "Een pilot die al maanden 'bijna klaar' is. Een tool die niemand meer gebruikt. Een intern team dat vastloopt zonder dat iemand precies kan zeggen waarom. Dit zijn geen uitzonderingen — het is de norm. 40%+ van de agentic-AI-projecten wordt vóór eind 2027 geschrapt: oplopende kosten, onduidelijke waarde, gebrekkige risicobeheersing (Gartner, juni 2025).",
+    body: "Een pilot die al maanden 'bijna klaar' is. Een tool die niemand meer gebruikt. Een intern team dat vastloopt zonder dat iemand precies kan zeggen waarom. Dit zijn geen uitzonderingen — het is de norm. 40%+ van de agentic-AI-projecten wordt vóór eind 2027 geschrapt: oplopende kosten, onduidelijke waarde, gebrekkige risicobeheersing (Gartner, juni 2025). [De vijf oorzaken die in elk onderzoek terugkomen](/blog/waarom-ai-pilots-mislukken) zie je hier bijna allemaal terug.",
     bullets: [
       "Een pilot die al weken of maanden 'bijna klaar' is",
       "Niemand kan aantonen wat het project tot nu toe heeft opgeleverd",
@@ -42,7 +42,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Wat we doen om het los te trekken",
-    body: "We beginnen niet met meer bouwen, maar met diagnose: wat staat er, waarom loopt het vast, en is het de moeite waard om te redden? Daarna kiezen we samen de vorm die past.",
+    body: "We beginnen niet met meer bouwen, maar met diagnose: wat staat er, waarom loopt het vast, en is het de moeite waard om te redden? Daarna kiezen we samen de vorm die past. Vaak begint dat met een verkorte [AI-scan](/ai-scan) op wat er al staat.",
     bullets: [
       "Meedraaien in een lopend intern AI-project",
       "Een pilot die blijft hangen alsnog naar productie brengen",

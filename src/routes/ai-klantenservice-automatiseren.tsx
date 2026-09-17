@@ -42,7 +42,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Eerst meelezen, daarna pas loslaten",
-    body: "We laten de agent bewust niet meteen zelf versturen. Zo bouw je vertrouwen op in de kwaliteit en zie je precies wat er zou zijn gestuurd. Pas als de antwoorden op een onderwerp consequent kloppen, zetten we dat onderwerp op automatisch — stap voor stap, met jou aan het stuur.",
+    body: "We laten de agent bewust niet meteen zelf versturen. Zo bouw je vertrouwen op in de kwaliteit en zie je precies wat er zou zijn gestuurd. Pas als de antwoorden op een onderwerp consequent kloppen, zetten we dat onderwerp op automatisch — stap voor stap, met jou aan het stuur. Dezelfde aanpak gebruiken we bij [maatwerk-automatiseringen](/ai-automatisering-op-maat).",
     bullets: [
       "Start met goedkeuren, groei naar automatisch",
       "Per onderwerp instelbaar",
@@ -52,7 +52,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Klantenservice automatiseren met een partner in Amsterdam",
-    body: "We beginnen met een intake waarin we je inbox doorlopen en de meest voorkomende vragen inventariseren. Voor bedrijven in Amsterdam en omgeving doen we dat graag persoonlijk op kantoor; verder weg werkt online net zo goed.",
+    body: "We beginnen met een intake waarin we je inbox doorlopen en de meest voorkomende vragen inventariseren. Voor bedrijven in [Amsterdam en omgeving](/ai-agents-amsterdam) doen we dat graag persoonlijk op kantoor; verder weg werkt online net zo goed.",
   },
 ];
 

@@ -44,7 +44,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Waarom eerst een scan, niet meteen een tool",
-    body: "95% van de generatieve-AI-pilots levert geen meetbaar resultaat op de winst-en-verliesrekening (MIT NANDA, The GenAI Divide, 2025). De meest voorkomende oorzaak: de tool wordt op een kapot proces geplakt. Bedrijven die AI succesvol opschalen hebben hun werkprocessen fundamenteel herontworpen — 73% van hen, tegenover 25% van de rest (McKinsey, State of AI 2026). De scan tekent eerst uit hoe het werk nu écht loopt, vaak blijkt de helft van de stappen overbodig.",
+    body: "95% van de generatieve-AI-pilots levert geen meetbaar resultaat op de winst-en-verliesrekening (MIT NANDA, The GenAI Divide, 2025). De meest voorkomende oorzaak: de tool wordt op een kapot proces geplakt. Dat is één van [vijf oorzaken die in elk onderzoek terugkomen](/blog/waarom-ai-pilots-mislukken). Bedrijven die AI succesvol opschalen hebben hun werkprocessen fundamenteel herontworpen — 73% van hen, tegenover 25% van de rest (McKinsey, State of AI 2026). De scan tekent eerst uit hoe het werk nu écht loopt, vaak blijkt de helft van de stappen overbodig.",
     bullets: [
       "Voorkomt dat je een dure tool koopt voor het verkeerde probleem",
       "Nulmeting vooraf, zodat je achteraf kunt bewijzen wat het scheelde",
@@ -53,7 +53,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Wat er na de scan gebeurt",
-    body: "De scan is geen verplichting tot meer. Kies je voor een vervolg, dan bouwen we eerst één pilot — de kans met de kortste terugverdientijd — met een nulmeting en één afgesproken KPI. Werkt die, dan rollen we de rest van de roadmap uit. Elke fase kun je stoppen; er is geen jaarcontract.",
+    body: "De scan is geen verplichting tot meer. Kies je voor een vervolg, dan bouwen we eerst één pilot — de kans met de kortste terugverdientijd — met een nulmeting en één afgesproken KPI. Werkt die, dan rollen we de rest van de roadmap uit. Elke fase kun je stoppen; er is geen jaarcontract. Wat elke fase kost staat op [tarieven](/tarieven).",
     bullets: [
       "Fase 2 — Pilot: 2 tot 4 weken, één automatisering, meetbaar resultaat na 30 dagen",
       "Fase 3 — Uitrol: 4 tot 12 weken, de rest van de roadmap plus training van je team",

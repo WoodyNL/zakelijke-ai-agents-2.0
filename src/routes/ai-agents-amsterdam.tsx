@@ -42,7 +42,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Drie agents, één werkwijze",
-    body: "We bouwen drie agents die los of samen werken: de AI Sales Assistant kwalificeert en beantwoordt nieuwe leads, de Inbox Draft Assistant schrijft concept-antwoorden op je zakelijke e-mail ter goedkeuring, en de WhatsApp Follow-up Agent volgt leads en klanten na op WhatsApp en zet complexe gesprekken door naar een mens.",
+    body: "We bouwen drie agents die los of samen werken: de [AI Sales Assistant](/ai-lead-opvolging) kwalificeert en beantwoordt nieuwe leads, de [Inbox Draft Assistant](/ai-klantenservice-automatiseren) schrijft concept-antwoorden op je zakelijke e-mail ter goedkeuring, en de [WhatsApp Follow-up Agent](/whatsapp-follow-up-automatiseren) volgt leads en klanten na op WhatsApp en zet complexe gesprekken door naar een mens.",
     bullets: [
       "AI Sales Assistant — leads kwalificeren en beantwoorden",
       "Inbox Draft Assistant — concept-antwoorden in je mailbox",
@@ -52,7 +52,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Kennismaken in Amsterdam — online of op locatie",
-    body: "Omdat we in Amsterdam zitten, kunnen we bij je langskomen voor de intake. We lopen samen door je aanvraagstroom, je mailbox en je CRM, en laten zien welke stappen de agent overneemt. Daarna volgt een concreet voorstel met vaste prijs en doorlooptijd — geen jaarcontract, minimaal drie maanden en daarna maandelijks opzegbaar.",
+    body: "Omdat we in Amsterdam zitten, kunnen we bij je langskomen voor de intake. We lopen samen door je aanvraagstroom, je mailbox en je CRM, en laten zien welke stappen de agent overneemt. Daarna volgt een concreet voorstel met vaste prijs en doorlooptijd — geen jaarcontract, minimaal drie maanden en daarna maandelijks opzegbaar. Zoek je het bredere beeld, dan staat dat op [AI voor het MKB in Amsterdam](/ai-voor-het-mkb-amsterdam).",
     bullets: [
       "Intake op locatie in Amsterdam of online",
       "Concreet voorstel met vaste prijs",
@@ -71,7 +71,10 @@ export const Route = createFileRoute("/ai-agents-amsterdam")({
         content:
           "AI agents voor Amsterdamse bedrijven: leads kwalificeren, e-mail beantwoorden en opvolgen via WhatsApp. Kennismaking online of persoonlijk in Amsterdam.",
       },
-      { property: "og:title", content: "AI agents Amsterdam — sales & klantenservice automatiseren" },
+      {
+        property: "og:title",
+        content: "AI agents Amsterdam — sales & klantenservice automatiseren",
+      },
       {
         property: "og:description",
         content:

@@ -42,7 +42,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Zo verloopt de lead opvolging stap voor stap",
-    body: "De agent leest de lead, bepaalt relevantie en verrijkt de gegevens met bedrijf, rol en signalen. Vervolgens schrijft hij een persoonlijke reactie in jouw tone-of-voice, verstuurt die via e-mail of WhatsApp en maakt het contact aan in je CRM. Reageert de prospect niet, dan volgt automatisch een zachte herinnering. Is er interesse, dan boekt de agent de afspraak direct in je agenda.",
+    body: "De agent leest de lead, bepaalt relevantie en verrijkt de gegevens met bedrijf, rol en signalen. Vervolgens schrijft hij een persoonlijke reactie in jouw tone-of-voice, verstuurt die via [e-mail](/ai-klantenservice-automatiseren) of [WhatsApp](/whatsapp-follow-up-automatiseren) en maakt het contact aan in je CRM. Reageert de prospect niet, dan volgt automatisch een zachte herinnering. Is er interesse, dan boekt de agent de afspraak direct in je agenda.",
     bullets: [
       "Lezen en kwalificeren",
       "Verrijken en vastleggen in CRM",
@@ -52,7 +52,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Voor wie dit werkt",
-    body: "Vooral voor bedrijven met een gestage stroom aanvragen via de website en een klein sales- of serviceteam: dienstverleners, bureaus, installateurs, B2B-leveranciers en praktijken. Zit je in Amsterdam? Dan komen we langs om samen door je aanvraagstroom te lopen voordat we iets bouwen.",
+    body: "Vooral voor bedrijven met een gestage stroom aanvragen via de website en een klein sales- of serviceteam: dienstverleners, bureaus, installateurs, B2B-leveranciers en praktijken. [Zit je in Amsterdam?](/ai-agents-amsterdam) Dan komen we langs om samen door je aanvraagstroom te lopen voordat we iets bouwen.",
   },
 ];
 

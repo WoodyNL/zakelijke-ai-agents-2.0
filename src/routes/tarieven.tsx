@@ -44,7 +44,7 @@ const SECTIONS: SeoSection[] = [
     heading: "Waarom onze tarieven per fase zijn opgebouwd",
     body: "De meeste AI-bureaus verkopen een abonnementsformaat: klein, middel, groot. Dat werkt alleen als je al weet wat je nodig hebt. Bij AI weet vrijwel geen mkb-bedrijf dat aan het begin, en dat is precies waar het misgaat — je kiest een pakket, ontdekt dat het niet past, en zit er drie maanden aan vast. Onze tarieven volgen daarom de vier fasen waar een bedrijf doorheen gaat, en na elke fase kun je stoppen.",
     bullets: [
-      "Stap 1 — weten: de AI-scan (€1.450), verrekenbaar als je doorgaat",
+      "Stap 1 — weten: de [AI-scan](/ai-scan) (€1.450), verrekenbaar als je doorgaat",
       "Kant-en-klaar: één agent live binnen een week (€795 + €495 p.m.)",
       "Stap 2 — bouwen: het AI-traject met vaste prijs (vanaf €4.500 + €395 p.m.)",
       "Stap 3 — doorpakken: AI-partner met vaste capaciteit (€2.450 p.m.)",
@@ -68,7 +68,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Hoe je bepaalt welk tarief bij jou past",
-    body: "Heb je één concreet proces voor ogen dat te veel tijd kost, dan is de kant-en-klare agent de snelste en goedkoopste test. Weet je nog niet waar de winst zit, begin dan met de scan — dan koop je geen oplossing voordat je het probleem kent. Loopt er al een AI-project vast, dan kijken we eerst wat er gebouwd is; vaak is er meer te redden dan mensen denken. En wil je er helemaal niet over nadenken, dan neemt het partnerschap het hele traject over. De gratis verkenning van 30 minuten is er precies om die keuze te maken, zonder dat je ergens aan vastzit.",
+    body: "Heb je één concreet proces voor ogen dat te veel tijd kost, dan is de [kant-en-klare agent](/ai-automatisering-op-maat) de snelste en goedkoopste test. Weet je nog niet waar de winst zit, begin dan met de [AI-scan](/ai-scan) — dan koop je geen oplossing voordat je het probleem kent. [Loopt er al een AI-project vast](/ai-project-vastgelopen), dan kijken we eerst wat er gebouwd is; vaak is er meer te redden dan mensen denken. En wil je er helemaal niet over nadenken, dan neemt het partnerschap het hele traject over. De gratis verkenning van 30 minuten is er precies om die keuze te maken, zonder dat je ergens aan vastzit.",
   },
 ];
 

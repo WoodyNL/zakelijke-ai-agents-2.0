@@ -42,7 +42,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Eén brein, meerdere kanalen",
-    body: "De WhatsApp Follow-up Agent gebruikt dezelfde kwalificatielogica als onze AI Sales Assistant — alleen op een ander kanaal. Wat de agent leert over jouw aanbod, veelgestelde vragen en bezwaren, geldt dus meteen voor e-mail én WhatsApp. Alles wordt vastgelegd in je CRM, zodat je één beeld per contact houdt.",
+    body: "De WhatsApp Follow-up Agent gebruikt dezelfde kwalificatielogica als onze [AI Sales Assistant](/ai-lead-opvolging) — alleen op een ander kanaal. Wat de agent leert over jouw aanbod, veelgestelde vragen en bezwaren, geldt dus meteen voor [e-mail](/ai-klantenservice-automatiseren) én WhatsApp. Alles wordt vastgelegd in je CRM, zodat je één beeld per contact houdt.",
     bullets: [
       "Zelfde kwalificatielogica als e-mail",
       "Vastlegging in je CRM per contact",
@@ -52,7 +52,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Opzetten met een team in Amsterdam",
-    body: "We richten de WhatsApp-koppeling, de berichten en de overdrachtsregels samen met je in. Zit je in Amsterdam of omgeving, dan doen we die sessie het liefst op locatie: dan horen we hoe je team nu opvolgt en nemen we die toon over in de berichten.",
+    body: "We richten de WhatsApp-koppeling, de berichten en de overdrachtsregels samen met je in. Zit je in [Amsterdam of omgeving](/ai-agents-amsterdam), dan doen we die sessie het liefst op locatie: dan horen we hoe je team nu opvolgt en nemen we die toon over in de berichten.",
   },
 ];
 

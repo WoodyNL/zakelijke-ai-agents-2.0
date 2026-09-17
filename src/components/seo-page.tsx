@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { TekstMetLinks } from "@/components/tekst-met-links";
 import { Reveal } from "@/hooks/use-reveal";
 import { SITE } from "@/content/site";
 import { PAGINA_LABELS, verwantePaginas } from "@/lib/verwante-paginas";
@@ -101,7 +102,9 @@ export function SeoPage({
               <h2 className="font-display text-[20px] font-bold tracking-tight text-brand sm:text-[24px]">
                 {s.heading}
               </h2>
-              <p className="mt-3 max-w-[70ch] text-[14px]/[1.75] text-ink/65">{s.body}</p>
+              <p className="mt-3 max-w-[70ch] text-[14px]/[1.75] text-ink/65">
+                <TekstMetLinks tekst={s.body} />
+              </p>
               {s.bullets && (
                 <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                   {s.bullets.map((b) => (
@@ -112,7 +115,7 @@ export function SeoPage({
                       <span aria-hidden="true" className="text-mint">
                         ✓
                       </span>
-                      {b}
+                      <TekstMetLinks tekst={b} />
                     </li>
                   ))}
                 </ul>

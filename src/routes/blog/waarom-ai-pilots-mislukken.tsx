@@ -28,7 +28,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Reden 1 — de tool wordt op een kapot proces geplakt",
-    body: "Bedrijven die AI succesvol opschalen hebben hun werkprocessen fundamenteel herontworpen: 73% van hen, tegenover 25% van de rest (McKinsey, State of AI 2026). De meesten automatiseren gewoon de bestaande rommel. Begin bij het proces, niet bij de tool: teken eerst uit hoe het werk nu écht loopt. Vaak blijkt de helft van de stappen overbodig — en dat is winst voordat er ook maar iets is geautomatiseerd.",
+    body: "Bedrijven die AI succesvol opschalen hebben hun werkprocessen fundamenteel herontworpen: 73% van hen, tegenover 25% van de rest (McKinsey, State of AI 2026). De meesten automatiseren gewoon de bestaande rommel. Begin bij het proces, niet bij de tool: teken eerst uit hoe het werk nu écht loopt. Vaak blijkt de helft van de stappen overbodig — en dat is winst voordat er ook maar iets is geautomatiseerd. Dat uittekenen is precies wat de [AI-scan](/ai-scan) doet.",
   },
   {
     heading: "Reden 2 — niemand meet iets",
@@ -40,11 +40,11 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Reden 4 — zelf bouwen loopt drie keer zo vaak vast",
-    body: "Interne AI-bouwprojecten slagen in ongeveer 33% van de gevallen. Samenwerken met een gespecialiseerde partij: 67% (MIT NANDA, 2025). Dat is geen kwestie van motivatie — het is ervaring die je koopt in plaats van zelf voor het eerst moet opdoen, met alle fouten die daarbij horen.",
+    body: "Interne AI-bouwprojecten slagen in ongeveer 33% van de gevallen. Samenwerken met een gespecialiseerde partij: 67% (MIT NANDA, 2025). Dat is geen kwestie van motivatie — het is ervaring die je koopt in plaats van zelf voor het eerst moet opdoen, met alle fouten die daarbij horen. Loopt jouw project al vast, dan is er meestal [meer te redden dan mensen denken](/ai-project-vastgelopen).",
   },
   {
     heading: "Reden 5 — geen beleid, geen naleving",
-    body: "Gebrekkige risicobeheersing is een van de drie hoofdredenen waarom Gartner verwacht dat 40% van de agentic-AI-projecten sneuvelt. Sinds 2 augustus 2026 moet bovendien elke chatbot zich in de EU kenbaar maken als AI, en sinds 2 februari 2025 is AI-geletterdheidstraining al verplicht voor personeel dat met AI werkt (EU AI Act, art. 50). Wie dat niet meeneemt in het traject, betaalt het later alsnog — via een boete of via een project dat wordt stilgelegd.",
+    body: "Gebrekkige risicobeheersing is een van de drie hoofdredenen waarom Gartner verwacht dat 40% van de agentic-AI-projecten sneuvelt. Sinds 2 augustus 2026 moet bovendien elke chatbot zich in de EU kenbaar maken als AI, en sinds 2 februari 2025 is AI-geletterdheidstraining al verplicht voor personeel dat met AI werkt (EU AI Act, art. 50). Wie dat niet meeneemt in het traject, betaalt het later alsnog — via een boete of via een project dat wordt stilgelegd. De AI Act-check zit standaard in onze [AI-consultancy](/ai-consultancy-mkb).",
   },
 ];
 

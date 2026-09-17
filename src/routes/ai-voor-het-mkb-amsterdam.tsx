@@ -38,7 +38,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Waarom vanuit Amsterdam werkt in je voordeel",
-    body: "We werken landelijk, met onze focus op Amsterdam en omgeving. Dat betekent direct en zakelijk contact, snel schakelen als er iets moet worden bijgesteld, en een intake die — in overleg — ook gewoon bij je op locatie kan in plaats van alleen via een videogesprek.",
+    body: "We werken landelijk, met onze focus op Amsterdam en omgeving. Dat betekent direct en zakelijk contact, snel schakelen als er iets moet worden bijgesteld, en een intake die — in overleg — ook gewoon bij je op locatie kan in plaats van alleen via een videogesprek. Wat we hier concreet bouwen staat op [AI agents in Amsterdam](/ai-agents-amsterdam).",
     bullets: [
       "Intake of AI-scan op locatie in Amsterdam of online",
       "Korte lijnen: je spreekt de persoon die het ook bouwt, geen accountmanager",
@@ -47,7 +47,7 @@ const SECTIONS: SeoSection[] = [
   },
   {
     heading: "Onze aanpak, ongeacht waar je nu staat",
-    body: "Oriënteer je je nog, heb je een concreet proces in gedachten, of loopt een lopend AI-project vast? Voor elk van die situaties hebben we een passend startpunt — je hoeft niet alles tegelijk.",
+    body: "[Oriënteer je je nog](/ai-scan), heb je een [concreet proces in gedachten](/ai-automatisering-op-maat), of [loopt een lopend AI-project vast](/ai-project-vastgelopen)? Voor elk van die situaties hebben we een passend startpunt — je hoeft niet alles tegelijk.",
     bullets: [
       "Oriënterend? Begin met de AI-scan: twee weken, vaste prijs, verrekenbaar bij vervolg",
       "Concreet proces? Kant-en-klare agent binnen een week, of maatwerk binnen enkele weken",
