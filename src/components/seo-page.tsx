@@ -1,8 +1,9 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Reveal } from "@/hooks/use-reveal";
 import { SITE } from "@/content/site";
+import { PAGINA_LABELS, verwantePaginas } from "@/lib/verwante-paginas";
 
 const shadowBrand = { boxShadow: "0 12px 26px -12px oklch(0.2 0.04 285 / 0.8)" } as const;
 
@@ -23,6 +24,9 @@ export function SeoPage({
   faqs: { q: string; a: string }[];
   children?: ReactNode;
 }) {
+  const pad = useRouterState({ select: (staat) => staat.location.pathname });
+  const verwant = verwantePaginas(pad);
+
   return (
     <div className="theme-dark surface-gradient min-h-screen w-full font-sans text-ink antialiased">
       <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-8 sm:py-8">
@@ -60,7 +64,9 @@ export function SeoPage({
         </nav>
 
         <header className="mt-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet">{kicker}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet">
+            {kicker}
+          </p>
           <h1 className="mt-2 font-display text-[30px]/[1.15] font-bold tracking-tight text-brand sm:text-[40px]/[1.1]">
             {title}
           </h1>
@@ -135,8 +141,9 @@ export function SeoPage({
               Liever even persoonlijk kennismaken in Amsterdam?
             </h2>
             <p className="mx-auto mt-3 max-w-[52ch] text-[14px]/[1.7] text-ink/65">
-              We komen langs bij je op kantoor in Amsterdam of omgeving, of we doen het online — wat jou
-              het beste uitkomt. In 30 minuten weet je precies wat een agent voor jouw bedrijf oplevert.
+              We komen langs bij je op kantoor in Amsterdam of omgeving, of we doen het online — wat
+              jou het beste uitkomt. In 30 minuten weet je precies wat een agent voor jouw bedrijf
+              oplevert.
             </p>
             <Link
               to="/"
@@ -152,26 +159,18 @@ export function SeoPage({
         </Reveal>
 
         <Reveal as="section" className="mt-10">
-          <h2 className="font-display text-[16px] font-bold tracking-tight text-brand">
-            Meer over Zakelijke AI Agents
-          </h2>
+          <h2 className="font-display text-[16px] font-bold tracking-tight text-brand">Lees ook</h2>
           <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
-            <SeoLink to="/tarieven" label="Tarieven" />
-            <SeoLink to="/ai-scan" label="AI-scan" />
-            <SeoLink to="/ai-voor-het-mkb-amsterdam" label="AI voor het MKB in Amsterdam" />
-            <SeoLink to="/ai-automatisering-op-maat" label="Maatwerk AI-automatisering" />
-            <SeoLink to="/ai-project-vastgelopen" label="AI-project vastgelopen?" />
-            <SeoLink to="/ai-consultancy-mkb" label="AI-consultancy & strategie" />
-            <SeoLink to="/ai-agents-amsterdam" label="AI agents in Amsterdam" />
-            <SeoLink to="/ai-lead-opvolging" label="AI lead opvolging" />
-            <SeoLink to="/whatsapp-follow-up-automatiseren" label="WhatsApp follow-up automatiseren" />
-            <SeoLink to="/ai-klantenservice-automatiseren" label="AI klantenservice automatiseren" />
-            <SeoLink to="/blog/waarom-ai-pilots-mislukken" label="Waarom AI-pilots mislukken" />
+            {verwant.map((adres) => (
+              <SeoLink key={adres} to={adres} label={PAGINA_LABELS[adres] ?? adres} />
+            ))}
           </div>
         </Reveal>
 
         <footer className="mt-10 flex flex-wrap items-center justify-between gap-2 pb-6">
-          <span className="font-display text-[13px] font-semibold text-brand">Zakelijke AI Agents</span>
+          <span className="font-display text-[13px] font-semibold text-brand">
+            Zakelijke AI Agents
+          </span>
           <span className="text-[11px] text-ink/40">Amsterdam · © 2026 Zakelijke AI Agents</span>
         </footer>
       </div>
