@@ -265,11 +265,18 @@ export function leesContacten(
       return waarde || undefined;
     };
 
-    // Een CRM houdt voor- en achternaam apart; wij hebben één naam nodig voor de
-    // aanhef. Staat er een losse naamkolom, dan wint die, want die is al
-    // samengesteld zoals de klant hem zelf schrijft.
-    const naam =
-      pak("naam") ?? [pak("voornaam"), pak("achternaam")].filter(Boolean).join(" ").trim();
+    // Staat er een aparte voornaamkolom, dan wint die van een algemene
+    // naamkolom. Dat lijkt omgekeerd maar volgde uit een echte lijst: naast
+    // "Voornaam contact" stond daar een kolom "Eigenaar / contactpersoon" met
+    // "Alfredo Smith (chef-kok) & Sonja" erin. Die won op de kop, en dan begint
+    // de mail met "Beste Alfredo Smith (chef-kok) & Sonja,".
+    //
+    // Een kolom die uitdrukkelijk de voornaam bevat, is voor een aanhef altijd
+    // betrouwbaarder dan een kolom die alles over de eigenaar verzamelt.
+    const voornaam = pak("voornaam");
+    const naam = voornaam
+      ? [voornaam, pak("achternaam")].filter(Boolean).join(" ").trim()
+      : (pak("naam") ?? "");
 
     // Alleen velden meesturen die werkelijk iets bevatten. Een leeg veld
     // weglaten is niet hetzelfde als er een lege tekst in zetten: dat laatste

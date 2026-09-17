@@ -193,6 +193,33 @@ meld(
   "lege telefoon blijft weg, naam blijft compleet",
 );
 
+console.log("\nKoude-leadlijst met twee naamkolommen");
+
+// Uit een echte lijst met horecaleads. Naast een kolom met alleen de voornaam
+// stond er een kolom die alles over de eigenaar verzamelde. Die won, en dan
+// begint de mail met "Beste Alfredo Smith (chef-kok) & Sonja,".
+const leads = [
+  ["Bedrijfsnaam", "Type", "Plaats", "Voornaam contact", "Eigenaar / contactpersoon", "E-mail", "Telefoon"],
+  ["Cafetaria de Mebri", "Cafetaria", "Alphen aan den Rijn", "Alfredo", "Alfredo Smith (chef-kok) & Sonja", "info@mebri.nl", "0172-479009"],
+  ["Cafetaria Turbo", "Cafetaria", "Hillegom", "", "", "info@cafetariaturbo.nl", "0252-524540"],
+];
+const leadKolommen = raadKolommen(leads);
+const gelezenLeads = leesContacten(leads, leadKolommen, true);
+
+meld(
+  gelezenLeads.contacten[0]!.naam === "Alfredo",
+  "de voornaamkolom wint van de verzamelkolom",
+  gelezenLeads.contacten[0]!.naam ?? "(leeg)",
+);
+meld(
+  gelezenLeads.contacten[0]!.bedrijf === "Cafetaria de Mebri",
+  "bedrijfsnaam blijft de bedrijfsnaam",
+);
+meld(
+  !("naam" in gelezenLeads.contacten[1]!),
+  "geen voornaam betekent geen naam, niet een halve",
+);
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) console.log("Alles in orde.\n");
 else {

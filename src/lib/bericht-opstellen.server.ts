@@ -160,7 +160,11 @@ Dit is het enige dat je aanbiedt. Je verzint er geen korting, geen actie en geen
       ? `De naam zoals wij hem hebben is "${o.contact.naam}". Staat de voornaam er voluit, gebruik dan alléén die: "Beste ${o.contact.naam.split(" ")[0]}," en niet de hele naam. Voor- en achternaam samen in de aanhef klinkt als een brief van een instantie.
 
 Staat er een initiaal of alleen een achternaam, verzin er dan geen voornaam bij — dat valt onmiddellijk op en is pijnlijk. Schrijf dan "Beste meneer/mevrouw ${o.contact.naam.split(" ").slice(1).join(" ") || o.contact.naam}" of laat de naam weg en begin gewoon.`
-      : "Je kent de naam niet. Gebruik geen aanhef met een naam erin en schrijf niet 'Beste heer/mevrouw'; begin gewoon."
+      : o.contact.bedrijf
+        ? `Je kent de naam van deze persoon niet, alleen de zaak: "${o.contact.bedrijf}". Schrijf dan "Beste ${o.contact.bedrijf}," als aanhef.
+
+Dat is met opzet geen "Geachte heer/mevrouw". Dit gaat naar strandtenten, snackbars en familiezaken; die aanhef is daar te stijf, en het is bovendien het eerste teken dat een mail naar duizend mensen tegelijk ging. De naam van de zaak erin is warmer en laat zien dat je weet wie je schrijft.`
+        : "Je kent de naam niet en de zaak ook niet. Gebruik dan geen aanhef met een naam erin en schrijf niet 'Geachte heer/mevrouw'; begin gewoon met je eerste zin."
   }
 - Eindig met één concrete vraag waar ja of nee op past.
 - Spreek de lezer aan met "u", en hou dat de hele mail vol. Dit zijn horecaondernemers en slagers die het bedrijf van vroeger kenden.
