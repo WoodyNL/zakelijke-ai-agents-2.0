@@ -76,26 +76,50 @@ export const telDoelgroep = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    let q = context.supabase
-      .from("outbound_contacts")
-      .select("id", { count: "exact", head: true })
-      .eq("agent_id", data.agentId)
-      .eq("herkomst", data.herkomst)
-      .is("afgemeld_op", null)
-      .is("bounce_op", null);
+    const gebied = <T extends { or: (s: string) => T; is: (k: string, w: null | boolean) => T }>(
+      q: T,
+    ): T => {
+      // Onbekend gebied telt mee bij "binnen": iemand buitensluiten omdat er
+      // geen plaats is ingevuld, is erger dan hem een bericht sturen dat
+      // misschien niet past.
+      if (data.doelgroep === "binnen_gebied") {
+        return q.or("in_bezorggebied.is.true,in_bezorggebied.is.null");
+      }
+      if (data.doelgroep === "buiten_gebied") return q.is("in_bezorggebied", false);
+      return q;
+    };
 
-    // Onbekend gebied telt mee bij "binnen": iemand buitensluiten omdat er geen
-    // plaats is ingevuld, is erger dan hem een bericht sturen dat misschien
-    // niet past.
-    if (data.doelgroep === "binnen_gebied") {
-      q = q.or("in_bezorggebied.is.true,in_bezorggebied.is.null");
-    } else if (data.doelgroep === "buiten_gebied") {
-      q = q.is("in_bezorggebied", false);
-    }
+    const totaal = await gebied(
+      context.supabase
+        .from("outbound_contacts")
+        .select("id", { count: "exact", head: true })
+        .eq("agent_id", data.agentId)
+        .eq("herkomst", data.herkomst)
+        .is("afgemeld_op", null)
+        .is("bounce_op", null),
+    );
+    if (totaal.error) throw new Error(totaal.error.message);
 
-    const { count, error } = await q;
-    if (error) throw new Error(error.message);
-    return { aantal: count ?? 0 };
+    // Wie al een eerste bericht heeft gehad telt niet meer mee, ook niet als
+    // dat uit een andere campagne kwam: bereidVoor kijkt naar de hele agent,
+    // niet naar deze campagne. Een contact krijgt maar één keer een eerste
+    // bericht, en de unieke index op (contact_id, stap) maakt deze join precies
+    // één rij per contact.
+    const gehad = await gebied(
+      context.supabase
+        .from("outbound_contacts")
+        .select("id, outbound_messages!inner(id)", { count: "exact", head: true })
+        .eq("agent_id", data.agentId)
+        .eq("herkomst", data.herkomst)
+        .is("afgemeld_op", null)
+        .is("bounce_op", null)
+        .eq("outbound_messages.stap", 1),
+    );
+    if (gehad.error) throw new Error(gehad.error.message);
+
+    const aantal = totaal.count ?? 0;
+    const alGehad = gehad.count ?? 0;
+    return { aantal, alGehad, nieuw: Math.max(aantal - alGehad, 0) };
   });
 
 export const bewaarCampagne = createServerFn({ method: "POST" })

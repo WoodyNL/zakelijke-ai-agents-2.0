@@ -111,10 +111,10 @@ function CampagnesPagina() {
     queryFn: () =>
       telFn({
         data: { agentId: agentId!, herkomst: v.herkomst, doelgroep: v.doelgroep },
-      }) as Promise<{ aantal: number }>,
+      }) as Promise<{ aantal: number; alGehad: number; nieuw: number }>,
     enabled: agentId !== null,
   });
-  const bereik = bereikQuery.data?.aantal ?? null;
+  const bereik = bereikQuery.data ?? null;
 
   const [bewerktId, zetBewerktId] = useState<string | null>(null);
   const [bezig, zetBezig] = useState(false);
@@ -410,29 +410,71 @@ function CampagnesPagina() {
                   </select>
                 </Veld>
 
-                {/* Het getal dat de twee keuzelijsten hierboven concreet maakt,
-                    en de laatste controle vóór het klaarzetten. */}
+                {/* Wat de twee keuzelijsten hierboven concreet maakt, en de
+                    laatste controle vóór het klaarzetten. */}
                 {bereik !== null && (
-                  <p className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[12.5px]/[1.65] text-ink/70">
-                    Deze instellingen raken{" "}
-                    <strong className="font-display font-bold text-brand tabular-nums">
-                      {bereik}
-                    </strong>{" "}
-                    {bereik === 1 ? "contact" : "contacten"}
-                    {v.doelgroep === "binnen_gebied" && " waar de chauffeur kan komen"}
-                    {v.doelgroep === "buiten_gebied" && " buiten het bezorggebied"}.
-                    {bereik === 0 && (
-                      <span className="block text-amber-300/80">
-                        Met deze selectie gaat er niets weg. Klopt de groep hierboven?
-                      </span>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
+                    <p className="text-[12.5px]/[1.65] text-ink/70">
+                      Deze selectie bevat{" "}
+                      <strong className="font-display font-bold text-ink tabular-nums">
+                        {bereik.aantal}
+                      </strong>{" "}
+                      {bereik.aantal === 1 ? "contact" : "contacten"}
+                      {v.doelgroep === "binnen_gebied" && " waar de chauffeur kan komen"}
+                      {v.doelgroep === "buiten_gebied" && " buiten het bezorggebied"}.
+                    </p>
+
+                    {bereik.aantal === 0 ? (
+                      <p className="mt-1.5 text-[12.5px]/[1.65] text-amber-300/80">
+                        Zo gaat er niets weg. Klopt de groep hierboven?
+                      </p>
+                    ) : (
+                      <>
+                        {/* Twee losse staven zouden suggereren dat het losse
+                            getallen zijn. Het is één groep die in tweeën valt,
+                            dus is het één balk. */}
+                        <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="bg-brand"
+                            style={{ width: `${(bereik.nieuw / bereik.aantal) * 100}%` }}
+                          />
+                          <div
+                            className="bg-white/25"
+                            style={{ width: `${(bereik.alGehad / bereik.aantal) * 100}%` }}
+                          />
+                        </div>
+
+                        <div className="mt-2.5 grid gap-1.5 text-[12.5px]/[1.6] sm:grid-cols-2">
+                          <span className="flex items-center gap-2 text-ink/75">
+                            <span className="size-2 shrink-0 rounded-full bg-brand" />
+                            <strong className="font-display font-bold text-brand tabular-nums">
+                              {bereik.nieuw}
+                            </strong>
+                            nog geen eerste bericht gehad
+                          </span>
+                          <span className="flex items-center gap-2 text-ink/55">
+                            <span className="size-2 shrink-0 rounded-full bg-white/25" />
+                            <strong className="tabular-nums">{bereik.alGehad}</strong>
+                            al benaderd, die slaat de agent over
+                          </span>
+                        </div>
+
+                        {bereik.nieuw === 0 ? (
+                          <p className="mt-2 text-[12.5px]/[1.65] text-amber-300/80">
+                            Iedereen in deze groep heeft al een eerste bericht gehad. Klaarzetten
+                            levert nu niets op — opvolgen doe je bij Berichten.
+                          </p>
+                        ) : (
+                          <p className="mt-2 text-[12.5px]/[1.65] text-ink/45">
+                            Bij {dagmaximumFout ? "?" : perDag} per dag zijn die {bereik.nieuw}{" "}
+                            berichten in{" "}
+                            {dagmaximumFout ? "?" : Math.ceil(bereik.nieuw / perDag)} werkdagen de
+                            deur uit.
+                          </p>
+                        )}
+                      </>
                     )}
-                    {bereik > 0 && (
-                      <span className="block text-ink/45">
-                        Bij {v.dagmaximum || "?"} per dag zijn dat{" "}
-                        {Math.ceil(bereik / Math.max(Number(v.dagmaximum) || 1, 1))} werkdagen.
-                      </span>
-                    )}
-                  </p>
+                  </div>
                 )}
 
 
