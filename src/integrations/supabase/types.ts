@@ -290,6 +290,7 @@ export type Database = {
           id: string
           naam: string
           ondertekening: string | null
+          opvolg_na_dagen: number
           verzendwijze: Database["public"]["Enums"]["verzendwijze"]
         }
         Insert: {
@@ -305,6 +306,7 @@ export type Database = {
           id?: string
           naam: string
           ondertekening?: string | null
+          opvolg_na_dagen?: number
           verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
         }
         Update: {
@@ -320,6 +322,7 @@ export type Database = {
           id?: string
           naam?: string
           ondertekening?: string | null
+          opvolg_na_dagen?: number
           verzendwijze?: Database["public"]["Enums"]["verzendwijze"]
         }
         Relationships: [
@@ -687,6 +690,10 @@ export type Database = {
         }[]
       }
       outbound_afmelden: { Args: { _sleutel: string }; Returns: undefined }
+      outbound_meld_bounce: {
+        Args: { _provider_id: string; _reden: string }
+        Returns: undefined
+      }
       outbound_vrijdagen: {
         Args: { _agent_id: string; _weken?: number }
         Returns: {
