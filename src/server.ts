@@ -50,6 +50,24 @@ const INBOUND_PAD = "/api/inbound";
 /** Waar een afmeldlink op uitkomt; ook het adres in List-Unsubscribe. */
 const AFMELD_PAD = "/afmelden";
 
+/**
+ * Adressen van pagina's die we hebben opgeheven, met hun opvolger.
+ *
+ * Google en de bezoeker hebben de oude adressen nog: ze staan in de index, in
+ * bookmarks en in links van buiten. Zonder deze tabel belanden die allemaal op
+ * een 404, en gaat de waarde die zo'n pagina in de loop van de tijd heeft
+ * opgebouwd verloren. Een 301 draagt die waarde over aan de opvolger.
+ *
+ * Het moet een 301 zijn en geen 302: alleen bij een 301 vervangt Google het
+ * oude adres door het nieuwe in de index.
+ */
+const OPGEHEVEN_PADEN: Record<string, string> = {
+  "/prijzen": "/tarieven",
+  "/over-ons": "/",
+  "/ai-voor-mkb-amsterdam": "/ai-voor-het-mkb-amsterdam",
+  "/ai-sales-assistant": "/ai-lead-opvolging",
+};
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -76,6 +94,13 @@ export default {
         const { meldAf } = await import("./lib/afmelden.functions");
         await meldAf(sleutel);
         return new Response("ok", { status: 200 });
+      }
+
+      const opvolger = OPGEHEVEN_PADEN[pad];
+      if (opvolger) {
+        const doel = new URL(request.url);
+        doel.pathname = opvolger;
+        return Response.redirect(doel.toString(), 301);
       }
 
       if (pad === INBOUND_PAD) {
