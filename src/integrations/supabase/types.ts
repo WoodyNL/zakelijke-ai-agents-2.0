@@ -286,6 +286,7 @@ export type Database = {
           agent_id: string
           antwoord_naar: string | null
           dagmaximum: number
+          doelgroep: Database["public"]["Enums"]["campagne_doelgroep"]
           herkomst: Database["public"]["Enums"]["contact_herkomst"]
           id: string
           naam: string
@@ -302,6 +303,7 @@ export type Database = {
           agent_id: string
           antwoord_naar?: string | null
           dagmaximum?: number
+          doelgroep?: Database["public"]["Enums"]["campagne_doelgroep"]
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
           naam: string
@@ -318,6 +320,7 @@ export type Database = {
           agent_id?: string
           antwoord_naar?: string | null
           dagmaximum?: number
+          doelgroep?: Database["public"]["Enums"]["campagne_doelgroep"]
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
           naam?: string
@@ -346,6 +349,7 @@ export type Database = {
           email: string
           herkomst: Database["public"]["Enums"]["contact_herkomst"]
           id: string
+          in_bezorggebied: boolean | null
           laatst_besteld_op: string | null
           naam: string | null
           notitie: string | null
@@ -362,6 +366,7 @@ export type Database = {
           email: string
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
+          in_bezorggebied?: boolean | null
           laatst_besteld_op?: string | null
           naam?: string | null
           notitie?: string | null
@@ -378,6 +383,7 @@ export type Database = {
           email?: string
           herkomst?: Database["public"]["Enums"]["contact_herkomst"]
           id?: string
+          in_bezorggebied?: boolean | null
           laatst_besteld_op?: string | null
           naam?: string | null
           notitie?: string | null
@@ -746,6 +752,7 @@ export type Database = {
         | "verzonden"
         | "mislukt"
         | "beantwoord"
+      campagne_doelgroep: "alles" | "binnen_gebied" | "buiten_gebied"
       contact_herkomst: "oud_klant" | "koud"
       verzendwijze: "concept" | "direct"
     }
@@ -892,6 +899,7 @@ export const Constants = {
         "mislukt",
         "beantwoord",
       ],
+      campagne_doelgroep: ["alles", "binnen_gebied", "buiten_gebied"],
       contact_herkomst: ["oud_klant", "koud"],
       verzendwijze: ["concept", "direct"],
     },
