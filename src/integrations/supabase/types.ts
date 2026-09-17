@@ -694,6 +694,20 @@ export type Database = {
         Args: { _provider_id: string; _reden: string }
         Returns: undefined
       }
+      outbound_trechter: {
+        Args: { _agent_id: string }
+        Returns: {
+          aangeschreven: number
+          afgemeld: number
+          afspraak: number
+          bereikbaar: number
+          bezorgd: number
+          contacten: number
+          gebouncet: number
+          in_gesprek: number
+          opgevolgd: number
+        }[]
+      }
       outbound_vrijdagen: {
         Args: { _agent_id: string; _weken?: number }
         Returns: {
