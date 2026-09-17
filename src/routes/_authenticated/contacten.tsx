@@ -10,6 +10,7 @@ import {
   bepaalGebiedOpnieuw,
   haalContacten,
   importeerContacten,
+  vulContactenAan,
 } from "@/lib/contacten.functions";
 import type { GelezenContact } from "@/lib/contactimport";
 
@@ -43,6 +44,7 @@ function ContactenPagina() {
   const importFn = useServerFn(importeerContacten);
   const lijstFn = useServerFn(haalContacten);
   const gebiedFn = useServerFn(bepaalGebiedOpnieuw);
+  const aanvulFn = useServerFn(vulContactenAan);
   const [gebiedBezig, zetGebiedBezig] = useState(false);
   const [gebiedMelding, zetGebiedMelding] = useState<string | null>(null);
 
@@ -136,7 +138,15 @@ function ContactenPagina() {
               </div>
             )}
 
-            <ContactImport onOpslaan={opslaan} />
+            <ContactImport
+              onOpslaan={opslaan}
+              onAanvullen={async (gelezen) => {
+                if (!actieveId) throw new Error("Kies eerst een agent.");
+                const r = await aanvulFn({ data: { agentId: actieveId, contacten: gelezen } });
+                await qc.invalidateQueries({ queryKey: ["contacten", actieveId] });
+                return r;
+              }}
+            />
 
             {/* De route is pas vastgelegd toen er al een lijst in stond, en een
                 route kan veranderen. Dan moet de hele lijst opnieuw langs de

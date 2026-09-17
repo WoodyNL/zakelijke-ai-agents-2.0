@@ -289,3 +289,105 @@ export const haalContactReis = createServerFn({ method: "GET" })
       bezorgingen: bezorgingen.data ?? [],
     };
   });
+
+/**
+ * Bestaande contacten aanvullen uit een nieuwe versie van dezelfde lijst.
+ *
+ * Nodig omdat een lijst eerder kan zijn ingelezen dan dat er velden voor
+ * bestonden: de 137 relaties van FJ Snacks stonden er al voordat er een
+ * adreskolom was. Opnieuw importeren helpt dan niet, want die slaat bestaande
+ * adressen over.
+ *
+ * Er wordt alleen ingevuld wat leeg is, nooit overschreven. Iemand kan een naam
+ * met de hand hebben verbeterd of een adres hebben gecorrigeerd na een
+ * verhuizing; een import die dat terugdraait naar wat er in een oud bestand
+ * stond, maakt stilletjes werk ongedaan.
+ */
+export const vulContactenAan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        agentId: z.string().uuid(),
+        contacten: z.array(contactSchema).min(1).max(5000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: agent, error: agentFout } = await context.supabase
+      .from("agents")
+      .select("id")
+      .eq("id", data.agentId)
+      .maybeSingle();
+    if (agentFout) throw new Error(agentFout.message);
+    if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");
+
+    const perEmail = new Map(data.contacten.map((c) => [c.email.toLowerCase(), c]));
+    const adressen = [...perEmail.keys()];
+
+    type Rij = {
+      id: string;
+      email: string;
+      naam: string | null;
+      bedrijf: string | null;
+      plaats: string | null;
+      telefoon: string | null;
+      notitie: string | null;
+      adres: string | null;
+      postcode: string | null;
+    };
+
+    const bestaand: Rij[] = [];
+    for (let i = 0; i < adressen.length; i += 200) {
+      const { data: rijen, error } = await context.supabase
+        .from("outbound_contacts")
+        .select("id, email, naam, bedrijf, plaats, telefoon, notitie, adres, postcode")
+        .eq("agent_id", data.agentId)
+        .in("email", adressen.slice(i, i + 200));
+      if (error) throw new Error(error.message);
+      bestaand.push(...((rijen ?? []) as unknown as Rij[]));
+    }
+
+    let aangevuld = 0;
+    let ongewijzigd = 0;
+    const velden = [
+      "naam",
+      "bedrijf",
+      "plaats",
+      "telefoon",
+      "adres",
+      "postcode",
+      "notitie",
+    ] as const;
+
+    for (const rij of bestaand) {
+      const bron = perEmail.get(rij.email.toLowerCase());
+      if (!bron) continue;
+
+      const bij: Record<string, string> = {};
+      for (const veld of velden) {
+        const huidig = rij[veld];
+        const nieuw = (bron as Record<string, string | undefined>)[veld];
+        if (nieuw && (huidig === null || String(huidig).trim() === "")) bij[veld] = nieuw;
+      }
+
+      if (Object.keys(bij).length === 0) {
+        ongewijzigd++;
+        continue;
+      }
+
+      const { error } = await context.supabase
+        .from("outbound_contacts")
+        .update(bij as never)
+        .eq("id", rij.id);
+      if (error) throw new Error(error.message);
+      aangevuld++;
+    }
+
+    return {
+      aangevuld,
+      ongewijzigd,
+      nietGevonden: perEmail.size - bestaand.length,
+      inLijst: perEmail.size,
+    };
+  });

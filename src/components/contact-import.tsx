@@ -71,13 +71,23 @@ export type Importuitkomst = {
   totaal_in_lijst: number;
 };
 
+export type Aanvuluitkomst = {
+  aangevuld: number;
+  ongewijzigd: number;
+  nietGevonden: number;
+  inLijst: number;
+};
+
 export function ContactImport({
   onOpslaan,
+  onAanvullen,
 }: {
   onOpslaan: (
     contacten: GelezenContact[],
     herkomst: "oud_klant" | "koud",
   ) => Promise<Importuitkomst>;
+  /** Bestaande contacten bijwerken met wat er nog ontbreekt. */
+  onAanvullen: (contacten: GelezenContact[]) => Promise<Aanvuluitkomst>;
 }) {
   const [rijen, zetRijen] = React.useState<string[][]>([]);
   const [kolommen, zetKolommen] = React.useState<Kolomsoort[]>([]);
@@ -88,6 +98,7 @@ export function ContactImport({
   const [fout, zetFout] = React.useState<string | null>(null);
   const [bezig, zetBezig] = React.useState(false);
   const [uitkomst, zetUitkomst] = React.useState<Importuitkomst | null>(null);
+  const [aanvul, zetAanvul] = React.useState<Aanvuluitkomst | null>(null);
 
   const invoer = React.useRef<HTMLInputElement>(null);
 
@@ -127,10 +138,36 @@ export function ContactImport({
   );
   const bestandWeetHet = perRij.klant + perRij.prospect > 0;
 
+  /**
+   * Bestaande contacten bijwerken in plaats van nieuwe toevoegen.
+   *
+   * Nodig omdat een lijst eerder kan zijn ingelezen dan dat er velden voor
+   * bestonden. Er wordt alleen ingevuld wat leeg is: een naam die met de hand
+   * is verbeterd of een adres dat na een verhuizing is aangepast, mag niet
+   * teruggedraaid worden naar wat er in een oud bestand stond.
+   */
+  async function aanvullen() {
+    zetBezig(true);
+    zetFout(null);
+    zetUitkomst(null);
+    zetAanvul(null);
+    try {
+      zetAanvul(await onAanvullen(gelezen.contacten));
+      zetRijen([]);
+      zetKolommen([]);
+      zetBestandsnaam("");
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Aanvullen is niet gelukt.");
+    } finally {
+      zetBezig(false);
+    }
+  }
+
   async function opslaan() {
     zetBezig(true);
     zetFout(null);
     zetUitkomst(null);
+    zetAanvul(null);
     try {
       zetUitkomst(await onOpslaan(gelezen.contacten, herkomst));
       zetRijen([]);
@@ -385,6 +422,29 @@ export function ContactImport({
             >
               {bezig ? "Bezig met opslaan…" : `${gelezen.contacten.length} contacten opslaan`}
             </button>
+
+            {/* Naast opslaan, niet in plaats van. Dezelfde lijst kan een tweede
+                keer nuttig zijn: niet om contacten toe te voegen maar om aan te
+                vullen wat er destijds nog niet in paste. */}
+            <button
+              type="button"
+              onClick={aanvullen}
+              disabled={bezig || gelezen.contacten.length === 0 || !heeftEmail}
+              className="rounded-xl border border-white/12 bg-white/[0.06] px-4 py-2 text-[13px] font-medium text-ink/75 transition hover:bg-white/10 disabled:opacity-40"
+            >
+              Bestaande aanvullen
+            </button>
+
+            {aanvul && (
+              <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                <span>
+                  {aanvul.aangevuld} contacten aangevuld
+                  {aanvul.ongewijzigd > 0 && `, ${aanvul.ongewijzigd} waren al compleet`}
+                  {aanvul.nietGevonden > 0 && `, ${aanvul.nietGevonden} stonden er nog niet in`}.
+                </span>
+              </p>
+            )}
 
             {uitkomst && (
               <p className="inline-flex items-start gap-2 text-[12.5px]/[1.6] text-ink/80">
