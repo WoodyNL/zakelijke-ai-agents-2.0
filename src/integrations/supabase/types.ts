@@ -344,6 +344,7 @@ export type Database = {
       outbound_contacts: {
         Row: {
           aangemaakt_op: string
+          adres: string | null
           afgemeld_op: string | null
           afmeldsleutel: string
           agent_id: string
@@ -357,11 +358,13 @@ export type Database = {
           naam: string | null
           notitie: string | null
           plaats: string | null
+          postcode: string | null
           prioriteit: number | null
           telefoon: string | null
         }
         Insert: {
           aangemaakt_op?: string
+          adres?: string | null
           afgemeld_op?: string | null
           afmeldsleutel?: string
           agent_id: string
@@ -375,11 +378,13 @@ export type Database = {
           naam?: string | null
           notitie?: string | null
           plaats?: string | null
+          postcode?: string | null
           prioriteit?: number | null
           telefoon?: string | null
         }
         Update: {
           aangemaakt_op?: string
+          adres?: string | null
           afgemeld_op?: string | null
           afmeldsleutel?: string
           agent_id?: string
@@ -393,6 +398,7 @@ export type Database = {
           naam?: string | null
           notitie?: string | null
           plaats?: string | null
+          postcode?: string | null
           prioriteit?: number | null
           telefoon?: string | null
         }
