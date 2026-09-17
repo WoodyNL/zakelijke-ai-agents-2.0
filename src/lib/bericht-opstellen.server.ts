@@ -37,7 +37,16 @@ export type Opdracht = {
   /** Wat er is gebeurd bij de vorige mail; leeg bij het eerste bericht. */
   vorigBericht?: string | undefined;
   /** Welke stap in de reeks; bepaalt waar het bericht op uitkomt. */
-  soort?: "eerste" | "opvolging" | "navraag" | undefined;
+  soort?: "eerste" | "opvolging" | "navraag" | "bevestiging" | undefined;
+  /** Alleen bij een bevestiging: de afspraak die wordt nagevraagd. */
+  bezorging?:
+    | {
+        /** Zoals een mens het zegt: "vrijdag 25 september". */
+        dag: string;
+        /** Het adres waar de chauffeur volgens onze gegevens heen gaat. */
+        adres: string | null;
+      }
+    | undefined;
 };
 
 export type Concept = { onderwerp: string; tekst: string };
@@ -128,7 +137,42 @@ Eindig met de vraag of je even mag bellen, en wanneer dat schikt. Meer niet.
 En begin niet opnieuw over de overname of het overlijden van de vorige eigenaar. Dat heeft deze persoon inmiddels twee keer gelezen en er is een doos bezorgd; het verhaal is verteld. Val met de deur in huis: de chauffeur is langs geweest, hoe was het?`
       : "";
 
-  return `Je schrijft namens ${o.bedrijfsnaam} één e-mail aan één persoon. Je schrijft Nederlands.${navraag}
+
+  /**
+   * Woensdag: schikt het vrijdag?
+   *
+   * Dit bericht bestaat om een adres te controleren, maar het mag daar niet
+   * over gaan. "Klopt uw adres nog?" kost de ontvanger werk zonder dat het hem
+   * iets oplevert, en het is precies het soort vraag waarop mensen "ja"
+   * antwoorden zonder te kijken.
+   *
+   * Dus vraagt de agent naar het tijdstip en zet hij het adres voluit in de
+   * zin. Klopt dat niet, dan corrigeert de ontvanger het uit eigenbelang. Het
+   * adres is bijvangst van een vraag die hij toch al wilde beantwoorden.
+   */
+  const bevestiging =
+    o.soort === "bevestiging" && o.bezorging
+      ? `
+
+# Dit bericht gaat over een afspraak die al staat
+
+Er is afgesproken dat er een proefpakket wordt gebracht. Dat is geregeld en daar hoef je niet opnieuw over te onderhandelen. Deze mail is kort — vier zinnen is genoeg, en korter mag ook.
+
+Je schrijft dit:
+- de chauffeur komt ${o.bezorging.dag}
+${o.bezorging.adres ? `- hij komt naar: ${o.bezorging.adres}. Zet dat adres voluit in de zin, precies zoals het hier staat. Niet als vraag of het klopt, maar als mededeling waar hij heen gaat.` : "- wij hebben geen adres. Vraag waar het pakket bezorgd moet worden."}
+- en je vraagt of dat schikt, en zo niet wanneer dan wel
+
+Wat je hier niet doet:
+- geen prijzen, geen aanbod, geen argumenten waarom het pakket de moeite waard is. Dat is allemaal al gezegd en het maakt van een kort berichtje een verkoopmail.
+- niet vragen of het adres klopt. Het staat er; als het niet klopt schrijft hij dat vanzelf.
+- niet vragen of hij het pakket nog wil. Die vraag opent iets wat dicht was.
+- geen exact tijdstip noemen dat je niet weet. "In de ochtend" of "in de loop van de dag" mag, "om 10 uur" niet.
+
+De toon is die van een bevestiging, niet van een verzoek. Zoals een leverancier die even laat weten dat hij langskomt.`
+      : "";
+
+  return `Je schrijft namens ${o.bedrijfsnaam} één e-mail aan één persoon. Je schrijft Nederlands.${navraag}${bevestiging}
 
 # De belangrijkste regel
 
@@ -152,6 +196,8 @@ ${NOTITIEREGELS}` : ""
 ${
   o.soort === "navraag"
     ? `Deze persoon heeft het pakket gehad. Waar hij vandaan komt in de lijst doet er nu niet meer toe; schrijf over wat er bezorgd is en niet over hoe het contact ooit begon.`
+    : o.soort === "bevestiging"
+    ? `Met deze persoon is al gemaild en er staat een afspraak. Waar hij vandaan komt in de lijst doet er nu niet meer toe. Begin dus niet opnieuw over de overname, over het overlijden van de vorige eigenaar, of over hoe het contact begon — dat is verteld, en een bevestiging die dat herhaalt leest als een nieuwe verkoopmail.`
     : oud
     ? `Deze persoon was klant. Dat is de reden dat je schrijft, en dat mag je benoemen.
 
@@ -172,6 +218,12 @@ ${
 ${o.aanbod}
 
 Dat is geweest. Je biedt het niet opnieuw aan.`
+      : o.soort === "bevestiging"
+      ? `# Wat er bezorgd wordt
+
+${o.aanbod}
+
+Dit is waar de afspraak over gaat. Je hoeft het niet opnieuw aan te prijzen en je noemt het hooguit in een halve bijzin, zodat duidelijk is waar het pakket over gaat.`
       : `# Wat je voorstelt
 
 ${o.aanbod}
@@ -197,7 +249,11 @@ Dat is met opzet geen "Geachte heer/mevrouw". Dit gaat naar strandtenten, snackb
         : "Je kent de naam niet en de zaak ook niet. Gebruik dan geen aanhef met een naam erin en schrijf niet 'Geachte heer/mevrouw'; begin gewoon met je eerste zin."
   }
 - Eindig met één concrete vraag waar ja of nee op past.
-- Noem geen specifieke datum of "komende vrijdag". Welke vrijdag het wordt, wordt later ingepland en hangt af van hoeveel er die dag mee kan. Zeg "op een vrijdag" en niets preciezers; een datum die niet gereserveerd is, is een toezegging die je niet kunt nakomen.
+${
+  o.soort === "bevestiging"
+    ? `- Noem de dag die hierboven staat, voluit. Dat is de hele reden dat je schrijft: die vrijdag is gereserveerd en er staat een doos voor klaar. "Op een vrijdag" is hier fout — dan weet de lezer nog steeds niet wanneer hij thuis moet zijn.`
+    : `- Noem geen specifieke datum of "komende vrijdag". Welke vrijdag het wordt, wordt later ingepland en hangt af van hoeveel er die dag mee kan. Zeg "op een vrijdag" en niets preciezers; een datum die niet gereserveerd is, is een toezegging die je niet kunt nakomen.`
+}
 - Spreek de lezer aan met "u", en hou dat de hele mail vol. Dit zijn horecaondernemers en slagers die het bedrijf van vroeger kenden.
 
 # Nederlands

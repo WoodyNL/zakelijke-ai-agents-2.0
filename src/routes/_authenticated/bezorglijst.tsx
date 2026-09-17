@@ -33,6 +33,8 @@ type Bezorging = {
   adres: string | null;
   status: string;
   notitie: string | null;
+  bevestiging?: string;
+  adres_eerder?: string | null;
   outbound_contacts: {
     naam: string | null;
     bedrijf: string | null;
@@ -56,8 +58,16 @@ function BezorglijstPagina() {
   });
 
   const alles = query.data ?? [];
+  // Wie heeft afgezegd staat niet op de lijst. Een naam die je moet overslaan
+  // is een naam waar iemand op vrijdagochtend alsnog naartoe rijdt.
   const lijst = alles
-    .filter((b) => b.status !== "afgezegd" && (!dag || b.bezorgdag === dag))
+    .filter(
+      (b) =>
+        b.status !== "afgezegd" &&
+        b.bevestiging !== "afgezegd" &&
+        b.bevestiging !== "verzet" &&
+        (!dag || b.bezorgdag === dag),
+    )
     .sort((a, b) => (a.outbound_contacts?.plaats ?? "").localeCompare(b.outbound_contacts?.plaats ?? ""));
 
   const dagTekst = dag
@@ -107,6 +117,14 @@ function BezorglijstPagina() {
         <p className="mt-1 text-[13px] text-ink/55 print:text-black">
           {lijst.length} {lijst.length === 1 ? "adres" : "adressen"} · FJ Snacks, Lageweg 4 Katwijk
         </p>
+        {/* Hoeveel er bevestigd zijn hoort vóór het wegrijden bekend te zijn,
+            niet bij de derde deur die dicht blijkt. */}
+        {lijst.length > 0 && (
+          <p className="mt-0.5 text-[12.5px] text-ink/45 print:text-black">
+            {lijst.filter((b) => b.bevestiging === "bevestigd" || b.bevestiging === "ander_adres").length}{" "}
+            van {lijst.length} bevestigd
+          </p>
+        )}
       </header>
 
       {lijst.length === 0 ? (
@@ -138,6 +156,23 @@ function BezorglijstPagina() {
                   <p className="mt-1 text-[13px] text-ink/80 print:text-black">
                     {b.adres ?? <span className="text-amber-300">geen adres bekend</span>}
                   </p>
+
+                  {/* Een adres dat is gewijzigd hoort op papier te staan.
+                      Anders rijdt de chauffeur naar het adres dat hij vorige
+                      week in zijn hoofd heeft geprent. */}
+                  {b.adres_eerder && (
+                    <p className="mt-1 text-[12px] text-ink/60 print:text-black">
+                      gewijzigd — was: <span className="line-through">{b.adres_eerder}</span>
+                    </p>
+                  )}
+
+                  {b.bevestiging !== "bevestigd" && b.bevestiging !== "ander_adres" && (
+                    <p className="mt-1 text-[12px] text-ink/50 print:text-black">
+                      {b.bevestiging === "gevraagd"
+                        ? "niet bevestigd — nog geen antwoord"
+                        : "niet bevestigd"}
+                    </p>
+                  )}
 
                   {adresOnvolledig && (
                     <p className="geen-print mt-1.5 inline-flex items-center gap-1.5 text-[11.5px] text-amber-300">

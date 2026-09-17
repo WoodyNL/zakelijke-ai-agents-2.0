@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { mijnAgent } from "@/lib/agent-toegang";
 
 /**
  * Proefpakketten inplannen op een vrijdag.
@@ -21,7 +22,7 @@ export const haalBezorgingen = createServerFn({ method: "GET" })
     const { data: rijen, error } = await context.supabase
       .from("outbound_deliveries")
       .select(
-        "id, bezorgdag, adres, status, notitie, opvolging, contact_id, outbound_contacts(naam, bedrijf, plaats, email)",
+        "id, bezorgdag, adres, status, notitie, opvolging, bevestiging, bevestiging_op, adres_eerder, adres_bron, contact_id, outbound_contacts(naam, bedrijf, plaats, email)",
       )
       .eq("agent_id", data.agentId)
       .order("bezorgdag", { ascending: true })
@@ -166,6 +167,66 @@ export const zetOpvolging = createServerFn({ method: "POST" })
         opvolging: data.opvolging,
         opvolging_op: new Date().toISOString(),
         ...(data.notitie !== undefined ? { opvolging_notitie: data.notitie } : {}),
+      } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Woensdag de vraag uitzetten: schikt het vrijdag?
+ *
+ * Eén knop per bezorgdag, en niet per pakket. Acht keer op een knopje drukken
+ * om acht keer dezelfde vraag te stellen is werk dat de software hoort te doen,
+ * en het is bovendien de handeling waarbij je er eentje overslaat.
+ *
+ * Er wordt meteen verstuurd en niet klaargezet. Een bevestiging voor overmorgen
+ * die als concept blijft staan is geen bevestiging meer, en het gaat om het
+ * aantal dat in één bus past — niet om honderd koude mails.
+ */
+export const vraagBevestiging = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        agentId: z.string().uuid(),
+        bezorgdag: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Kies een datum."),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await mijnAgent(context as never, data.agentId);
+    const { verstuurBevestigingen } = await import("@/lib/bezorgbevestiging.server");
+    return verstuurBevestigingen(data.agentId, data.bezorgdag);
+  });
+
+/**
+ * Een adreswijziging terugdraaien.
+ *
+ * Het adres wordt automatisch bijgewerkt als iemand er in zijn antwoord een
+ * ander noemt, want anders staat de chauffeur vrijdag alsnog op het oude adres.
+ * Maar een model dat een zin verkeerd leest bestaat, dus moet één klik het
+ * kunnen terugzetten — en daarvoor is het oude adres bewaard.
+ */
+export const herstelAdres = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rij, error: leesFout } = await context.supabase
+      .from("outbound_deliveries")
+      .select("adres_eerder")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (leesFout) throw new Error(leesFout.message);
+    const eerder = (rij as { adres_eerder?: string | null } | null)?.adres_eerder ?? null;
+
+    const { error } = await context.supabase
+      .from("outbound_deliveries")
+      .update({
+        adres: eerder,
+        adres_eerder: null,
+        adres_bron: null,
+        bevestiging: "bevestigd",
       } as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);

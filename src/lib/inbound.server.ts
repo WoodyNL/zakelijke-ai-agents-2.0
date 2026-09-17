@@ -250,6 +250,22 @@ export async function verwerkInboundWebhook(request: Request): Promise<Response>
     } catch (e) {
       console.error("Opvolging intrekken mislukt:", e);
     }
+
+    // Staat er een bezorging open waar we naar hebben gevraagd, dan zit het
+    // antwoord op die vraag in deze mail. Dat is de enige plek waar een model
+    // iets wijzigt waar een mens naar handelt — de chauffeur rijdt ernaartoe —
+    // dus mag het alleen iets doen als het zeker is, en wordt het oude adres
+    // bewaard.
+    //
+    // Om dezelfde reden als hierboven mag dit de afhandeling niet laten
+    // struikelen: het antwoord is bewaard, en dat is het gegeven dat telt.
+    try {
+      const { verwerkBevestigingsAntwoord } = await import("@/lib/bezorgbevestiging.server");
+      const stand = await verwerkBevestigingsAntwoord(agentId, contactId, inhoud.tekst);
+      if (stand) console.info(`Bevestiging voor contact ${contactId}: ${stand}`);
+    } catch (e) {
+      console.error("Bevestiging verwerken mislukt:", e);
+    }
   }
 
   return new Response("ok", { status: 200 });

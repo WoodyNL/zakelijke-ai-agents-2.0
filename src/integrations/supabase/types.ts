@@ -414,6 +414,10 @@ export type Database = {
       }
       outbound_deliveries: {
         Row: {
+          adres_bron: string | null
+          adres_eerder: string | null
+          bevestiging: Database["public"]["Enums"]["bevestiging_stand"]
+          bevestiging_op: string | null
           aangemaakt_op: string
           adres: string | null
           agent_id: string
@@ -427,6 +431,10 @@ export type Database = {
           status: string
         }
         Insert: {
+          adres_bron?: string | null
+          adres_eerder?: string | null
+          bevestiging?: Database["public"]["Enums"]["bevestiging_stand"]
+          bevestiging_op?: string | null
           aangemaakt_op?: string
           adres?: string | null
           agent_id: string
@@ -440,6 +448,10 @@ export type Database = {
           status?: string
         }
         Update: {
+          adres_bron?: string | null
+          adres_eerder?: string | null
+          bevestiging?: Database["public"]["Enums"]["bevestiging_stand"]
+          bevestiging_op?: string | null
           aangemaakt_op?: string
           adres?: string | null
           agent_id?: string
@@ -777,6 +789,13 @@ export type Database = {
         | "beantwoord"
       campagne_doelgroep: "alles" | "binnen_gebied" | "buiten_gebied"
       contact_herkomst: "oud_klant" | "koud"
+      bevestiging_stand:
+        | "niet_gevraagd"
+        | "gevraagd"
+        | "bevestigd"
+        | "ander_adres"
+        | "verzet"
+        | "afgezegd"
       opvolging_stand:
         | "open"
         | "navraag_uit"

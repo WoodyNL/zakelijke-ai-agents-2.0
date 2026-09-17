@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { mijnAgent } from "@/lib/agent-toegang";
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import type { TablesInsert } from "@/integrations/supabase/types";
 
@@ -30,13 +31,6 @@ const campagneSchema = z.object({
   actief: z.boolean(),
 });
 
-async function mijnAgent(context: { supabase: ReturnType<typeof Object> }, agentId: string) {
-  const sb = (context as { supabase: any }).supabase;
-  const { data, error } = await sb.from("agents").select("id, name").eq("id", agentId).maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Deze agent bestaat niet, of is niet van jou.");
-  return data as { id: string; name: string };
-}
 
 export const haalCampagnes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

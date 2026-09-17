@@ -2,10 +2,21 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Truck, Check, AlertTriangle, PackageCheck, Printer } from "lucide-react";
+import {
+  Truck,
+  Check,
+  AlertTriangle,
+  PackageCheck,
+  Printer,
+  Send,
+  MapPin,
+  Undo2,
+} from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
+  herstelAdres,
+  vraagBevestiging,
   haalBezorgingen,
   haalKandidaten,
   planBezorging,
@@ -28,6 +39,9 @@ type Contactje = { naam: string | null; bedrijf: string | null; plaats: string |
 type Bezorging = {
   id: string;
   bezorgdag: string;
+  bevestiging?: string;
+  adres_eerder?: string | null;
+  adres_bron?: string | null;
   adres: string | null;
   status: string;
   notitie: string | null;
@@ -65,6 +79,8 @@ function BezorgenPagina() {
   const planFn = useServerFn(planBezorging);
   const statusFn = useServerFn(zetBezorgingStatus);
   const opvolgFn = useServerFn(zetOpvolging);
+  const bevestigFn = useServerFn(vraagBevestiging);
+  const herstelFn = useServerFn(herstelAdres);
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
@@ -84,6 +100,11 @@ function BezorgenPagina() {
   const [dag, zetDag] = useState(vrijdagen()[0]!);
   const [bezig, zetBezig] = useState<string | null>(null);
   const [fout, zetFout] = useState<string | null>(null);
+  const [gevraagd, zetGevraagd] = useState<{
+    dag: string;
+    verstuurd: number;
+    overgeslagen: Array<{ email: string; reden: string }>;
+  } | null>(null);
 
   const bezorgingen = bezorgQuery.data ?? [];
   const kandidaten = kandQuery.data ?? [];
@@ -138,6 +159,43 @@ function BezorgenPagina() {
    * verdwijnt tussen de honderd andere, en dat is de klant die het meeste
    * waard was.
    */
+  /**
+   * Eén knop per dag, niet per pakket.
+   *
+   * Acht keer dezelfde vraag stellen is werk dat de software hoort te doen, en
+   * het is precies de handeling waarbij je er eentje overslaat.
+   */
+  async function vraagNa(d: string) {
+    if (!agentId) return;
+    zetFout(null);
+    zetBezig(`bevestig-${d}`);
+    try {
+      const uit = (await bevestigFn({ data: { agentId, bezorgdag: d } })) as {
+        verstuurd: number;
+        overgeslagen: Array<{ email: string; reden: string }>;
+      };
+      zetGevraagd({ dag: d, ...uit });
+      await qc.invalidateQueries({ queryKey: ["bezorgingen", agentId] });
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Versturen mislukt.");
+    } finally {
+      zetBezig(null);
+    }
+  }
+
+  async function herstel(b: Bezorging) {
+    zetFout(null);
+    zetBezig(b.id);
+    try {
+      await herstelFn({ data: { id: b.id } });
+      await qc.invalidateQueries({ queryKey: ["bezorgingen", agentId] });
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Terugzetten mislukt.");
+    } finally {
+      zetBezig(null);
+    }
+  }
+
   async function zetOpvolgStand(b: Bezorging, stand: string) {
     zetBezig(b.id);
     zetFout(null);
@@ -160,6 +218,14 @@ function BezorgenPagina() {
     { stand: "klant", label: "klant geworden", cls: "border-emerald-400/35 bg-emerald-400/12 text-emerald-300 hover:bg-emerald-400/22" },
     { stand: "geen_interesse", label: "geen interesse", cls: "border-white/12 text-ink/55 hover:bg-white/10" },
   ];
+
+  const BEVESTIGINGSTEKST: Record<string, string> = {
+    gevraagd: "gevraagd of het schikt",
+    bevestigd: "schikt",
+    ander_adres: "ander adres",
+    verzet: "wil een andere dag",
+    afgezegd: "afgezegd",
+  };
 
   const OPVOLGTEKST: Record<string, string> = {
     open: "nog niets mee gedaan",
@@ -263,8 +329,38 @@ function BezorgenPagina() {
                   <Printer className="h-3.5 w-3.5" aria-hidden="true" />
                   lijst voor de chauffeur
                 </Link>
+                {/* Woensdag vragen of het vrijdag schikt. Het adres staat
+                    voluit in die mail, dus wie verhuisd is corrigeert het
+                    vanzelf — je hoeft er niet naar te vragen. */}
+                {lijst.some((b) => (b.bevestiging ?? "niet_gevraagd") === "niet_gevraagd") && (
+                  <button
+                    type="button"
+                    onClick={() => vraagNa(d)}
+                    disabled={bezig !== null}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-violet/35 bg-violet/[0.10] px-3 py-1.5 text-[11.5px] font-semibold text-violet transition hover:bg-violet/20 disabled:opacity-40"
+                  >
+                    <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                    {bezig === `bevestig-${d}`
+                      ? "Bezig…"
+                      : `vraag of het schikt (${lijst.filter((b) => (b.bevestiging ?? "niet_gevraagd") === "niet_gevraagd").length})`}
+                  </button>
+                )}
               </span>
             </div>
+
+            {gevraagd?.dag === d && (
+              <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[12.5px]/[1.65] text-ink/70">
+                {gevraagd.verstuurd === 0
+                  ? "Er ging niets weg."
+                  : `${gevraagd.verstuurd} ${gevraagd.verstuurd === 1 ? "vraag" : "vragen"} verstuurd. Antwoorden komen vanzelf binnen en worden hieronder verwerkt.`}
+                {gevraagd.overgeslagen.length > 0 && (
+                  <span className="mt-1.5 block text-ink/45">
+                    Overgeslagen:{" "}
+                    {gevraagd.overgeslagen.map((o) => `${o.email} (${o.reden})`).join(", ")}
+                  </span>
+                )}
+              </p>
+            )}
 
             <ul className="mt-4 grid gap-2">
               {lijst.map((b) => {
@@ -285,6 +381,46 @@ function BezorgenPagina() {
                         <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-emerald-300">
                           <PackageCheck className="h-3 w-3" aria-hidden="true" />
                           bezorgd
+                        </span>
+                      )}
+                      {!af && b.bevestiging && b.bevestiging !== "niet_gevraagd" && (
+                        <span
+                          className={`ml-2 text-[11px] ${
+                            b.bevestiging === "bevestigd"
+                              ? "text-emerald-300"
+                              : b.bevestiging === "gevraagd"
+                                ? "text-ink/40"
+                                : "text-amber-300"
+                          }`}
+                        >
+                          {BEVESTIGINGSTEKST[b.bevestiging] ?? b.bevestiging}
+                        </span>
+                      )}
+
+                      {/* Het adres is al bijgewerkt — de chauffeur leest de
+                          lijst, niet dit scherm. Maar wát er is veranderd en
+                          waarop, staat erbij: een wijziging die je niet kunt
+                          terugzien is er een die je niet durft te vertrouwen. */}
+                      {b.adres_eerder && (
+                        <span className="mt-1.5 block rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2 text-[11.5px]/[1.6] text-ink/70">
+                          <span className="flex items-center gap-1.5 font-semibold text-amber-200">
+                            <MapPin className="h-3 w-3" aria-hidden="true" />
+                            adres aangepast
+                          </span>
+                          <span className="mt-1 block text-ink/45 line-through">{b.adres_eerder}</span>
+                          <span className="block text-ink/85">{b.adres}</span>
+                          {b.adres_bron && (
+                            <span className="mt-1 block italic text-ink/50">“{b.adres_bron}”</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => herstel(b)}
+                            disabled={bezig !== null}
+                            className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-ink/60 underline decoration-white/25 underline-offset-2 transition hover:text-ink disabled:opacity-40"
+                          >
+                            <Undo2 className="h-3 w-3" aria-hidden="true" />
+                            oude adres terugzetten
+                          </button>
                         </span>
                       )}
                     </span>
