@@ -382,8 +382,8 @@ export const PORTAL = {
     month: "september 2026",
     tiles: [
       { icon: "message", value: "1.284", label: "berichten verwerkt", nadruk: false },
-      { icon: "clock", value: "128 uur", label: "tijd bespaard", nadruk: false },
-      { icon: "euro", value: "€ 5.760", label: "aan kosten vermeden", nadruk: true },
+      { icon: "clock", value: "128,4 uur", label: "tijd bespaard", nadruk: false },
+      { icon: "euro", value: "€ 5.778", label: "aan kosten vermeden", nadruk: true },
     ],
     fairUse: { agent: "Website-assistent", used: 284, total: 300 },
     trechterTitle: "Trechter · uitgaande e-mailagent",
@@ -419,8 +419,8 @@ export const PORTAL = {
     {
       icon: "send",
       kind: "Uitgaande e-mail",
-      title: "Trechter & bezorging",
-      points: ["Contacten → bezorgd → reactie", "Afspraken & klanten", "Afmeldingen & bounces", "Bezorgplanning per vrijdag"],
+      title: "Trechter & opvolging",
+      points: ["Contacten → bezorgd → reactie", "Afspraken & klanten", "Afmeldingen & bounces", "Opvolging na X werkdagen"],
     },
   ],
   cta: { label: "Plan een gratis AI-verkenning", href: "#contact" },
