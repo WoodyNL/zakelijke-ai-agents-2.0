@@ -12,12 +12,12 @@ import { SITE } from "@/content/site";
  * NA TE LOPEN VOORDAT DIT DEFINITIEF IS
  * De teksten hieronder beschrijven wat er in deze codebase daadwerkelijk
  * gebeurt: welke velden het formulier verstuurt, welke partijen de gegevens
- * verwerken en welke modellen er worden aangeroepen. Drie dingen staan hier
- * als redelijke aanname en moeten door Wouter bevestigd worden:
+ * verwerken en welke modellen er worden aangeroepen. Drie dingen stonden hier
+ * als aanname; wat nog open is, moet door Wouter bevestigd worden:
  *   1. de bewaartermijnen (nu: 12 maanden voor aanvragen zonder opdracht);
- *   2. de vestigingsregio van het Supabase-project. De teksten gaan uit van
- *      een EU-regio (besluit 19 september 2026); nog bij Lovable navragen,
- *      want op Lovable Cloud is die niet zelf in te zien;
+ *   2. (bevestigd 19 september 2026) het Supabase-project draait in AWS-regio
+ *      eu-west-1, Ierland. Lovable heeft dat nagezocht in de pooler-
+ *      connection-string, want op Lovable Cloud kun je het niet zelf zien;
  *   3. de betaaltermijn en aansprakelijkheidsgrens in de voorwaarden.
  * Laat de voorwaarden daarnaast één keer door een jurist nalopen. Dit is een
  * gedegen basis, geen vervanging van dat oordeel.
@@ -113,7 +113,7 @@ export const PRIVACY: JuridischBlok[] = [
       {
         naam: "Supabase",
         toelichting:
-          "Database en inloggen voor het klantportaal. De gegevens staan opgeslagen in een datacentrum in de EU.",
+          "Database en inloggen voor het klantportaal. De gegevens staan opgeslagen in een datacentrum in Ierland, binnen de EU.",
       },
       { naam: "Resend", toelichting: "Versturen van e-mail, zoals de melding van je aanvraag." },
       {
