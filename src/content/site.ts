@@ -18,6 +18,7 @@ export const SITE = {
 export const NAV = [
   { label: "Diensten", href: "#diensten" },
   { label: "Werkwijze", href: "#werkwijze" },
+  { label: "Portaal", href: "#portaal" },
   { label: "Branches", href: "#branches" },
   { label: "Tarieven", href: "#tarieven" },
   { label: "Veelgestelde vragen", href: "#faq" },
@@ -326,6 +327,103 @@ export const BRANCHES = {
   footer:
     "Staat jouw branche er niet bij? Dat maakt weinig uit. We kijken naar het proces, niet naar de sector.",
   footerLink: "Neem contact op",
+} as const;
+
+export const PORTAL = {
+  eyebrow: "JOUW EIGEN PORTAAL",
+  h2: "Eén login. Precies zien wat je agents doen.",
+  intro:
+    "Elke klant krijgt een eigen beveiligde omgeving achter login. Daarin zie je live wat je AI-agents doen, wat ze opleveren en wat het verbruikt — per agent, per dag. Geen black box, geen maandelijkse PDF die niemand leest.",
+  usps: [
+    {
+      icon: "lock",
+      title: "Eigen inlogomgeving",
+      body: "Een beveiligd portaal, alleen voor jou en je team. Je ziet uitsluitend je eigen agents en je eigen data — niets van andere klanten, altijd binnen de EU.",
+    },
+    {
+      icon: "layers",
+      title: "Per agent een ander dashboard",
+      body: "Een sales-assistent toont leads en afspraken; een inbox-assistent toont concepten en goedkeuringen. Het scherm past zich aan wat de agent doet, niet andersom.",
+    },
+    {
+      icon: "barChart",
+      title: "Live data, geen maandrapport",
+      body: "Status en resultaten over de laatste 30 dagen, per agent. Je ziet het meteen — niet pas aan het eind van de maand in een pdf.",
+    },
+    {
+      icon: "clock",
+      title: "Verbruik én tijdwinst",
+      body: "Hoeveel berichten je agent verwerkte, en — zodra we samen de aanname vastleggen — hoeveel tijd dat scheelde. Met de grondslag erbij, niet als kaal getal.",
+    },
+    {
+      icon: "euro",
+      title: "Vermeden kosten in euro's",
+      body: "Wat de agent deze maand opleverde, omgerekend naar tijd en geld. Inclusief de rekensom eronder, want een bedrag zonder onderbouwing overtuigt niet.",
+    },
+    {
+      icon: "gauge",
+      title: "Fair use in één oogopslag",
+      body: "Per agent een balk die laat zien hoeveel van je maandlimiet je gebruikt hebt. Boven de grens? Dan waarschuwen we vooraf, niet pas op de factuur.",
+    },
+    {
+      icon: "trechter",
+      title: "Van contact tot klant",
+      body: "Voor uitgaande e-mailagents: hoeveel contacten zijn aangeschreven, bezorgd, beantwoord en uiteindelijk een afspraak of klant geworden.",
+    },
+    {
+      icon: "fileDown",
+      title: "Rapport downloaden",
+      body: "Met één klik een PDF van je resultaten, voor je eigen administratie of een evaluatie met je team.",
+    },
+  ],
+  preview: {
+    badge: "Voorbeeld",
+    title: "Wat het deze maand deed",
+    month: "september 2026",
+    tiles: [
+      { icon: "message", value: "1.284", label: "berichten verwerkt", nadruk: false },
+      { icon: "clock", value: "128 uur", label: "tijd bespaard", nadruk: false },
+      { icon: "euro", value: "€ 5.760", label: "aan kosten vermeden", nadruk: true },
+    ],
+    fairUse: { agent: "Website-assistent", used: 284, total: 300 },
+    trechterTitle: "Trechter · uitgaande e-mailagent",
+    trechter: [
+      { label: "Aangeschreven", value: 1200, pct: 100 },
+      { label: "Bezorgd", value: 1043, pct: 87 },
+      { label: "Gereageerd", value: 318, pct: 27 },
+      { label: "Afspraak", value: 72, pct: 6 },
+    ],
+    verantwoording:
+      "1.284 berichten × 6 minuten per bericht, gebaseerd op de nulmeting van september. Uurtarief € 45.",
+  },
+  variantLabel: "Per agent ziet het dashboard er anders uit",
+  variants: [
+    {
+      icon: "zap",
+      kind: "Sales-assistent",
+      title: "Leads & afspraken",
+      points: ["Binnengehaalde leads", "Gekwalificeerd vs. afgewezen", "Geboekte afspraken", "Responstijd"],
+    },
+    {
+      icon: "mail",
+      kind: "Inbox-assistent",
+      title: "Concepten & goedkeuring",
+      points: ["Concepten klaargezet", "Goedgekeurd door jou", "Wijzigingen waarvan geleerd", "Geen autosend — jij beslist"],
+    },
+    {
+      icon: "message",
+      kind: "WhatsApp-opvolger",
+      title: "Opvolging & reacties",
+      points: ["Berichten verstuurd", "Reacties ontvangen", "Overdrachten naar mens", "Openstaande opvolging"],
+    },
+    {
+      icon: "send",
+      kind: "Uitgaande e-mail",
+      title: "Trechter & bezorging",
+      points: ["Contacten → bezorgd → reactie", "Afspraken & klanten", "Afmeldingen & bounces", "Bezorgplanning per vrijdag"],
+    },
+  ],
+  cta: { label: "Plan een gratis AI-verkenning", href: "#contact" },
 } as const;
 
 export const AGENTS = {
