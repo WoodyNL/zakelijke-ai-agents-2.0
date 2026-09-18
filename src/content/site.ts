@@ -338,7 +338,7 @@ export const PORTAL = {
     {
       icon: "lock",
       title: "Eigen inlogomgeving",
-      body: "Een beveiligd portaal, alleen voor jou en je team. Je ziet uitsluitend je eigen agents en je eigen data — niets van andere klanten, altijd binnen de EU.",
+      body: "Een beveiligd portaal, alleen voor jou en je team. Je ziet uitsluitend je eigen agents en je eigen data — niets van andere klanten.",
     },
     {
       icon: "layers",
@@ -389,12 +389,12 @@ export const PORTAL = {
     trechterTitle: "Trechter · uitgaande e-mailagent",
     trechter: [
       { label: "Aangeschreven", value: 1200, pct: 100 },
-      { label: "Bezorgd", value: 1043, pct: 87 },
-      { label: "Gereageerd", value: 318, pct: 27 },
-      { label: "Afspraak", value: 72, pct: 6 },
+      { label: "Bezorgd", value: 1150, pct: 96 },
+      { label: "Gereageerd", value: 58, pct: 5 },
+      { label: "Afspraak", value: 14, pct: 1 },
     ],
     verantwoording:
-      "1.284 berichten × 6 minuten per bericht, gebaseerd op de nulmeting van september. Uurtarief € 45.",
+      "1.284 berichten × 6 minuten per bericht, gebaseerd op de nulmeting van augustus. Uurtarief € 45.",
   },
   variantLabel: "Per agent ziet het dashboard er anders uit",
   variants: [
@@ -587,7 +587,7 @@ export const GOVERNANCE = {
   ],
   points: [
     "Jij bepaalt per proces wat automatisch mag en wat langs een mens gaat",
-    "Data blijft binnen de EU, met een verwerkersovereenkomst",
+    "Verwerkersovereenkomst, en data binnen de EU als je dat wilt",
     "Alles wat de AI doet is terug te zien in een activiteitenlog",
     "AI-beleid en verplichte AI-geletterdheidstraining voor je team",
   ],
@@ -675,7 +675,7 @@ export const FAQ = {
     },
     {
       q: "Wat gebeurt er met onze data?",
-      a: "Die blijft binnen de EU en we sluiten een verwerkersovereenkomst. Je bepaalt zelf welke data de AI mag zien en wat er buiten blijft. Alles wat de AI doet, staat in een log.",
+      a: "We sluiten een verwerkersovereenkomst en leggen daarin vast waar je data staat. Wil je dat die de EU niet verlaat, dan richten we het zo in. Je bepaalt zelf welke data de AI mag zien en wat er buiten blijft. Alles wat de AI doet, staat in een log.",
     },
     {
       q: "Zit ik ergens aan vast?",

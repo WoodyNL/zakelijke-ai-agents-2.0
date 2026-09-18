@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: "Wat gebeurt er met onze data?",
-    a: "Die blijft binnen de EU en we sluiten een verwerkersovereenkomst. Je bepaalt zelf welke data de AI mag zien en wat er buiten blijft. Alles wat de AI doet, staat in een activiteitenlog.",
+    a: "We sluiten een verwerkersovereenkomst en leggen daarin vast waar je data staat. Wil je dat die de EU niet verlaat, dan richten we het zo in. Je bepaalt zelf welke data de AI mag zien en wat er buiten blijft. Alles wat de AI doet, staat in een activiteitenlog.",
   },
   {
     q: "Kan de Inbox Draft Assistant zelfstandig mails versturen?",
@@ -54,7 +54,7 @@ const SECTIONS: SeoSection[] = [
     body: "Het grootste bezwaar tegen AI is niet de prijs — het is de angst dat er iets de deur uit gaat waar je niet achter staat. Daarom bepaal jij per proces wat de AI zelfstandig mag, wat eerst langs een mens gaat en wanneer er wordt overgedragen.",
     bullets: [
       "Jij bepaalt per proces wat automatisch mag en wat langs een mens gaat",
-      "Data blijft binnen de EU, met een verwerkersovereenkomst",
+      "Verwerkersovereenkomst, en data binnen de EU als je dat wilt",
       "Alles wat de AI doet is terug te zien in een activiteitenlog",
     ],
   },
