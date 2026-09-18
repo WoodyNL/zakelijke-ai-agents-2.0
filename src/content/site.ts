@@ -420,7 +420,7 @@ export const PORTAL = {
       icon: "send",
       kind: "Uitgaande e-mail",
       title: "Trechter & opvolging",
-      points: ["Contacten → bezorgd → reactie", "Afspraken & klanten", "Afmeldingen & bounces", "Opvolging na X werkdagen"],
+      points: ["Contacten → bezorgd → reactie", "Afspraken & klanten", "Afmeldingen & bounces", "Automatische opvolging bij geen reactie"],
     },
   ],
   cta: { label: "Plan een gratis AI-verkenning", href: "#contact" },
