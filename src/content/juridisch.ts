@@ -15,14 +15,16 @@ import { SITE } from "@/content/site";
  * verwerken en welke modellen er worden aangeroepen. Drie dingen staan hier
  * als redelijke aanname en moeten door Wouter bevestigd worden:
  *   1. de bewaartermijnen (nu: 12 maanden voor aanvragen zonder opdracht);
- *   2. de vestigingsregio van het Supabase-project, in verband met doorgifte;
+ *   2. de vestigingsregio van het Supabase-project. De teksten gaan uit van
+ *      een EU-regio (besluit 19 september 2026); nog bij Lovable navragen,
+ *      want op Lovable Cloud is die niet zelf in te zien;
  *   3. de betaaltermijn en aansprakelijkheidsgrens in de voorwaarden.
  * Laat de voorwaarden daarnaast één keer door een jurist nalopen. Dit is een
  * gedegen basis, geen vervanging van dat oordeel.
  * ────────────────────────────────────────────────────────────────────────
  */
 
-export const BIJGEWERKT = "18 september 2026";
+export const BIJGEWERKT = "19 september 2026";
 
 /** Terugkerend blok: wie is de verwerkingsverantwoordelijke / contractpartij. */
 const WIE: JuridischBlok = {
@@ -108,7 +110,11 @@ export const PRIVACY: JuridischBlok[] = [
       "We besteden een deel van de techniek uit. Met elk van deze partijen is een verwerkersovereenkomst gesloten of van toepassing via hun voorwaarden.",
     ],
     paren: [
-      { naam: "Supabase", toelichting: "Database en inloggen voor het klantportaal." },
+      {
+        naam: "Supabase",
+        toelichting:
+          "Database en inloggen voor het klantportaal. De gegevens staan opgeslagen in een datacentrum in de EU.",
+      },
       { naam: "Resend", toelichting: "Versturen van e-mail, zoals de melding van je aanvraag." },
       {
         naam: "Anthropic",
@@ -127,7 +133,7 @@ export const PRIVACY: JuridischBlok[] = [
   {
     kop: "Doorgifte buiten de EU",
     alineas: [
-      "Een deel van deze partijen is gevestigd in de Verenigde Staten. Die doorgifte vindt plaats op basis van de standaardcontractbepalingen van de Europese Commissie, of omdat de partij is aangesloten bij het EU-US Data Privacy Framework. Voor opdrachten waarbij je wilt dat gegevens de EU niet verlaten, richten we dat zo in en leggen we het vast in de verwerkersovereenkomst.",
+      "De gegevens van het klantportaal staan opgeslagen in de EU. Een deel van de andere partijen is gevestigd in de Verenigde Staten. Die doorgifte vindt plaats op basis van de standaardcontractbepalingen van de Europese Commissie, of omdat de partij is aangesloten bij het EU-US Data Privacy Framework. Voor opdrachten waarbij je wilt dat gegevens de EU niet verlaten, richten we dat zo in en leggen we het vast in de verwerkersovereenkomst.",
     ],
   },
   {

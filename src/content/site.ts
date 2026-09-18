@@ -338,7 +338,7 @@ export const PORTAL = {
     {
       icon: "lock",
       title: "Eigen inlogomgeving",
-      body: "Een beveiligd portaal, alleen voor jou en je team. Je ziet uitsluitend je eigen agents en je eigen data — niets van andere klanten.",
+      body: "Een beveiligd portaal, alleen voor jou en je team. Je ziet uitsluitend je eigen agents en je eigen data — niets van andere klanten, opgeslagen in de EU.",
     },
     {
       icon: "layers",
