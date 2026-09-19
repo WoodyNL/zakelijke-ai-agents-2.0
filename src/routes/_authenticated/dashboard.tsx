@@ -52,11 +52,20 @@ function Dashboard() {
 
   // Eén totaal over alle agents. Een klant met drie agents wil eerst weten wat
   // ze samen doen, en pas daarna per stuk.
-  const totaal = agents.reduce((som, a) => som + (a.total30 ?? 0), 0);
+  //
+  // Welk totaal, hangt af van de soort (agent-soorten.ts). Gesprekken tellen we
+  // automatisch; handmatige metingen bestaan alleen bij soorten die ze hebben.
+  // Een chat-assistent stond hier eerst op "0 acties" terwijl hij praatte.
+  const telt = (a: any, bron: string) => soortVan(a.kind).bronnen.includes(bron as never);
+  const metGesprekken = agents.some((a) => telt(a, "gesprekken"));
+  const totaal = metGesprekken
+    ? agents.reduce((som, a) => som + (a.gesprekken30 ?? 0), 0)
+    : agents.reduce((som, a) => som + (a.total30 ?? 0), 0);
   const scores = agents.map((a) => a.score30).filter((s) => s != null) as number[];
   const gemiddeldeScore = scores.length
     ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
     : null;
+  const totaalLeads = agents.reduce((som, a) => som + (a.leads30 ?? 0), 0);
 
   return (
     <DashboardShell
@@ -89,15 +98,20 @@ function Dashboard() {
 
       {agents.length > 0 && (
         <div className="mt-7 grid gap-3 sm:grid-cols-3">
-          <Kerncijfer waarde={String(totaal)} label="acties in 30 dagen" nadruk />
+          <Kerncijfer
+            waarde={String(totaal)}
+            label={metGesprekken ? "gesprekken in 30 dagen" : "acties in 30 dagen"}
+            nadruk
+          />
           <Kerncijfer
             waarde={`${live.length}/${agents.length}`}
             label={live.length === 1 ? "agent live" : "agents live"}
           />
-          <Kerncijfer
-            waarde={gemiddeldeScore != null ? `${gemiddeldeScore}%` : "—"}
-            label="gemiddelde prestatiescore"
-          />
+          {gemiddeldeScore != null ? (
+            <Kerncijfer waarde={`${gemiddeldeScore}%`} label="gemiddelde prestatiescore" />
+          ) : (
+            <Kerncijfer waarde={String(totaalLeads)} label="leads in 30 dagen" />
+          )}
         </div>
       )}
 
@@ -203,7 +217,11 @@ function Dashboard() {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {agents.map((a, i) => {
           const st = STATUS_META[a.status] ?? STATUS_META["setup"]!;
-          const reeks = (a.series ?? []).map((s: any) => ({ v: s.output_count ?? 0 }));
+          const gesprekken = telt(a, "gesprekken");
+          const leads = telt(a, "leads");
+          const reeks = (gesprekken ? (a.verbruikPerDag ?? []) : (a.series ?? [])).map(
+            (s: any) => ({ v: s.output_count ?? 0 }),
+          );
           return (
             <Link
               key={a.id}
@@ -235,15 +253,23 @@ function Dashboard() {
               <div className="mt-5 flex items-end justify-between gap-3">
                 <div>
                   <p className="font-display text-[28px] leading-none font-bold text-brand tabular-nums">
-                    {a.total30}
+                    {gesprekken ? a.gesprekken30 : a.total30}
                   </p>
-                  <p className="mt-1.5 text-[11px] text-ink/50">{a.metric_label} · 30 dagen</p>
+                  <p className="mt-1.5 text-[11px] text-ink/50">
+                    {gesprekken ? "gesprekken" : a.metric_label} · 30 dagen
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="font-display text-[19px] leading-none font-semibold text-violet tabular-nums">
-                    {a.score30 != null ? `${Number(a.score30).toFixed(0)}%` : "—"}
+                    {leads
+                      ? a.leads30
+                      : a.score30 != null
+                        ? `${Number(a.score30).toFixed(0)}%`
+                        : "—"}
                   </p>
-                  <p className="mt-1.5 text-[11px] text-ink/50">{a.score_label}</p>
+                  <p className="mt-1.5 text-[11px] text-ink/50">
+                    {leads ? "leads" : a.score_label}
+                  </p>
                 </div>
               </div>
 

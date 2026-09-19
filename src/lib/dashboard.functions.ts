@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { leesKlant } from "@/lib/klant";
+import { SOORTEN, type AgentSoort } from "@/lib/agent-soorten";
 
 type Ctx = { supabase: any; userId: string };
 
@@ -93,6 +94,28 @@ export const listAgents = createServerFn({ method: "GET" })
       .gte("date", since)
       .order("date", { ascending: true });
 
+    // Naast de handmatige metingen ook wat we automatisch tellen: gesprekken,
+    // leads en het verbruik per dag. Een chat-assistent heeft geen metingen;
+    // zonder dit stond er "0 acties" bij een agent die wel degelijk praatte.
+    const db = context.supabase as unknown as Rpc;
+    const geteld = await Promise.all(
+      (agents ?? []).map(async (a: { id: string }) => {
+        const [kern, dagen] = await Promise.all([
+          db.rpc("agent_kerncijfers", { _agent_id: a.id, _dagen: 30 }),
+          db.rpc("agent_usage_daily", { _agent_id: a.id, _days: 30 }),
+        ]);
+        const k = ((kern.data ?? []) as Array<{ gesprekken: number; leads: number }>)[0];
+        return {
+          id: a.id,
+          gesprekken30: Number(k?.gesprekken ?? 0),
+          leads30: Number(k?.leads ?? 0),
+          verbruikPerDag: ((dagen.data ?? []) as Array<{ dag: string; requests: number }>).map(
+            (d) => ({ date: d.dag, output_count: Number(d.requests) }),
+          ),
+        };
+      }),
+    );
+
     return (agents ?? []).map((a: any) => {
       const rows = (stats ?? []).filter((s: any) => s.agent_id === a.id);
       const total = rows.reduce((sum: number, s: any) => sum + (s.output_count ?? 0), 0);
@@ -101,7 +124,16 @@ export const listAgents = createServerFn({ method: "GET" })
         ? scored.reduce((sum: number, s: any) => sum + Number(s.performance_score), 0) /
           scored.length
         : null;
-      return { ...a, total30: total, score30: score, series: rows };
+      const g = geteld.find((x) => x.id === a.id);
+      return {
+        ...a,
+        total30: total,
+        score30: score,
+        series: rows,
+        gesprekken30: g?.gesprekken30 ?? 0,
+        leads30: g?.leads30 ?? 0,
+        verbruikPerDag: g?.verbruikPerDag ?? [],
+      };
     });
   });
 
@@ -263,9 +295,9 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
         metricLabel: z.string().default("acties"),
         scoreLabel: z.string().default("prestatiescore"),
         status: z.enum(["live", "paused", "setup"]),
-        kind: z
-          .enum(["chat_assistent", "sales_assistent", "inbox_draft", "whatsapp_followup", "overig"])
-          .optional(),
+        // Uit SOORTEN en niet met de hand: een eigen lijst hier liep achter,
+        // waardoor "Uitgaande e-mailagent" niet op te slaan was.
+        kind: z.enum(Object.keys(SOORTEN) as [AgentSoort, ...AgentSoort[]]).optional(),
 
         // De afspraken met de klant waarmee het dashboard berichten omrekent
         // naar tijd en geld. Leeg mag: dan toont het dashboard dat cijfer niet,
