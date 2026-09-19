@@ -37,6 +37,7 @@ import { Route as AuthenticatedCampagnesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedContactenRouteImport } from './routes/_authenticated/contacten'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogWaaromAiPilotsMislukkenRouteImport } from './routes/blog/waarom-ai-pilots-mislukken'
 import { Route as EmbedSlugRouteImport } from './routes/embed.$slug'
@@ -185,6 +186,11 @@ const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/blog': typeof BlogIndexRoute
@@ -312,6 +320,7 @@ export interface FileRoutesById {
   '/_authenticated/contacten': typeof AuthenticatedContactenRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -348,6 +357,7 @@ export interface FileRouteTypes {
     | '/contacten'
     | '/dashboard'
     | '/knowledge'
+    | '/support'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/blog/'
@@ -382,6 +392,7 @@ export interface FileRouteTypes {
     | '/contacten'
     | '/dashboard'
     | '/knowledge'
+    | '/support'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/blog'
@@ -417,6 +428,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacten'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
+    | '/_authenticated/support'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/blog/'
@@ -646,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -695,6 +714,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactenRoute: typeof AuthenticatedContactenRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedAgentsAgentIdRoute: typeof AuthenticatedAgentsAgentIdRoute
   AuthenticatedContactContactIdRoute: typeof AuthenticatedContactContactIdRoute
 }
@@ -710,6 +730,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactenRoute: AuthenticatedContactenRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedAgentsAgentIdRoute: AuthenticatedAgentsAgentIdRoute,
   AuthenticatedContactContactIdRoute: AuthenticatedContactContactIdRoute,
 }

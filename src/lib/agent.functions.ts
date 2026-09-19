@@ -90,3 +90,28 @@ export const haalKerncijfers = createServerFn({ method: "GET" })
     if (error) return null;
     return ((rijen ?? []) as Kerncijfers[])[0] ?? null;
   });
+
+export type SupportKerncijfers = {
+  binnen: number;
+  automatisch: number;
+  via_concept: number;
+  ongewijzigd: number;
+  mens_nodig: number;
+  open: number;
+  reactie_minuten: number | null;
+};
+
+/** Kerncijfers van supportmail (inbox-assistent): aantallen, geen inhoud. */
+export const haalSupportKerncijfers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z.object({ agentId: z.string().uuid(), dagen: z.number().int().min(1).max(3650) }).parse(d),
+  )
+  .handler(async ({ context, data }): Promise<SupportKerncijfers | null> => {
+    const { data: rijen, error } = await (context.supabase as unknown as Rpc).rpc(
+      "support_kerncijfers",
+      { _agent_id: data.agentId, _dagen: data.dagen },
+    );
+    if (error) return null;
+    return ((rijen ?? []) as SupportKerncijfers[])[0] ?? null;
+  });

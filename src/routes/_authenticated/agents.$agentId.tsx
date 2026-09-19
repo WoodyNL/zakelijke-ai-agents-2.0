@@ -7,7 +7,12 @@ import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { TrechterPaneel } from "@/components/trechter-paneel";
 import { VerbruikPaneel } from "@/components/verbruik-paneel";
 import { useMeekijken } from "@/hooks/use-meekijken";
-import { haalGebeurtenissen, haalKerncijfers, pauzeerAgent } from "@/lib/agent.functions";
+import {
+  haalGebeurtenissen,
+  haalKerncijfers,
+  haalSupportKerncijfers,
+  pauzeerAgent,
+} from "@/lib/agent.functions";
 import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
 import { soortVan } from "@/lib/agent-soorten";
 import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
@@ -60,6 +65,12 @@ function AgentDetail() {
     queryKey: ["kerncijfers", agentId, days],
     queryFn: () => kernFn({ data: { agentId, dagen: days || 3650 } }),
     enabled: !!agent,
+  });
+  const supportFn = useServerFn(haalSupportKerncijfers);
+  const supportQuery = useQuery({
+    queryKey: ["support-kerncijfers", agentId, days],
+    queryFn: () => supportFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("support"),
   });
   const trechterFn = useServerFn(haalTrechter);
   const trechterQuery = useQuery({
@@ -144,6 +155,38 @@ function AgentDetail() {
                 value={kernQuery.data ? String(kernQuery.data.leads) : "—"}
                 label="leads binnengehaald"
               />
+            )}
+            {soort.bronnen.includes("support") && (
+              <>
+                <Stat
+                  value={supportQuery.data ? String(supportQuery.data.binnen) : "—"}
+                  label="supportmails binnen"
+                />
+                <Stat
+                  value={
+                    supportQuery.data
+                      ? String(supportQuery.data.automatisch + supportQuery.data.via_concept)
+                      : "—"
+                  }
+                  label={
+                    supportQuery.data
+                      ? `beantwoord (${supportQuery.data.automatisch} zelf, ${supportQuery.data.via_concept} via concept)`
+                      : "beantwoord"
+                  }
+                />
+                <Stat
+                  value={supportQuery.data ? String(supportQuery.data.mens_nodig) : "—"}
+                  label="naar jou doorgezet"
+                />
+                <Stat
+                  value={
+                    supportQuery.data?.reactie_minuten != null
+                      ? `${supportQuery.data.reactie_minuten} min`
+                      : "—"
+                  }
+                  label="gemiddelde reactietijd"
+                />
+              </>
             )}
             {soort.bronnen.includes("metingen") && (
               <>

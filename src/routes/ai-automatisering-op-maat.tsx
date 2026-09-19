@@ -21,7 +21,7 @@ const FAQS = [
   },
   {
     q: "Kan de Inbox Draft Assistant zelfstandig mails versturen?",
-    a: "Standaard niet. Hij zet een concept-antwoord klaar in jouw toon; jij keurt goed en verstuurt. Hij leert van elke wijziging die je maakt, zodat concepten steeds beter aansluiten.",
+    a: "Standaard niet. Hij zet een concept-antwoord klaar in jouw toon; jij keurt goed en verstuurt. Vertrouw je zijn antwoorden, dan kun je zelf direct versturen aanzetten voor vragen die letterlijk in je kennisbank staan; twijfelgevallen en klachten blijven altijd bij jou. Hij leert van elke wijziging die je maakt, zodat concepten steeds beter aansluiten.",
   },
   {
     q: "Wat kost een agent of maatwerkautomatisering?",

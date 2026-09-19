@@ -17,7 +17,8 @@ export type AgentSoort =
   | "overig";
 
 /** Schermen in het klantportaal die alleen bij bepaalde soorten horen. */
-export type Scherm = "contacten" | "campagnes" | "berichten" | "antwoorden" | "bezorgen";
+export type Scherm =
+  "contacten" | "campagnes" | "berichten" | "antwoorden" | "bezorgen" | "support";
 
 /**
  * Een kerncijfer op het dashboard van een agent, en waar het vandaan komt.
@@ -26,8 +27,9 @@ export type Scherm = "contacten" | "campagnes" | "berichten" | "antwoorden" | "b
  *   leads       aanvragen die de agent binnenhaalde (lead_requests)
  *   trechter    aangeschreven → bezorgd → reactie → afspraak (outbound_*)
  *   metingen    de dagcijfers die per agent worden bijgehouden (agent_stats)
+ *   support     supportmail: binnen, automatisch, via concept, naar een mens
  */
-export type Bron = "gesprekken" | "leads" | "trechter" | "metingen";
+export type Bron = "gesprekken" | "leads" | "trechter" | "metingen" | "support";
 
 type Beschrijving = {
   label: string;
@@ -93,12 +95,14 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
   inbox_draft: {
     label: "Inbox-assistent",
     kennisbank: true,
+    // Uitgebreid op 19 september 2026: beantwoordt supportmail. Standaard als
+    // concept; direct versturen zet de klant zelf aan als hij hem vertrouwt.
     uitleg:
-      "Zet concept-antwoorden klaar in je mailbox. Jij beslist wat er verstuurd wordt. Je huisstijl en beleid staan in zijn kennisbank.",
-    schermen: [],
+      "Beantwoordt supportmail met wat in zijn kennisbank staat. Standaard als concept dat jij goedkeurt; als je hem vertrouwt, zet je direct versturen aan.",
+    schermen: ["support"],
     optioneel: [],
-    bronnen: ["metingen"],
-    binnenkort: ["Concepten klaargezet", "Goedgekeurd door jou", "Wijzigingen waarvan hij leerde"],
+    bronnen: ["support"],
+    binnenkort: ["Mailbox koppelen (Gmail, Outlook)", "Wijzigingen waarvan hij leerde"],
   },
   whatsapp_followup: {
     label: "WhatsApp-opvolger",
@@ -135,6 +139,7 @@ export function heeftKennisbank(kind: string | null | undefined): boolean {
 }
 
 export const ALLE_SCHERMEN: Scherm[] = [
+  "support",
   "contacten",
   "campagnes",
   "berichten",

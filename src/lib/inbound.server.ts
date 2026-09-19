@@ -52,7 +52,9 @@ function supabase(serviceRole = true) {
 }
 
 /** De tekst van de mail ophalen. Mislukt dit, dan gaan we zonder tekst verder. */
-async function haalTekst(emailId: string): Promise<{ tekst: string; onderwerp?: string }> {
+async function haalTekst(
+  emailId: string,
+): Promise<{ tekst: string; onderwerp?: string; messageId?: string }> {
   const sleutel = process.env["RESEND_API_KEY"];
   if (!sleutel) return { tekst: "" };
   try {
@@ -60,16 +62,31 @@ async function haalTekst(emailId: string): Promise<{ tekst: string; onderwerp?: 
       headers: { Authorization: `Bearer ${sleutel}` },
     });
     if (!res.ok) return { tekst: "" };
-    const body = (await res.json()) as { text?: string | null; subject?: string };
-    const uit: { tekst: string; onderwerp?: string } = { tekst: (body.text ?? "").slice(0, 20_000) };
+    const body = (await res.json()) as {
+      text?: string | null;
+      subject?: string;
+      message_id?: string;
+      headers?: Record<string, string>;
+    };
+    const uit: { tekst: string; onderwerp?: string; messageId?: string } = {
+      tekst: (body.text ?? "").slice(0, 20_000),
+    };
     if (body.subject) uit.onderwerp = body.subject;
+    // Nodig om een antwoord in dezelfde draad te laten landen (In-Reply-To).
+    const messageId =
+      body.message_id ?? body.headers?.["message-id"] ?? body.headers?.["Message-ID"];
+    if (messageId) uit.messageId = messageId;
     return uit;
   } catch {
     return { tekst: "" };
   }
 }
 
-export async function verwerkInboundWebhook(request: Request): Promise<Response> {
+export async function verwerkInboundWebhook(
+  request: Request,
+  /** Werk dat na het antwoord mag doorlopen (Cloudflare ctx.waitUntil). */
+  naAfloop?: (werk: Promise<unknown>) => void,
+): Promise<Response> {
   if (request.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -176,15 +193,17 @@ export async function verwerkInboundWebhook(request: Request): Promise<Response>
   const locals = [...new Set(ontvangers.map(lokaalDeel).filter((x): x is string => x !== null))];
 
   let agentId: string | null = null;
+  let agentSoort: string | null = null;
   for (const local of locals) {
     const res = await fetch(
-      `${db.url}/rest/v1/agents?select=id&inbound_local=eq.${encodeURIComponent(local)}&limit=1`,
+      `${db.url}/rest/v1/agents?select=id,kind&inbound_local=eq.${encodeURIComponent(local)}&limit=1`,
       { headers: db.headers },
     );
     if (!res.ok) return new Response("Lookup failed", { status: 503 });
-    const rijen = (await res.json()) as Array<{ id: string }>;
+    const rijen = (await res.json()) as Array<{ id: string; kind: string }>;
     if (rijen[0]) {
       agentId = rijen[0].id;
+      agentSoort = rijen[0].kind;
       break;
     }
   }
@@ -193,6 +212,44 @@ export async function verwerkInboundWebhook(request: Request): Promise<Response>
     // Post op een adres dat bij niemand hoort. Niets aan te doen en niets aan
     // te verwijten; niet opnieuw aanbieden.
     console.warn("Inbound voor onbekend ontvangstadres:", locals.join(", "));
+    return new Response("ok", { status: 200 });
+  }
+
+  // Een inbox-assistent krijgt geen antwoorden op een campagne maar
+  // supportmail: een vraag van een klant van de klant, die beantwoord moet
+  // worden. Eerst vastleggen (lukt dat niet, dan 5xx zodat Resend het opnieuw
+  // biedt), dan pas opstellen. Het opstellen duurt seconden en mag na het
+  // antwoord aan Resend doorlopen; mislukt het, dan staat de mail als
+  // 'mislukt' in het portaal met een knop om het opnieuw te proberen.
+  if (agentSoort === "inbox_draft") {
+    const inhoud = await haalTekst(emailId);
+    const support = await import("@/lib/support.server");
+    let mailId: string | null;
+    try {
+      mailId = await support.ontvangSupportMail({
+        agentId,
+        providerId: emailId,
+        messageId: inhoud.messageId ?? null,
+        vanEmail: van,
+        vanNaam:
+          (d.from ?? "")
+            .replace(/<[^>]*>/, "")
+            .replace(/"/g, "")
+            .trim() || null,
+        onderwerp: inhoud.onderwerp ?? d.subject ?? null,
+        vraag: inhoud.tekst,
+      });
+    } catch (e) {
+      console.error("Supportmail opslaan mislukt:", e);
+      return new Response("Storage failed", { status: 503 });
+    }
+    if (mailId) {
+      const werk = support.verwerkSupportMail(mailId).catch((e) => {
+        console.error("Supportmail verwerken mislukt:", e);
+      });
+      if (naAfloop) naAfloop(werk);
+      else await werk;
+    }
     return new Response("ok", { status: 200 });
   }
 

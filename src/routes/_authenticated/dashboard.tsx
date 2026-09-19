@@ -57,7 +57,9 @@ function Dashboard() {
   // automatisch; handmatige metingen bestaan alleen bij soorten die ze hebben.
   // Een chat-assistent stond hier eerst op "0 acties" terwijl hij praatte.
   const telt = (a: any, bron: string) => soortVan(a.kind).bronnen.includes(bron as never);
-  const metGesprekken = agents.some((a) => telt(a, "gesprekken"));
+  // Supportmail telt als gesprek: elke verwerkte mail staat in hetzelfde
+  // verbruik, en daar rekent de fair use mee.
+  const metGesprekken = agents.some((a) => telt(a, "gesprekken") || telt(a, "support"));
   const totaal = metGesprekken
     ? agents.reduce((som, a) => som + (a.gesprekken30 ?? 0), 0)
     : agents.reduce((som, a) => som + (a.total30 ?? 0), 0);
@@ -217,7 +219,8 @@ function Dashboard() {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {agents.map((a, i) => {
           const st = STATUS_META[a.status] ?? STATUS_META["setup"]!;
-          const gesprekken = telt(a, "gesprekken");
+          const support = telt(a, "support");
+          const gesprekken = telt(a, "gesprekken") || support;
           const leads = telt(a, "leads");
           const reeks = (gesprekken ? (a.verbruikPerDag ?? []) : (a.series ?? [])).map(
             (s: any) => ({ v: s.output_count ?? 0 }),
@@ -256,7 +259,8 @@ function Dashboard() {
                     {gesprekken ? a.gesprekken30 : a.total30}
                   </p>
                   <p className="mt-1.5 text-[11px] text-ink/50">
-                    {gesprekken ? "gesprekken" : a.metric_label} · 30 dagen
+                    {support ? "supportmails" : gesprekken ? "gesprekken" : a.metric_label} · 30
+                    dagen
                   </p>
                 </div>
                 <div className="text-right">

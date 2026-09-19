@@ -305,6 +305,8 @@ for (const tabel of [
   "klantleden",
   "agent_gebeurtenissen",
   "fair_use_meldingen",
+  "support_mails",
+  "support_instellingen",
 ]) {
   const lezen = await rest(`${tabel}?select=*&limit=1`);
   meld(
@@ -320,6 +322,7 @@ for (const [functie, args] of [
   ["zet_agent_pauze", { _agent_id: NEP, _pauze: true }],
   ["mijn_team", {}],
   ["mijn_toegangslog", {}],
+  ["support_kerncijfers", { _agent_id: NEP, _dagen: 30 }],
 ]) {
   const poging = await rest(`rpc/${functie}`, { method: "POST", body: JSON.stringify(args) });
   meld(

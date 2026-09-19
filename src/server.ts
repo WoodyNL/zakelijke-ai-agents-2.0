@@ -123,7 +123,10 @@ export default {
 
       if (pad === INBOUND_PAD) {
         const { verwerkInboundWebhook } = await import("./lib/inbound.server");
-        return await verwerkInboundWebhook(request);
+        // Het opstellen van een supportantwoord mag na het antwoord aan Resend
+        // doorlopen; anders loopt de webhook tegen zijn tijdslimiet aan.
+        const wacht = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | null)?.waitUntil;
+        return await verwerkInboundWebhook(request, wacht ? (p) => wacht.call(ctx, p) : undefined);
       }
 
       const handler = await getServerEntry();

@@ -254,7 +254,7 @@ export const VOORWAARDEN: JuridischBlok[] = [
   {
     kop: "Werken met AI: wat je moet weten",
     alineas: [
-      "AI-systemen kunnen zich vergissen. Een gegenereerd antwoord kan feitelijk onjuist zijn, ook als het overtuigend klinkt. Daarom staat er standaard een mens tussen: de Inbox Draft Assistant verstuurt uit zichzelf niets, en jij bepaalt per proces wat er automatisch mag.",
+      "AI-systemen kunnen zich vergissen. Een gegenereerd antwoord kan feitelijk onjuist zijn, ook als het overtuigend klinkt. Daarom staat er standaard een mens tussen: de Inbox Draft Assistant verstuurt uit zichzelf niets. Direct versturen zet je alleen zelf aan, en ook dan gaat alleen een antwoord weg dat letterlijk in je kennisbank staat; twijfelgevallen, klachten en onbekende vragen blijven bij jou. Zo bepaal jij per proces wat er automatisch mag.",
       "Wij zijn niet aansprakelijk voor de inhoud van berichten die na jouw goedkeuring zijn verstuurd, of voor beslissingen die op basis van AI-uitvoer zijn genomen zonder menselijke controle die we hebben geadviseerd.",
       "De verplichtingen die de EU AI Act aan jou als gebruiker oplegt, brengen we in kaart en richten we mee in. De eindverantwoordelijkheid voor naleving binnen jouw organisatie blijft bij jou.",
     ],
