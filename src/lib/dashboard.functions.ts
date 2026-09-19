@@ -172,7 +172,7 @@ export const adminListClients = createServerFn({ method: "GET" })
         .filter((r) => r.role === "admin" || r.role === "support")
         .map((r) => r.user_id),
     );
-    const teamleden = ((leden.data ?? []) as Array<{ user_id: string; client_id: string }>) ?? [];
+    const teamleden = (leden.data ?? []) as Array<{ user_id: string; client_id: string }>;
     const isTeamlid = new Set(teamleden.map((l) => l.user_id));
 
     // Wat een beheerder per agent moet weten om te zien of hij draait: wanneer
