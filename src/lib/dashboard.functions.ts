@@ -389,6 +389,95 @@ export const adminDeleteAgent = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Een klant definitief verwijderen, met alles wat erbij hoort.
+ *
+ * Dit is het zwaarste wat er in /admin kan: het account, de agents, hun
+ * kennisbank, contacten, berichten, supportmail, verbruik en de teamleden
+ * verdwijnen, en dat is niet terug te draaien. Daarom meer drempels dan
+ * alleen een knop:
+ *
+ *   - alleen de beheerder, niet support;
+ *   - het e-mailadres van de klant moet letterlijk zijn ingetypt, en dat
+ *     controleren we hier nog een keer, niet alleen in het scherm;
+ *   - geen medewerker en niet jezelf;
+ *   - geen klant met een agent die live staat: die zet je eerst bewust op
+ *     pauze. Een klant waar nog verkeer op loopt, verwijder je niet per
+ *     ongeluk.
+ */
+export const adminDeleteClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        clientId: z.string().uuid(),
+        bevestiging: z.string().trim().toLowerCase(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context as Ctx);
+    if (data.clientId === context.userId) throw new Error("Je kunt jezelf niet verwijderen.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as unknown as {
+      from: (t: string) => any;
+    };
+
+    const [{ data: profiel }, { data: rollen }, { data: agents }, { data: leden }] =
+      await Promise.all([
+        db.from("profiles").select("id, name, email").eq("id", data.clientId).maybeSingle(),
+        db.from("user_roles").select("role").eq("user_id", data.clientId),
+        db.from("agents").select("id, name, status").eq("client_id", data.clientId),
+        db.from("klantleden").select("user_id").eq("client_id", data.clientId),
+      ]);
+
+    if (!profiel) throw new Error("Deze klant bestaat niet (meer).");
+    if (
+      data.bevestiging !==
+      String(profiel.email ?? "")
+        .trim()
+        .toLowerCase()
+    ) {
+      throw new Error("Het ingetypte e-mailadres klopt niet. Er is niets verwijderd.");
+    }
+    const staf = ((rollen ?? []) as Array<{ role: string }>).some(
+      (r) => r.role === "admin" || r.role === "support",
+    );
+    if (staf) throw new Error("Dit is een medewerker, geen klant. Er is niets verwijderd.");
+
+    const live = ((agents ?? []) as Array<{ name: string; status: string }>).filter(
+      (a) => a.status === "live",
+    );
+    if (live.length > 0) {
+      throw new Error(
+        `Deze klant heeft een agent die live staat (${live.map((a) => a.name).join(", ")}). Zet die eerst op pauze. Er is niets verwijderd.`,
+      );
+    }
+
+    // Chatleads hangen aan de agent met ON DELETE SET NULL. Zonder deze stap
+    // blijven ze achter zonder agent, en dan staan ze als onze eigen
+    // aanvragen in /admin: gegevens van de klanten van een klant bij ons.
+    const agentIds = ((agents ?? []) as Array<{ id: string }>).map((a) => a.id);
+    if (agentIds.length > 0) {
+      const { error: leadFout } = await db.from("lead_requests").delete().in("agent_id", agentIds);
+      if (leadFout) throw new Error(`Leads opruimen lukte niet: ${leadFout.message}`);
+    }
+
+    // Eerst de teamleden: hun eigen login zou anders blijven bestaan, zonder
+    // bedrijf, en bij de volgende keer inloggen als lege "klant" verschijnen.
+    for (const lid of (leden ?? []) as Array<{ user_id: string }>) {
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(lid.user_id);
+      if (error) throw new Error(`Teamlid verwijderen lukte niet: ${error.message}`);
+    }
+
+    // Het account zelf. Het profiel, de agents en alles wat eraan hangt gaan
+    // mee via ON DELETE CASCADE.
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.clientId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, agents: (agents ?? []).length, teamleden: (leden ?? []).length };
+  });
+
 export const adminSaveStat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>

@@ -14,6 +14,7 @@ import {
   adminCreateClient,
   adminSaveAgent,
   adminDeleteAgent,
+  adminDeleteClient,
   adminSaveStat,
 } from "@/lib/dashboard.functions";
 import { listLeadRequests, verwijderAanvraag } from "@/lib/leads.functions";
@@ -388,6 +389,122 @@ function MeekijkKnop({ clientId, naam }: { clientId: string; naam: string }) {
   );
 }
 
+/**
+ * Een klant definitief verwijderen. Het zwaarste wat hier kan, dus drie
+ * drempels: eerst uitklappen en lezen wat er verdwijnt, dan het e-mailadres
+ * van de klant letterlijk intypen, en dan nog een laatste vraag. De server
+ * controleert het e-mailadres opnieuw en weigert zolang er een agent live
+ * staat.
+ */
+function VerwijderKlant({
+  client,
+}: {
+  client: { id: string; name?: string | null; email: string; teamleden?: number; agents: any[] };
+}) {
+  const qc = useQueryClient();
+  const fn = useServerFn(adminDeleteClient);
+  const [open, setOpen] = useState(false);
+  const [getypt, setGetypt] = useState("");
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState<string | null>(null);
+
+  const naam = client.name || client.email;
+  const live = client.agents.filter((a) => a.status === "live");
+  const klopt = getypt.trim().toLowerCase() === client.email.trim().toLowerCase();
+
+  async function verwijder() {
+    if (!klopt) return;
+    const zeker = window.confirm(
+      `Laatste vraag: "${naam}" definitief verwijderen?\n\nHet account, ${client.agents.length} agent(s) met hun kennisbank, contacten, berichten, supportmail en verbruik${
+        client.teamleden ? `, en ${client.teamleden} teamlid/teamleden` : ""
+      } verdwijnen. Dit kan niet ongedaan worden gemaakt.`,
+    );
+    if (!zeker) return;
+    setBezig(true);
+    setFout(null);
+    try {
+      await fn({ data: { clientId: client.id, bevestiging: getypt } });
+      await qc.invalidateQueries({ queryKey: ["admin-clients"] });
+    } catch (err) {
+      setFout(err instanceof Error ? err.message : "Verwijderen lukte niet");
+      setBezig(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 ml-4 text-[12px] font-medium text-ink/40 transition-colors hover:text-destructive"
+      >
+        Klant verwijderen
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-destructive/40 bg-destructive/[0.06] p-4">
+      <p className="text-[13px] font-semibold text-ink/90">{naam} definitief verwijderen</p>
+      <ul className="mt-2 list-disc space-y-0.5 pl-5 text-[12.5px]/[1.6] text-ink/70">
+        <li>Het account en de inlog van {client.email}</li>
+        <li>
+          {client.agents.length === 0
+            ? "Geen agents"
+            : `${client.agents.length} agent(s): ${client.agents.map((a) => a.name).join(", ")}, met kennisbank, contacten, berichten, supportmail en verbruik`}
+        </li>
+        {!!client.teamleden && <li>{client.teamleden} teamlid/teamleden en hun inlog</li>}
+      </ul>
+      <p className="mt-2 text-[12.5px] font-semibold text-destructive">
+        Dit kan niet ongedaan worden gemaakt.
+      </p>
+
+      {live.length > 0 ? (
+        <p className="mt-3 text-[12.5px] text-ink/75">
+          {live.map((a) => a.name).join(", ")} staat nog live. Zet die eerst op pauze; een klant
+          waar nog verkeer op loopt, verwijder je niet.
+        </p>
+      ) : (
+        <label className="mt-3 block text-[12.5px] text-ink/75">
+          Typ <strong className="font-semibold text-ink/90">{client.email}</strong> om te bevestigen
+          <input
+            className={`${inputCls} mt-1.5`}
+            value={getypt}
+            onChange={(e) => setGetypt(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </label>
+      )}
+      {fout && <p className="mt-2 text-[12px] text-destructive">{fout}</p>}
+
+      <div className="mt-3 flex gap-2">
+        {live.length === 0 && (
+          <button
+            type="button"
+            disabled={!klopt || bezig}
+            onClick={verwijder}
+            className="rounded-full bg-destructive px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-40"
+          >
+            {bezig ? "Bezig\u2026" : "Definitief verwijderen"}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setGetypt("");
+            setFout(null);
+          }}
+          className="rounded-full border border-white/12 px-4 py-2 text-[12px] font-semibold text-ink/70"
+        >
+          Annuleren
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LeadRequests({ enabled }: { enabled: boolean }) {
   const qc = useQueryClient();
   const listFn = useServerFn(listLeadRequests);
@@ -525,6 +642,8 @@ function ClientBlock({
       {client.agents.length > 0 && !client.eigen && (
         <MeekijkKnop clientId={client.id} naam={client.name || client.email} />
       )}
+
+      {magWijzigen && !client.eigen && <VerwijderKlant client={client} />}
 
       {magWijzigen && (
         <div className="mt-3 space-y-3">
