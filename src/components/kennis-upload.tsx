@@ -96,6 +96,12 @@ export function KennisUpload({
   const [opslaan, setOpslaan] = React.useState(false);
   const [webadres, setWebadres] = React.useState("");
   const [webBezig, setWebBezig] = React.useState(false);
+  // Standaard de hele site: op de homepage staat meestal reclame, de
+  // antwoorden staan op de pagina's over verzending, prijzen en retour.
+  const [heleSite, setHeleSite] = React.useState(true);
+  const [gelezen, setGelezen] = React.useState<
+    Array<{ url: string; gelukt: boolean; reden?: string }>
+  >([]);
   const websiteFn = useServerFn(importeerVanWebsite);
 
   /**
@@ -112,12 +118,18 @@ export function KennisUpload({
     setWebBezig(true);
     setFout(null);
     setUitkomstMelding(null);
+    setGelezen([]);
     try {
       const uitkomst = await websiteFn({
-        data: { agentId, url: url.startsWith("http") ? url : `https://${url}` },
+        data: { agentId, url: url.startsWith("http") ? url : `https://${url}`, heleSite },
       });
+      setGelezen(uitkomst.gelezen ?? []);
       if (uitkomst.items.length === 0) {
-        setFout("Op die pagina stond niets bruikbaars voor de kennisbank.");
+        setFout(
+          heleSite
+            ? "Op deze site stond niets bruikbaars voor de kennisbank."
+            : "Op die pagina stond niets bruikbaars voor de kennisbank.",
+        );
         return;
       }
       setVoorstel((eerder) => [...(eerder ?? []), ...uitkomst.items]);
@@ -242,13 +254,44 @@ export function KennisUpload({
           disabled={webBezig || bezig || webadres.trim() === ""}
           className="rounded-xl border border-violet/35 bg-violet/[0.10] px-4 py-2 text-[13px] font-semibold text-violet transition hover:bg-violet/20 disabled:opacity-40"
         >
-          {webBezig ? "Bezig met lezen…" : "Van website halen"}
+          {webBezig
+            ? heleSite
+              ? "Site wordt gelezen… (±30 sec)"
+              : "Bezig met lezen…"
+            : "Van website halen"}
         </button>
       </div>
-      <p className="mt-1.5 text-[11px] text-ink/40">
-        Haalt wat er op die pagina staat. Je ziet de voorstellen hieronder voordat er iets wordt
-        opgeslagen.
+      <label className="mt-2 flex items-center gap-2 text-[12px] text-ink/65">
+        <input
+          type="checkbox"
+          className="accent-violet"
+          checked={heleSite}
+          onChange={(e) => setHeleSite(e.target.checked)}
+        />
+        Ook de belangrijkste andere pagina's (veelgestelde vragen, verzending, prijzen, contact; max.
+        10)
+      </label>
+      <p className="mt-1 text-[11px] text-ink/40">
+        {heleSite
+          ? "Typ alleen het domein. We zoeken zelf de pagina's met antwoorden. "
+          : "Haalt wat er op die ene pagina staat. "}
+        Je ziet de voorstellen hieronder voordat er iets wordt opgeslagen.
       </p>
+      {gelezen.length > 0 && (
+        <details className="mt-2 text-[11.5px] text-ink/55">
+          <summary className="cursor-pointer">
+            {gelezen.filter((g) => g.gelukt).length} van {gelezen.length} pagina's gelezen
+          </summary>
+          <ul className="mt-1.5 space-y-0.5">
+            {gelezen.map((g) => (
+              <li key={g.url} className={g.gelukt ? "" : "text-ink/35"}>
+                {g.gelukt ? "✓" : "–"} {new URL(g.url).pathname || "/"}
+                {!g.gelukt && g.reden ? ` (${g.reden})` : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       <div
         onDragOver={(e) => {

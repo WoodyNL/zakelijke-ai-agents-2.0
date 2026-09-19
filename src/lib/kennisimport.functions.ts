@@ -240,6 +240,149 @@ function alleenTekst(html: string): string {
     .slice(0, MAX_TEKEN);
 }
 
+/**
+ * Meerdere pagina's van één site in één keer.
+ *
+ * Eén pagina per keer is te weinig: op de homepage staat meestal reclametekst,
+ * de antwoorden staan op de pagina's over verzending, prijzen, retour en
+ * veelgestelde vragen. Die zoeken we op via de links op de startpagina (en de
+ * sitemap als die er weinig oplevert), kiezen de pagina's waar zulke
+ * antwoorden het waarschijnlijkst staan, en lezen ze samen.
+ *
+ * Alleen hetzelfde domein, en nooit een intern adres: deze functie haalt op
+ * de server op wat een gebruiker intypt, en dat mag geen weg naar binnen zijn.
+ */
+
+const MAX_PAGINAS = 10;
+const TEKEN_PER_PAGINA = 14_000;
+
+/** Woorden in een adres of linktekst die op antwoorden wijzen, met gewicht. */
+const SIGNALEN: Array<[RegExp, number]> = [
+  [/faq|veelgestelde|vragen|questions|klantenservice|service|help/, 10],
+  [/verzend|verzending|levering|bezorg|shipping|delivery|levertijd/, 9],
+  [/retour|ruilen|return|garantie|klacht/, 9],
+  [/prijs|prijzen|tarief|tarieven|kosten|pricing|abonnement/, 8],
+  [/voorwaarden|terms|betal|payment/, 7],
+  [/contact|openingstijden|locatie|adres|route/, 7],
+  [/over-ons|over|about|wie-zijn|team|bedrijf/, 5],
+  [/diensten|producten|aanbod|assortiment|menu|services|products/, 5],
+];
+
+const OVERSLAAN =
+  /\.(pdf|jpe?g|png|gif|webp|svg|zip|mp4|mp3|docx?|xlsx?)$|\/(wp-admin|wp-login|login|inloggen|account|winkelwagen|cart|checkout|afrekenen|tag|author|feed)(\/|$)/i;
+
+function isInternAdres(host: string): boolean {
+  const h = host.toLowerCase().replace(/^\[|\]$/g, "");
+  if (
+    h === "localhost" ||
+    h.endsWith(".localhost") ||
+    h.endsWith(".local") ||
+    h.endsWith(".internal")
+  ) {
+    return true;
+  }
+  // Een kaal IP-adres: een site van een klant heeft een naam.
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.includes(":");
+}
+
+function zelfdeSite(a: URL, b: URL): boolean {
+  return a.hostname.replace(/^www\./, "") === b.hostname.replace(/^www\./, "");
+}
+
+async function haalPagina(url: string): Promise<string> {
+  const u = new URL(url);
+  if (!["http:", "https:"].includes(u.protocol) || isInternAdres(u.hostname)) {
+    throw new Error("Dit adres kan ik niet ophalen.");
+  }
+  const stop = new AbortController();
+  const klok = setTimeout(() => stop.abort(), 10_000);
+  try {
+    const res = await fetch(u.toString(), {
+      headers: { "user-agent": "ZakelijkeAIAgents/1.0 (kennisbank-import)" },
+      redirect: "follow",
+      signal: stop.signal,
+    });
+    if (!res.ok) throw new Error(`De site gaf ${res.status}`);
+    const soort = res.headers.get("content-type") ?? "";
+    if (soort && !soort.includes("html") && !soort.includes("xml")) {
+      throw new Error("Geen webpagina");
+    }
+    return (await res.text()).slice(0, 2_000_000);
+  } finally {
+    clearTimeout(klok);
+  }
+}
+
+/** Kandidaat-pagina's uit de links, gesorteerd op hoe waarschijnlijk er antwoorden staan. */
+function kiesPaginas(html: string, basis: URL, extra: string[]): string[] {
+  const scores = new Map<string, number>();
+  const bekijk = (href: string, linktekst: string) => {
+    let u: URL;
+    try {
+      u = new URL(href, basis);
+    } catch {
+      return;
+    }
+    if (!["http:", "https:"].includes(u.protocol) || !zelfdeSite(u, basis)) return;
+    u.hash = "";
+    u.search = "";
+    const pad = u.pathname.replace(/\/+$/, "") || "/";
+    if (pad === "/" || OVERSLAAN.test(pad)) return;
+    const sleutel = `${u.origin}${pad}`;
+    const tekst = `${pad} ${linktekst}`.toLowerCase();
+    let score = 0;
+    for (const [patroon, gewicht] of SIGNALEN) if (patroon.test(tekst)) score += gewicht;
+    // Diep weggestopte pagina's zijn vaker een los product of blogbericht.
+    score -= Math.max(0, pad.split("/").length - 3) * 2;
+    scores.set(sleutel, Math.max(scores.get(sleutel) ?? -Infinity, score));
+  };
+
+  for (const m of html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    bekijk(m[1]!, m[2]!.replace(/<[^>]+>/g, " "));
+  }
+  for (const href of extra) bekijk(href, "");
+
+  // Eerst de pagina's met een duidelijk signaal, daarna aangevuld met gewone
+  // pagina's dicht bij de hoofdmap. Een site zonder "faq" in de adressen heeft
+  // zijn antwoorden ook ergens staan.
+  return [...scores.entries()]
+    .filter(([, score]) => score >= 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_PAGINAS - 1)
+    .map(([url]) => url);
+}
+
+/** De sitemap, als de startpagina weinig links heeft (bijvoorbeeld een menu in JavaScript). */
+async function uitSitemap(basis: URL): Promise<string[]> {
+  try {
+    const xml = await haalPagina(new URL("/sitemap.xml", basis).toString());
+    return [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]!).slice(0, 300);
+  } catch {
+    return [];
+  }
+}
+
+/** Een handvol tegelijk, niet alles tegelijk: we zijn te gast op die site. */
+async function haalAlle(urls: string[]) {
+  const uit: Array<{ url: string; tekst: string | null; reden?: string }> = [];
+  for (let i = 0; i < urls.length; i += 4) {
+    const porties = await Promise.all(
+      urls.slice(i, i + 4).map(async (url) => {
+        try {
+          const tekst = alleenTekst(await haalPagina(url)).slice(0, TEKEN_PER_PAGINA);
+          return tekst.length < 200
+            ? { url, tekst: null, reden: "nauwelijks tekst" }
+            : { url, tekst };
+        } catch (e) {
+          return { url, tekst: null, reden: e instanceof Error ? e.message : "niet op te halen" };
+        }
+      }),
+    );
+    uit.push(...porties);
+  }
+  return uit;
+}
+
 export const importeerVanWebsite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
@@ -253,6 +396,8 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
           .refine((u) => u.startsWith("https://") || u.startsWith("http://"), {
             message: "Alleen http en https.",
           }),
+        /** Ook de belangrijkste andere pagina's van dezelfde site (max. 10). */
+        heleSite: z.boolean().default(false),
       })
       .parse(d),
   )
@@ -268,23 +413,52 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
 
     let html: string;
     try {
-      const res = await fetch(data.url, {
-        headers: { "user-agent": "ZakelijkeAIAgents/1.0 (kennisbank-import)" },
-        redirect: "follow",
-      });
-      if (!res.ok) throw new Error(`De site gaf ${res.status}`);
-      html = await res.text();
+      html = await haalPagina(data.url);
     } catch (e) {
       throw new Error(
         `Die pagina kon ik niet ophalen: ${e instanceof Error ? e.message : "onbekende fout"}`,
       );
     }
 
-    const tekst = alleenTekst(html);
-    if (tekst.length < 200) {
-      throw new Error(
-        "Op die pagina staat nauwelijks tekst. Bij een site die alles met JavaScript opbouwt lukt dit niet; plak de tekst dan met de hand.",
-      );
+    const startTekst = alleenTekst(html);
+    const gelezen: Array<{ url: string; gelukt: boolean; reden?: string }> = [];
+    let tekst: string;
+
+    if (!data.heleSite) {
+      if (startTekst.length < 200) {
+        throw new Error(
+          "Op die pagina staat nauwelijks tekst. Bij een site die alles met JavaScript opbouwt lukt dit niet; plak de tekst dan met de hand.",
+        );
+      }
+      tekst = startTekst;
+      gelezen.push({ url: data.url, gelukt: true });
+    } else {
+      const basis = new URL(data.url);
+      let kandidaten = kiesPaginas(html, basis, []);
+      if (kandidaten.length < 4) kandidaten = kiesPaginas(html, basis, await uitSitemap(basis));
+      const paginas = await haalAlle(kandidaten);
+
+      const delen: string[] = [];
+      if (startTekst.length >= 200) {
+        delen.push(`### Pagina: ${basis.pathname || "/"}\n${startTekst.slice(0, TEKEN_PER_PAGINA)}`);
+        gelezen.push({ url: data.url, gelukt: true });
+      } else {
+        gelezen.push({ url: data.url, gelukt: false, reden: "nauwelijks tekst" });
+      }
+      for (const p of paginas) {
+        if (p.tekst) {
+          delen.push(`### Pagina: ${new URL(p.url).pathname}\n${p.tekst}`);
+          gelezen.push({ url: p.url, gelukt: true });
+        } else {
+          gelezen.push({ url: p.url, gelukt: false, reden: p.reden ?? "" });
+        }
+      }
+      if (delen.length === 0) {
+        throw new Error(
+          "Op deze site vond ik nauwelijks tekst. Bij een site die alles met JavaScript opbouwt lukt dit niet; plak de tekst dan met de hand.",
+        );
+      }
+      tekst = delen.join("\n\n").slice(0, MAX_TEKEN);
     }
 
     const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -299,7 +473,9 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4000,
+        // Tien pagina's leveren meer items op dan één; met 4000 werd de lijst
+        // halverwege afgekapt.
+        max_tokens: data.heleSite ? 8000 : 4000,
         system: INSTRUCTIE,
         tools: [EXTRACTIE_TOOL],
         tool_choice: { type: "tool", name: "leg_kennis_vast" },
@@ -311,7 +487,9 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
               {
                 type: "text",
                 text:
-                  `Dit is de website ${data.url} van ${agent.name}. Haal hier de kennis uit voor de assistent.\n\n` +
+                  (data.heleSite
+                    ? `Dit zijn ${gelezen.filter((g) => g.gelukt).length} pagina's van de website ${data.url} van ${agent.name}, elk onder een kopje "Pagina:". Haal hier de kennis uit voor de assistent. Staat hetzelfde op meer pagina's, neem het één keer op.\n\n`
+                    : `Dit is de website ${data.url} van ${agent.name}. Haal hier de kennis uit voor de assistent.\n\n`) +
                   "Let op: dit is reclametekst van het bedrijf zelf. Neem feiten over — wat ze maken, waar ze zitten, " +
                   "hoe lang ze bestaan, wat er in een product zit. Neem geen loftuitingen over als feit: " +
                   '"heerlijk", "de beste" en "legendarisch" zijn geen kennis en helpen de assistent niet.',
@@ -336,6 +514,7 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
 
     return {
       agentNaam: agent.name as string,
+      gelezen,
       items: items.map((i) => ({
         category: i.category,
         title: i.title,
