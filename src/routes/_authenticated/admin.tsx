@@ -712,6 +712,7 @@ type AgentRij = {
   overage_price?: number | null;
   inbound_local?: string | null;
   slug?: string | null;
+  modules?: string[] | null;
 };
 
 function AannamesBlok({
@@ -735,6 +736,7 @@ function AannamesBlok({
     overagePrice: agent.overage_price?.toString() ?? "1",
     inboundLocal: agent.inbound_local ?? "",
     slug: agent.slug ?? "",
+    modules: (agent.modules as Aannamewaarden["modules"]) ?? null,
   });
 
   const ingevuld = agent.minutes_saved_per_action != null || agent.hourly_rate != null;
@@ -782,6 +784,7 @@ function AannamesBlok({
                   overagePrice: alsGetal(waarden.overagePrice) ?? 1,
                   inboundLocal: alsTekst(waarden.inboundLocal),
                   slug: alsTekst(waarden.slug),
+                  modules: waarden.modules,
                 }),
               );
             }}

@@ -1,5 +1,11 @@
 import * as React from "react";
-import { SOORTEN, type AgentSoort } from "@/lib/agent-soorten";
+import {
+  SOORTEN,
+  actieveSchermen,
+  beschikbareSchermen,
+  type AgentSoort,
+  type Scherm,
+} from "@/lib/agent-soorten";
 import { alsGetal, type Aannamewaarden } from "@/lib/agent-aannames";
 import { berekenFairUse, berekenOpbrengst, euro, urenNotatie } from "@/lib/opbrengst";
 
@@ -16,6 +22,14 @@ import { berekenFairUse, berekenOpbrengst, euro, urenNotatie } from "@/lib/opbre
  * onder het bedrag: "gebaseerd op de nulmeting van september". Zonder die zin
  * is het een getal dat iemand kan betwisten; met die zin is het een afspraak.
  */
+
+const SCHERMNAMEN: Record<Scherm, string> = {
+  contacten: "Contacten",
+  campagnes: "Campagnes",
+  berichten: "Berichten",
+  antwoorden: "Antwoorden",
+  bezorgen: "Bezorgen",
+};
 
 const veldCls =
   "w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-[13px] text-ink outline-none transition placeholder:text-ink/35 focus:border-violet/55 focus:ring-2 focus:ring-violet/25";
@@ -47,11 +61,14 @@ export function AgentAannames({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
       <div className="grid gap-3">
-        <Veld label="Soort agent" hint="Bepaalt of er een kennisbank bij hoort">
+        <Veld label="Soort agent" hint="Bepaalt de schermen en het dashboard van de klant">
           <select
             className={veldCls}
             value={waarden.kind}
-            onChange={(e) => zet("kind")(e.target.value)}
+            // Een andere soort heeft andere schermen: begin dan bij zijn standaard.
+            onChange={(e) =>
+              onWijzig({ ...waarden, kind: e.target.value as AgentSoort, modules: null })
+            }
           >
             {(Object.keys(SOORTEN) as AgentSoort[]).map((k) => (
               <option key={k} value={k} className="bg-[#12121a]">
@@ -60,6 +77,35 @@ export function AgentAannames({
             ))}
           </select>
         </Veld>
+
+        {beschikbareSchermen(waarden.kind).length > 0 && (
+          <Veld
+            label="Schermen voor de klant"
+            hint="Wat niet aan staat, verschijnt niet in zijn menu"
+          >
+            <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
+              {beschikbareSchermen(waarden.kind).map((scherm) => {
+                const aan = actieveSchermen(waarden.kind, waarden.modules);
+                return (
+                  <label key={scherm} className="flex items-center gap-2 text-[13px] text-ink/80">
+                    <input
+                      type="checkbox"
+                      className="accent-violet"
+                      checked={aan.includes(scherm)}
+                      onChange={(e) => {
+                        const nieuw: Scherm[] = e.target.checked
+                          ? [...aan, scherm]
+                          : aan.filter((x) => x !== scherm);
+                        onWijzig({ ...waarden, modules: nieuw });
+                      }}
+                    />
+                    {SCHERMNAMEN[scherm]}
+                  </label>
+                );
+              })}
+            </div>
+          </Veld>
+        )}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Veld label="Minuten per bericht" hint="Wat één afgehandeld bericht scheelt">

@@ -35,8 +35,13 @@ type Beschrijving = {
   kennisbank: boolean;
   /** Wat de klant hier in één zin over moet weten. */
   uitleg: string;
-  /** Welke schermen de klant voor deze agent krijgt, naast de vaste. */
+  /** Welke schermen de klant standaard krijgt, naast de vaste. */
   schermen: Scherm[];
+  /**
+   * Schermen die per agent aan te zetten zijn, maar standaard uit staan. Voor
+   * onderdelen die voor één klant zijn gebouwd: Bezorgen is van FJ Snacks.
+   */
+  optioneel: Scherm[];
   /** Wat er op het dashboard van deze agent staat, en waar het vandaan komt. */
   bronnen: Bron[];
   /**
@@ -59,6 +64,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Beantwoordt vragen van bezoekers op je website. Wat hij weet, komt uit zijn kennisbank.",
     schermen: [],
+    optioneel: [],
     bronnen: ["gesprekken", "leads"],
     binnenkort: ["Gesprekken teruglezen", "Vragen die hij niet kon beantwoorden"],
   },
@@ -69,7 +75,8 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Neemt zelf contact op met je relaties en volgt op. Wat hij over je bedrijf zegt, komt uit zijn kennisbank.",
-    schermen: ["contacten", "campagnes", "berichten", "antwoorden", "bezorgen"],
+    schermen: ["contacten", "campagnes", "berichten", "antwoorden"],
+    optioneel: ["bezorgen"],
     bronnen: ["trechter", "gesprekken"],
     binnenkort: [],
   },
@@ -79,6 +86,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Kwalificeert binnenkomende leads en volgt ze op. Wie je ideale klant is en hoe je bezwaren beantwoordt, staat in zijn kennisbank.",
     schermen: [],
+    optioneel: [],
     bronnen: ["leads", "metingen"],
     binnenkort: ["Gekwalificeerd tegenover afgewezen", "Geboekte afspraken", "Responstijd"],
   },
@@ -88,6 +96,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Zet concept-antwoorden klaar in je mailbox. Jij beslist wat er verstuurd wordt. Je huisstijl en beleid staan in zijn kennisbank.",
     schermen: [],
+    optioneel: [],
     bronnen: ["metingen"],
     binnenkort: ["Concepten klaargezet", "Goedgekeurd door jou", "Wijzigingen waarvan hij leerde"],
   },
@@ -97,6 +106,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Houdt leads warm via WhatsApp en draagt over aan een mens zodra het ingewikkeld wordt.",
     schermen: [],
+    optioneel: [],
     bronnen: ["metingen"],
     binnenkort: ["Berichten verstuurd", "Reacties ontvangen", "Overdrachten naar een mens"],
   },
@@ -105,6 +115,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg: "Een automatisering op maat voor jouw situatie.",
     schermen: [],
+    optioneel: [],
     bronnen: ["metingen"],
     binnenkort: [],
   },
@@ -123,13 +134,43 @@ export function heeftKennisbank(kind: string | null | undefined): boolean {
   return soortVan(kind).kennisbank;
 }
 
+export const ALLE_SCHERMEN: Scherm[] = [
+  "contacten",
+  "campagnes",
+  "berichten",
+  "antwoorden",
+  "bezorgen",
+];
+
+/** Wat er voor deze soort aan of uit kan: de standaard plus het optionele. */
+export function beschikbareSchermen(kind: string | null | undefined): Scherm[] {
+  const s = soortVan(kind);
+  return ALLE_SCHERMEN.filter((x) => s.schermen.includes(x) || s.optioneel.includes(x));
+}
+
+/**
+ * Welke schermen deze ene agent aan heeft. Staat er per agent niets ingesteld
+ * (null), dan de standaard van de soort. Wat bij de soort niet kan, telt niet,
+ * ook niet als het in de database staat.
+ */
+export function actieveSchermen(
+  kind: string | null | undefined,
+  modules: string[] | null | undefined,
+): Scherm[] {
+  const kan = beschikbareSchermen(kind);
+  if (!modules) return soortVan(kind).schermen;
+  return kan.filter((x) => modules.includes(x));
+}
+
 /**
  * Welke schermen iemand met deze agents in zijn menu krijgt, in vaste volgorde.
- * Een klant met alleen een chat-assistent krijgt geen Contacten en Campagnes
- * meer: dat waren lege schermen voor iets wat hij niet heeft.
+ * Een klant met alleen een chat-assistent krijgt geen Contacten en Campagnes:
+ * dat waren lege schermen voor iets wat hij niet heeft. En Bezorgen staat
+ * alleen aan bij een agent waar de beheerder het heeft aangezet.
  */
-export function schermenVoor(kinds: Array<string | null | undefined>): Scherm[] {
-  const alle: Scherm[] = ["contacten", "campagnes", "berichten", "antwoorden", "bezorgen"];
-  const aan = new Set(kinds.flatMap((k) => soortVan(k).schermen));
-  return alle.filter((s) => aan.has(s));
+export function schermenVoor(
+  agents: Array<{ kind?: string | null; modules?: string[] | null }>,
+): Scherm[] {
+  const aan = new Set(agents.flatMap((a) => actieveSchermen(a.kind, a.modules)));
+  return ALLE_SCHERMEN.filter((s) => aan.has(s));
 }

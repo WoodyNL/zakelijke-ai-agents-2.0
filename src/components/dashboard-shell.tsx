@@ -50,7 +50,10 @@ export function DashboardShell({
   // Dezelfde sleutel als het dashboard, dus meestal al in het geheugen.
   const agentsFn = useServerFn(listAgents);
   const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
-  const kinds = ((agentsQuery.data ?? []) as Array<{ kind?: string | null }>).map((a) => a.kind);
+  const mijnAgents = (agentsQuery.data ?? []) as Array<{
+    kind?: string | null;
+    modules?: string[] | null;
+  }>;
 
   // Begint of eindigt een meekijksessie, dan hoort alles wat in het geheugen
   // staat bij de verkeerde klant. Opnieuw ophalen, niet hopen.
@@ -87,7 +90,9 @@ export function DashboardShell({
 
   // Het menu volgt de agents. Contacten, Campagnes en de rest horen bij de
   // uitgaande e-mailagent; een klant met alleen een chat-assistent kreeg vijf
-  // lege schermen. Welke soort welke schermen krijgt, staat in agent-soorten.ts.
+  // lege schermen. Welke soort welke schermen krijgt, staat in agent-soorten.ts;
+  // per agent kan de beheerder schermen aan- of uitzetten (Bezorgen is voor
+  // FJ Snacks gebouwd en staat standaard uit).
   //
   // Een beheerder krijgt Beheer vooraan: daar komt hij na het inloggen uit. De
   // rest is zijn eigen portaal, of tijdens meekijken dat van de klant, maar
@@ -96,7 +101,7 @@ export function DashboardShell({
     ...(isStaf ? [{ to: "/admin", label: "Beheer" }] : []),
     { to: "/dashboard", label: "Dashboard" },
     ...(sessie ? [] : [{ to: "/knowledge", label: "Kennisbank" }]),
-    ...schermenVoor(kinds).map((s) => SCHERMLINKS[s]),
+    ...schermenVoor(mijnAgents).map((s) => SCHERMLINKS[s]),
     { to: "/account", label: "Account" },
   ];
 

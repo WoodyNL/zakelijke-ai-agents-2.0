@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { leesKlant } from "@/lib/klant";
-import { SOORTEN, type AgentSoort } from "@/lib/agent-soorten";
+import { ALLE_SCHERMEN, SOORTEN, type AgentSoort, type Scherm } from "@/lib/agent-soorten";
 
 type Ctx = { supabase: any; userId: string };
 
@@ -338,6 +338,11 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
           .regex(/^[a-z0-9._-]{1,64}$/, "Alleen kleine letters, cijfers, punt en streepje.")
           .nullable()
           .optional(),
+        // Welke schermen de klant krijgt; null is de standaard van de soort.
+        modules: z
+          .array(z.enum(ALLE_SCHERMEN as [Scherm, ...Scherm[]]))
+          .nullable()
+          .optional(),
       })
       .parse(d),
   )
@@ -365,6 +370,7 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
       ...optioneel(data.overagePrice, "overage_price"),
       ...optioneel(data.slug, "slug"),
       ...optioneel(data.inboundLocal, "inbound_local"),
+      ...optioneel(data.modules, "modules"),
     };
     const { error } = data.id
       ? await context.supabase.from("agents").update(row).eq("id", data.id)

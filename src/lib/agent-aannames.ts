@@ -1,4 +1,4 @@
-import type { AgentSoort } from "./agent-soorten";
+import type { AgentSoort, Scherm } from "./agent-soorten";
 
 /**
  * De invoerwaarden van het afsprakenformulier, los van de component.
@@ -23,6 +23,8 @@ export type Aannamewaarden = {
   inboundLocal: string;
   /** De publieke naam waarmee de website deze agent opzoekt. */
   slug: string;
+  /** Welke schermen de klant krijgt; null is de standaard van de soort. */
+  modules: Scherm[] | null;
 };
 
 export const LEGE_AANNAMES: Aannamewaarden = {
@@ -35,6 +37,7 @@ export const LEGE_AANNAMES: Aannamewaarden = {
   overagePrice: "1",
   inboundLocal: "",
   slug: "",
+  modules: null,
 };
 
 /** Lege invoer wordt null, zodat het dashboard het cijfer weglaat. */
