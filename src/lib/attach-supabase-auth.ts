@@ -18,6 +18,17 @@ export const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
     const { supabase } = await import("@/lib/supabase-browser");
     const { data } = await supabase.auth.getSession();
     token = data.session?.access_token;
+
+    // De sessieopslag in de preview is asynchroon: vlak na het laden kan
+    // getSession() nog leeg zijn terwijl er wel degelijk een sessie is.
+    // getUser() wacht op het herstel; daarna staat de sessie er wel.
+    if (!token) {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const { data: opnieuw } = await supabase.auth.getSession();
+        token = opnieuw.session?.access_token;
+      }
+    }
   } catch (err) {
     console.warn("Supabase-sessie niet beschikbaar; verzoek gaat zonder token door", err);
   }
