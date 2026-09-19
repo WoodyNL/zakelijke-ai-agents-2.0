@@ -16,7 +16,7 @@ import {
   adminDeleteAgent,
   adminSaveStat,
 } from "@/lib/dashboard.functions";
-import { listLeadRequests } from "@/lib/leads.functions";
+import { listLeadRequests, verwijderAanvraag } from "@/lib/leads.functions";
 import { startMeekijken } from "@/lib/meekijken.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -389,13 +389,40 @@ function MeekijkKnop({ clientId, naam }: { clientId: string; naam: string }) {
 }
 
 function LeadRequests({ enabled }: { enabled: boolean }) {
+  const qc = useQueryClient();
   const listFn = useServerFn(listLeadRequests);
+  const verwijderFn = useServerFn(verwijderAanvraag);
   const { data, isLoading } = useQuery({
     queryKey: ["lead-requests"],
     queryFn: () => listFn(),
     enabled,
   });
   const leads = data ?? [];
+  const [bezig, setBezig] = useState<string | null>(null);
+  const [fout, setFout] = useState<string | null>(null);
+
+  // Definitief weg, dus eerst vragen, met de naam erin: je moet lezen wát je
+  // weggooit. Echte aanvragen bewaren we twaalf maanden (privacyverklaring);
+  // testaanvragen en spam horen hier niet te blijven staan.
+  async function verwijder(id: string, naam: string) {
+    if (
+      !window.confirm(
+        `De aanvraag van "${naam}" verwijderen? Dit kan niet ongedaan worden gemaakt.`,
+      )
+    ) {
+      return;
+    }
+    setBezig(id);
+    setFout(null);
+    try {
+      await verwijderFn({ data: { id } });
+      await qc.invalidateQueries({ queryKey: ["lead-requests"] });
+    } catch (err) {
+      setFout(err instanceof Error ? err.message : "Verwijderen lukte niet");
+    } finally {
+      setBezig(null);
+    }
+  }
 
   return (
     <section className="card-glass-lg mt-4 rounded-3xl p-5">
@@ -408,6 +435,7 @@ function LeadRequests({ enabled }: { enabled: boolean }) {
       {!isLoading && leads.length === 0 && (
         <p className="mt-3 text-[13px] text-ink/55">Nog geen aanvragen binnengekomen.</p>
       )}
+      {fout && <p className="mt-3 text-[12px] text-destructive">{fout}</p>}
 
       <div className="mt-3 space-y-2">
         {leads.map((l) => (
@@ -416,12 +444,22 @@ function LeadRequests({ enabled }: { enabled: boolean }) {
               <p className="text-[13px] font-semibold text-brand">
                 {l.name} — {l.company}
               </p>
-              <p className="text-[11px] text-ink/50">
-                {new Date(l.created_at).toLocaleString("nl-NL", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-[11px] text-ink/50">
+                  {new Date(l.created_at).toLocaleString("nl-NL", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </p>
+                <button
+                  type="button"
+                  disabled={bezig === l.id}
+                  onClick={() => verwijder(l.id, l.name)}
+                  className="text-[11.5px] font-medium text-ink/45 transition-colors hover:text-destructive disabled:opacity-50"
+                >
+                  {bezig === l.id ? "Bezig\u2026" : "Verwijderen"}
+                </button>
+              </div>
             </div>
             <p className="mt-1 text-[12px] text-ink/60">
               <a href={`mailto:${l.email}`} className="text-violet">
@@ -573,6 +611,9 @@ function AgentRow({
   onSaveStat: (p: any) => void;
 }) {
   const [status, setStatus] = useState<string>(agent.status);
+  const [statusUitkomst, setStatusUitkomst] = useState<{ ok: boolean; melding: string } | null>(
+    null,
+  );
   const [stat, setStat] = useState({
     date: new Date().toISOString().slice(0, 10),
     outputCount: "0",
@@ -608,8 +649,9 @@ function AgentRow({
         <button
           className={btnCls}
           disabled={busy}
-          onClick={() =>
-            onSaveAgent({
+          onClick={async () => {
+            setStatusUitkomst(null);
+            const r = await onSaveAgent({
               id: agent.id,
               clientId: agent.client_id,
               name: agent.name,
@@ -617,11 +659,26 @@ function AgentRow({
               metricLabel: agent.metric_label,
               scoreLabel: agent.score_label,
               status,
-            })
-          }
+            });
+            // Naast de knop en met de status erin: de melding bovenaan de
+            // pagina zie je niet als je hier bezig bent.
+            setStatusUitkomst(
+              r.ok
+                ? { ok: true, melding: `Opgeslagen: ${STATUS_META[status]?.label ?? status}` }
+                : r,
+            );
+          }}
         >
           Status opslaan
         </button>
+        {statusUitkomst && (
+          <span
+            role="status"
+            className={`text-[12px] font-medium ${statusUitkomst.ok ? "text-mint" : "text-destructive"}`}
+          >
+            {statusUitkomst.melding}
+          </span>
+        )}
         {/* Een agent verwijderen neemt zijn kennisbank, zijn verbruik en zijn
             hele geschiedenis mee: die hangen er met ON DELETE CASCADE aan. Dat
             is niet terug te draaien, en het is precies wat er is gebeurd met de

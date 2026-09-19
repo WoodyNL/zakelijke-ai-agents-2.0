@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { eigenKlant } from "@/lib/klant";
 
 const leadSchema = z.object({
   name: z.string().trim().min(1, "Vul je naam in").max(100),
@@ -51,9 +52,18 @@ export const submitLeadRequest = createServerFn({ method: "POST" })
 export const listLeadRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Onze eigen aanvragen: via het contactformulier (zonder agent) en via
+    // onze eigen agents. Expliciet gefilterd, want tijdens meekijken laat de
+    // database ook de chatleads van die klant zien, en die horen hier niet.
+    const { data: eigen } = await context.supabase
+      .from("agents")
+      .select("id")
+      .eq("client_id", await eigenKlant(context));
+    const ids = ((eigen ?? []) as Array<{ id: string }>).map((a) => a.id);
     const { data, error } = await context.supabase
       .from("lead_requests")
       .select("*")
+      .or(ids.length ? `agent_id.is.null,agent_id.in.(${ids.join(",")})` : "agent_id.is.null")
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
@@ -67,4 +77,28 @@ export const listLeadRequests = createServerFn({ method: "GET" })
       message: string | null;
       created_at: string;
     }>;
+  });
+
+/**
+ * Een aanvraag verwijderen, om het overzicht bij te houden. Wie wat mag
+ * verwijderen staat in de database: de beheerder de aanvragen van het
+ * contactformulier, de eigenaar van een agent de aanvragen van die agent.
+ * Meekijken kan niets verwijderen.
+ */
+export const verwijderAanvraag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: weg, error } = await context.supabase
+      .from("lead_requests")
+      .delete()
+      .eq("id", data.id)
+      .select("id");
+    if (error) throw new Error(error.message);
+    // RLS geeft geen fout bij een rij die je niet mag verwijderen; hij wordt
+    // dan gewoon niet geraakt. Zeg dat, in plaats van te doen alsof het lukte.
+    if (!weg || weg.length === 0) {
+      throw new Error("Deze aanvraag kon niet worden verwijderd.");
+    }
+    return { ok: true as const };
   });
