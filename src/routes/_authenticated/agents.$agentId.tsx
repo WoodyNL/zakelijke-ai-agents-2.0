@@ -1,10 +1,14 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
+import { TrechterPaneel } from "@/components/trechter-paneel";
 import { VerbruikPaneel } from "@/components/verbruik-paneel";
+import { useMeekijken } from "@/hooks/use-meekijken";
+import { haalGebeurtenissen, haalKerncijfers, pauzeerAgent } from "@/lib/agent.functions";
+import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
 import { soortVan } from "@/lib/agent-soorten";
 import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
 
@@ -47,6 +51,22 @@ function AgentDetail() {
   });
 
   const agent = query.data?.agent;
+  const soort = soortVan(agent?.kind);
+  const meekijken = useMeekijken();
+
+  // "Alles" is 0 dagen voor de metingen; voor de kerncijfers betekent het tien jaar.
+  const kernFn = useServerFn(haalKerncijfers);
+  const kernQuery = useQuery({
+    queryKey: ["kerncijfers", agentId, days],
+    queryFn: () => kernFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: !!agent,
+  });
+  const trechterFn = useServerFn(haalTrechter);
+  const trechterQuery = useQuery({
+    queryKey: ["trechter", agentId],
+    queryFn: () => trechterFn({ data: { agentId } }) as Promise<Trechter>,
+    enabled: soort.bronnen.includes("trechter"),
+  });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
   const scored = stats.filter((r: any) => r.performance_score != null);
@@ -80,12 +100,17 @@ function AgentDetail() {
                 {agent.description}
               </p>
             </div>
-            <span
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ${st.chip}`}
-            >
-              <span className={`size-1.5 rounded-full ${st.dot}`} />
-              {st.label}
-            </span>
+            <div className="flex flex-col items-end gap-2">
+              <span
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ${st.chip}`}
+              >
+                <span className={`size-1.5 rounded-full ${st.dot}`} />
+                {st.label}
+              </span>
+              {!meekijken.data && (agent.status === "live" || agent.status === "paused") && (
+                <PauzeKnop agentId={agent.id} status={agent.status} kind={agent.kind} />
+              )}
+            </div>
           </div>
 
           <div className="mt-5 flex gap-1.5">
@@ -104,11 +129,62 @@ function AgentDetail() {
             ))}
           </div>
 
+          {/* Wat er op dit dashboard staat, hangt af van de soort agent (zie
+              agent-soorten.ts). Alleen cijfers die we echt meten; wat eraan
+              komt staat eronder, in plaats van een leeg vak. */}
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <Stat value={String(total)} label={agent.metric_label} />
-            <Stat value={score != null ? `${score.toFixed(0)}%` : "—"} label={agent.score_label} />
-            <Stat value={String(stats.length)} label="dagen met activiteit" />
+            {soort.bronnen.includes("gesprekken") && (
+              <Stat
+                value={kernQuery.data ? String(kernQuery.data.gesprekken) : "—"}
+                label="gesprekken"
+              />
+            )}
+            {soort.bronnen.includes("leads") && (
+              <Stat
+                value={kernQuery.data ? String(kernQuery.data.leads) : "—"}
+                label="leads binnengehaald"
+              />
+            )}
+            {soort.bronnen.includes("metingen") && (
+              <>
+                <Stat value={String(total)} label={agent.metric_label} />
+                <Stat
+                  value={score != null ? `${score.toFixed(0)}%` : "—"}
+                  label={agent.score_label}
+                />
+              </>
+            )}
+            <Stat
+              value={
+                kernQuery.data?.laatste_activiteit
+                  ? new Date(kernQuery.data.laatste_activiteit).toLocaleDateString("nl-NL", {
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : "—"
+              }
+              label="laatst actief"
+            />
           </div>
+
+          {soort.bronnen.includes("trechter") &&
+            trechterQuery.data &&
+            trechterQuery.data.contacten > 0 && (
+              <div className="mt-3">
+                <TrechterPaneel t={trechterQuery.data} />
+              </div>
+            )}
+
+          {soort.binnenkort.length > 0 && (
+            <div className="mt-3 rounded-3xl border border-dashed border-white/12 px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/45">
+                Binnenkort op dit dashboard
+              </p>
+              <p className="mt-1.5 text-[12.5px]/[1.6] text-ink/55">
+                {soort.binnenkort.join(" · ")}
+              </p>
+            </div>
+          )}
 
           <div className="card-glass-lg mt-3 rounded-3xl p-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/50">
@@ -173,6 +249,8 @@ function AgentDetail() {
           </div>
         </>
       )}
+      {agent && <Gebeurtenissen agentId={agentId} />}
+
       <div className="mt-4">
         <VerbruikPaneel
           dagen={verbruikQuery.data?.dagen ?? []}
@@ -190,6 +268,102 @@ function Stat({ value, label }: { value: string; label: string }) {
     <div className="card-glass-lg rounded-3xl p-5">
       <p className="font-display text-[26px] font-bold leading-none text-brand">{value}</p>
       <p className="mt-1.5 text-[11px] text-ink/50">{label}</p>
+    </div>
+  );
+}
+
+/**
+ * De klant zet zijn agent zelf stil (fase 3). Bij een e-mailagent trekt de
+ * server daarna in wat al bij Resend klaarstaat; dat staat in de vraag, want
+ * het is niet terug te draaien.
+ */
+function PauzeKnop({
+  agentId,
+  status,
+  kind,
+}: {
+  agentId: string;
+  status: string;
+  kind: string | null;
+}) {
+  const qc = useQueryClient();
+  const fn = useServerFn(pauzeerAgent);
+  const [bezig, setBezig] = useState(false);
+  const [melding, setMelding] = useState<string | null>(null);
+  const pauze = status === "live";
+
+  async function klik() {
+    if (pauze) {
+      const vraag =
+        kind === "uitgaande_email"
+          ? "Deze agent stilzetten?\n\nBerichten die al zijn ingepland, trekken we in. Die gaan niet meer de deur uit, ook niet als je hem later weer aanzet."
+          : "Deze agent stilzetten? Hij doet niets tot je hem weer aanzet.";
+      if (!window.confirm(vraag)) return;
+    }
+    setBezig(true);
+    setMelding(null);
+    try {
+      const r = await fn({ data: { agentId, pauze } });
+      if (r.nietGelukt > 0) {
+        setMelding(
+          `${r.nietGelukt} ingepland bericht${r.nietGelukt === 1 ? "" : "en"} kon niet worden ingetrokken en gaat mogelijk toch weg. Mail ons als je dat wilt voorkomen.`,
+        );
+      } else if (r.ingetrokken > 0) {
+        setMelding(`${r.ingetrokken} ingeplande berichten ingetrokken.`);
+      }
+      await qc.invalidateQueries();
+    } catch (err) {
+      setMelding(err instanceof Error ? err.message : "Dat lukte niet");
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1.5">
+      <button
+        type="button"
+        onClick={klik}
+        disabled={bezig}
+        className="rounded-full border border-white/12 bg-white/5 px-3.5 py-1.5 text-[12px] font-semibold text-ink/80 transition-colors hover:border-violet/40 hover:text-ink disabled:opacity-50"
+      >
+        {bezig ? "Bezig\u2026" : pauze ? "Pauzeren" : "Weer aanzetten"}
+      </button>
+      {melding && <p className="max-w-[40ch] text-right text-[11.5px] text-ink/60">{melding}</p>}
+    </div>
+  );
+}
+
+/** Wanneer de agent live ging of werd stilgezet, en door wie. */
+function Gebeurtenissen({ agentId }: { agentId: string }) {
+  const fn = useServerFn(haalGebeurtenissen);
+  const query = useQuery({
+    queryKey: ["gebeurtenissen", agentId],
+    queryFn: () => fn({ data: { agentId } }),
+  });
+  const rijen = query.data ?? [];
+  if (rijen.length === 0) return null;
+
+  const label = (s: string | null) => (s ? (STATUS_META[s]?.label ?? s) : "—");
+
+  return (
+    <div className="card-glass-lg mt-3 rounded-3xl p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/50">
+        Statuswijzigingen
+      </p>
+      <ul className="mt-3 divide-y divide-white/[0.06]">
+        {rijen.map((g) => (
+          <li key={g.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2.5">
+            <p className="text-[12.5px] text-ink/80">
+              {label(g.van)} → <span className="font-semibold">{label(g.naar)}</span>
+              <span className="text-ink/50"> · {g.door}</span>
+            </p>
+            <p className="text-[11.5px] text-ink/45">
+              {new Date(g.op).toLocaleString("nl-NL", { dateStyle: "medium", timeStyle: "short" })}
+            </p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

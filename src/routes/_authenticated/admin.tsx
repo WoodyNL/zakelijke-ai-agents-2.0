@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -9,12 +9,15 @@ import { soortVan } from "@/lib/agent-soorten";
 import {
   getMe,
   adminListClients,
+  adminListMedewerkers,
+  adminNodigMedewerkerUit,
   adminCreateClient,
   adminSaveAgent,
   adminDeleteAgent,
   adminSaveStat,
 } from "@/lib/dashboard.functions";
 import { listLeadRequests } from "@/lib/leads.functions";
+import { startMeekijken } from "@/lib/meekijken.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -49,8 +52,10 @@ function AdminPanel() {
   const clientsQuery = useQuery({
     queryKey: ["admin-clients"],
     queryFn: () => listFn(),
-    enabled: meQuery.data?.isAdmin === true,
+    enabled: meQuery.data?.isStaf === true,
   });
+  // Support ziet hetzelfde overzicht en mag meekijken, maar wijzigt niets.
+  const isAdmin = meQuery.data?.isAdmin === true;
 
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -80,7 +85,7 @@ function AdminPanel() {
     }
   }
 
-  if (meQuery.data && !meQuery.data.isAdmin) {
+  if (meQuery.data && !meQuery.data.isStaf) {
     return (
       <DashboardShell isAdmin={false} userName={meQuery.data.name}>
         <p className="text-[13px] text-ink/60">
@@ -96,52 +101,58 @@ function AdminPanel() {
   const clients = clientsQuery.data ?? [];
 
   return (
-    <DashboardShell isAdmin userName={meQuery.data?.name ?? ""}>
+    <DashboardShell isAdmin={isAdmin} userName={meQuery.data?.name ?? ""}>
       <h1 className="font-display text-[24px] font-bold tracking-tight text-brand">Beheer</h1>
-      <p className="mt-1.5 text-[13px] text-ink/55">Klanten, agents en statistieken.</p>
+      <p className="mt-1.5 text-[13px] text-ink/55">
+        {isAdmin
+          ? "Klanten, agents en statistieken."
+          : "Welke agents er draaien. Als support kun je meekijken, maar niets wijzigen."}
+      </p>
       {msg && <p className="mt-3 text-[12px] font-medium text-violet">{msg}</p>}
 
       <AgentOverzicht clients={clients} laden={clientsQuery.isLoading} />
 
-      <section className="card-glass-lg mt-5 rounded-3xl p-5">
-        <p className="font-display text-[15px] font-semibold text-brand">Nieuwe klant</p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <input
-            className={inputCls}
-            placeholder="Naam"
-            value={nc.name}
-            onChange={(e) => setNc({ ...nc, name: e.target.value })}
-          />
-          <input
-            className={inputCls}
-            placeholder="E-mail"
-            value={nc.email}
-            onChange={(e) => setNc({ ...nc, email: e.target.value })}
-          />
-          <input
-            className={inputCls}
-            placeholder="Wachtwoord (min. 8)"
-            value={nc.password}
-            onChange={(e) => setNc({ ...nc, password: e.target.value })}
-          />
-        </div>
-        <button
-          className={`${btnCls} mt-3`}
-          disabled={busy || !nc.name || !nc.email || nc.password.length < 8}
-          onClick={() =>
-            run(async () => {
-              const res = (await createClientFn({ data: nc })) as
-                { ok: true; id?: string } | { ok: false; error: string };
-              if (!res.ok) throw new Error(res.error);
-              setNc({ name: "", email: "", password: "" });
-            }, "Klant aangemaakt")
-          }
-        >
-          Klant aanmaken
-        </button>
-      </section>
+      {isAdmin && (
+        <section className="card-glass-lg mt-5 rounded-3xl p-5">
+          <p className="font-display text-[15px] font-semibold text-brand">Nieuwe klant</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <input
+              className={inputCls}
+              placeholder="Naam"
+              value={nc.name}
+              onChange={(e) => setNc({ ...nc, name: e.target.value })}
+            />
+            <input
+              className={inputCls}
+              placeholder="E-mail"
+              value={nc.email}
+              onChange={(e) => setNc({ ...nc, email: e.target.value })}
+            />
+            <input
+              className={inputCls}
+              placeholder="Wachtwoord (min. 8)"
+              value={nc.password}
+              onChange={(e) => setNc({ ...nc, password: e.target.value })}
+            />
+          </div>
+          <button
+            className={`${btnCls} mt-3`}
+            disabled={busy || !nc.name || !nc.email || nc.password.length < 8}
+            onClick={() =>
+              run(async () => {
+                const res = (await createClientFn({ data: nc })) as
+                  { ok: true; id?: string } | { ok: false; error: string };
+                if (!res.ok) throw new Error(res.error);
+                setNc({ name: "", email: "", password: "" });
+              }, "Klant aangemaakt")
+            }
+          >
+            Klant aanmaken
+          </button>
+        </section>
+      )}
 
-      <LeadRequests enabled={meQuery.data?.isAdmin === true} />
+      {isAdmin && <LeadRequests enabled />}
 
       <div className="mt-4 space-y-4">
         {clients.map((c: any) => (
@@ -149,6 +160,7 @@ function AdminPanel() {
             key={c.id}
             client={c}
             busy={busy}
+            magWijzigen={isAdmin}
             onSaveAgent={(payload) => run(() => saveAgentFn({ data: payload }), "Agent opgeslagen")}
             onDeleteAgent={(id) => run(() => deleteAgentFn({ data: { id } }), "Agent verwijderd")}
             onSaveStat={(payload) =>
@@ -158,6 +170,8 @@ function AdminPanel() {
         ))}
         {clientsQuery.isLoading && <p className="text-[13px] text-ink/55">Laden…</p>}
       </div>
+
+      <Medewerkers magUitnodigen={isAdmin} />
     </DashboardShell>
   );
 }
@@ -191,6 +205,30 @@ function AgentOverzicht({
   );
   const telling = (st: string) => rijen.filter((r) => r.agent.status === st).length;
 
+  // Wat aandacht nodig heeft, bovenaan en in woorden: een live agent die een
+  // dag niets deed, en een agent die op 80% van zijn fair use zit.
+  const aandacht = rijen.flatMap(({ klant, agent: a }) => {
+    const punten: string[] = [];
+    if (
+      a.status === "live" &&
+      (!a.laatste_activiteit ||
+        Date.now() - new Date(a.laatste_activiteit).getTime() > 24 * 3600 * 1000)
+    ) {
+      punten.push(
+        a.laatste_activiteit
+          ? `${a.name} (${klant}) staat live, maar was voor het laatst actief ${sinds(a.laatste_activiteit)}`
+          : `${a.name} (${klant}) staat live, maar is nog nooit actief geweest`,
+      );
+    }
+    const grens = a.fair_use_per_month ?? null;
+    if (grens && a.verbruik_maand >= grens * 0.8) {
+      punten.push(
+        `${a.name} (${klant}) zit op ${Math.round((a.verbruik_maand / grens) * 100)}% van de fair use`,
+      );
+    }
+    return punten;
+  });
+
   return (
     <section className="card-glass-lg mt-5 rounded-3xl p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -199,6 +237,14 @@ function AgentOverzicht({
           {telling("live")} live · {telling("paused")} gepauzeerd · {telling("setup")} in opbouw
         </p>
       </div>
+
+      {aandacht.length > 0 && (
+        <ul className="mt-3 space-y-1 rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] px-4 py-3 text-[12.5px] text-amber-100">
+          {aandacht.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+      )}
 
       {laden && <p className="mt-3 text-[13px] text-ink/55">Laden…</p>}
       {!laden && rijen.length === 0 && (
@@ -256,6 +302,82 @@ function sinds(iso: string) {
   if (uur < 24) return `${uur} uur geleden`;
   const dagen = Math.round(uur / 24);
   return dagen === 1 ? "gisteren" : `${dagen} dagen geleden`;
+}
+
+/**
+ * Meekijken bij een klant, voor als er iets mis is. Een reden is verplicht: die
+ * komt in de toegangslog die de klant in zijn portaal ziet. Daarna opent het
+ * portaal van de klant, alleen lezen, en zonder kennisbank.
+ */
+function MeekijkKnop({ clientId, naam }: { clientId: string; naam: string }) {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const startFn = useServerFn(startMeekijken);
+  const [open, setOpen] = useState(false);
+  const [reden, setReden] = useState("");
+  const [bezig, setBezig] = useState(false);
+  const [fout, setFout] = useState<string | null>(null);
+
+  async function start() {
+    setBezig(true);
+    setFout(null);
+    try {
+      await startFn({ data: { clientId, reden } });
+      await qc.invalidateQueries();
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      setFout(err instanceof Error ? err.message : "Meekijken lukte niet");
+      setBezig(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 text-[12px] font-medium text-violet hover:underline"
+      >
+        Meekijken bij {naam}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] p-3">
+      <label className="block text-[12px] font-medium text-ink/75">
+        Waarom kijk je mee? {naam} ziet deze reden in zijn toegangslog.
+        <input
+          className={`${inputCls} mt-1.5`}
+          placeholder="Bijv. Frank meldt dat de campagne niet verstuurt"
+          value={reden}
+          onChange={(e) => setReden(e.target.value)}
+          maxLength={500}
+        />
+      </label>
+      <p className="mt-1.5 text-[11.5px] text-ink/50">
+        Een uur lang, alleen lezen, zonder kennisbank. Elk scherm dat je opent wordt vastgelegd.
+      </p>
+      {fout && <p className="mt-1.5 text-[12px] text-destructive">{fout}</p>}
+      <div className="mt-2.5 flex gap-2">
+        <button
+          type="button"
+          className={btnCls}
+          disabled={bezig || reden.trim().length < 10}
+          onClick={start}
+        >
+          {bezig ? "Bezig\u2026" : "Start meekijken"}
+        </button>
+        <button
+          type="button"
+          className="rounded-full border border-white/12 px-4 py-2 text-[12px] font-semibold text-ink/70"
+          onClick={() => setOpen(false)}
+        >
+          Annuleren
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function LeadRequests({ enabled }: { enabled: boolean }) {
@@ -320,12 +442,14 @@ function LeadRequests({ enabled }: { enabled: boolean }) {
 function ClientBlock({
   client,
   busy,
+  magWijzigen,
   onSaveAgent,
   onDeleteAgent,
   onSaveStat,
 }: {
   client: any;
   busy: boolean;
+  magWijzigen: boolean;
   onSaveAgent: (p: Record<string, unknown>) => Promise<{ ok: boolean; melding: string }>;
   onDeleteAgent: (id: string) => void;
   onSaveStat: (p: any) => void;
@@ -344,72 +468,85 @@ function ClientBlock({
         <p className="font-display text-[15px] font-semibold text-brand">
           {client.name || "(geen naam)"}
         </p>
-        <p className="text-[12px] text-ink/50">{client.email}</p>
+        <p className="text-[12px] text-ink/50">
+          {client.email}
+          {client.teamleden > 0
+            ? ` · ${client.teamleden} teamlid${client.teamleden === 1 ? "" : "en"}`
+            : ""}
+        </p>
       </div>
 
-      <div className="mt-3 space-y-3">
-        {client.agents.map((a: any) => (
-          <AgentRow
-            key={a.id}
-            agent={a}
-            busy={busy}
-            onSaveAgent={onSaveAgent}
-            onDeleteAgent={onDeleteAgent}
-            onSaveStat={onSaveStat}
-          />
-        ))}
-      </div>
+      {client.agents.length > 0 && (
+        <MeekijkKnop clientId={client.id} naam={client.name || client.email} />
+      )}
 
-      <details className="mt-3">
-        <summary className="cursor-pointer text-[12px] font-medium text-violet">
-          + Agent toevoegen
-        </summary>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <input
-            className={inputCls}
-            placeholder="Naam (bijv. Lead Qualification Assistant)"
-            value={newAgent.name}
-            onChange={(e) => setNewAgent({ ...newAgent, name: e.target.value })}
-          />
-          <input
-            className={inputCls}
-            placeholder="Korte omschrijving"
-            value={newAgent.description}
-            onChange={(e) => setNewAgent({ ...newAgent, description: e.target.value })}
-          />
-          <input
-            className={inputCls}
-            placeholder="Label output (bijv. leads gekwalificeerd)"
-            value={newAgent.metricLabel}
-            onChange={(e) => setNewAgent({ ...newAgent, metricLabel: e.target.value })}
-          />
-          <input
-            className={inputCls}
-            placeholder="Label score (bijv. nauwkeurigheid)"
-            value={newAgent.scoreLabel}
-            onChange={(e) => setNewAgent({ ...newAgent, scoreLabel: e.target.value })}
-          />
-          <select
-            className={inputCls}
-            value={newAgent.status}
-            onChange={(e) => setNewAgent({ ...newAgent, status: e.target.value as any })}
-          >
-            <option value="live">Live</option>
-            <option value="paused">Gepauzeerd</option>
-            <option value="setup">In opbouw</option>
-          </select>
-          <button
-            className={btnCls}
-            disabled={busy || !newAgent.name}
-            onClick={() => {
-              onSaveAgent({ ...newAgent, clientId: client.id });
-              setNewAgent({ ...newAgent, name: "", description: "" });
-            }}
-          >
-            Opslaan
-          </button>
+      {magWijzigen && (
+        <div className="mt-3 space-y-3">
+          {client.agents.map((a: any) => (
+            <AgentRow
+              key={a.id}
+              agent={a}
+              busy={busy}
+              onSaveAgent={onSaveAgent}
+              onDeleteAgent={onDeleteAgent}
+              onSaveStat={onSaveStat}
+            />
+          ))}
         </div>
-      </details>
+      )}
+
+      {magWijzigen && (
+        <details className="mt-3">
+          <summary className="cursor-pointer text-[12px] font-medium text-violet">
+            + Agent toevoegen
+          </summary>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <input
+              className={inputCls}
+              placeholder="Naam (bijv. Lead Qualification Assistant)"
+              value={newAgent.name}
+              onChange={(e) => setNewAgent({ ...newAgent, name: e.target.value })}
+            />
+            <input
+              className={inputCls}
+              placeholder="Korte omschrijving"
+              value={newAgent.description}
+              onChange={(e) => setNewAgent({ ...newAgent, description: e.target.value })}
+            />
+            <input
+              className={inputCls}
+              placeholder="Label output (bijv. leads gekwalificeerd)"
+              value={newAgent.metricLabel}
+              onChange={(e) => setNewAgent({ ...newAgent, metricLabel: e.target.value })}
+            />
+            <input
+              className={inputCls}
+              placeholder="Label score (bijv. nauwkeurigheid)"
+              value={newAgent.scoreLabel}
+              onChange={(e) => setNewAgent({ ...newAgent, scoreLabel: e.target.value })}
+            />
+            <select
+              className={inputCls}
+              value={newAgent.status}
+              onChange={(e) => setNewAgent({ ...newAgent, status: e.target.value as any })}
+            >
+              <option value="live">Live</option>
+              <option value="paused">Gepauzeerd</option>
+              <option value="setup">In opbouw</option>
+            </select>
+            <button
+              className={btnCls}
+              disabled={busy || !newAgent.name}
+              onClick={() => {
+                onSaveAgent({ ...newAgent, clientId: client.id });
+                setNewAgent({ ...newAgent, name: "", description: "" });
+              }}
+            >
+              Opslaan
+            </button>
+          </div>
+        </details>
+      )}
     </section>
   );
 }
@@ -659,5 +796,84 @@ function AannamesBlok({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Wie er bij ons werkt. De beheerder kan een support-medewerker uitnodigen:
+ * die ziet dit overzicht en mag meekijken, maar wijzigt niets.
+ */
+function Medewerkers({ magUitnodigen }: { magUitnodigen: boolean }) {
+  const qc = useQueryClient();
+  const listFn = useServerFn(adminListMedewerkers);
+  const uitnodigFn = useServerFn(adminNodigMedewerkerUit);
+  const query = useQuery({ queryKey: ["medewerkers"], queryFn: () => listFn() });
+  const [nieuw, setNieuw] = useState({ naam: "", email: "" });
+  const [bezig, setBezig] = useState(false);
+  const [melding, setMelding] = useState<string | null>(null);
+
+  async function uitnodigen() {
+    setBezig(true);
+    setMelding(null);
+    try {
+      await uitnodigFn({ data: nieuw });
+      setMelding(`Uitnodiging verstuurd naar ${nieuw.email}.`);
+      setNieuw({ naam: "", email: "" });
+      await qc.invalidateQueries({ queryKey: ["medewerkers"] });
+    } catch (err) {
+      setMelding(err instanceof Error ? err.message : "Uitnodigen lukte niet");
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <section className="card-glass-lg mt-5 rounded-3xl p-5">
+      <p className="font-display text-[15px] font-semibold text-brand">Medewerkers</p>
+      <ul className="mt-3 space-y-1.5">
+        {(query.data ?? []).map((m) => (
+          <li
+            key={m.id}
+            className="flex flex-wrap items-baseline justify-between gap-2 text-[13px]"
+          >
+            <span className="text-ink/85">{m.name || m.email}</span>
+            <span className="text-[12px] text-ink/50">
+              {m.email} · {m.rol}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {magUitnodigen && (
+        <div className="mt-4">
+          <p className="text-[12px] text-ink/55">
+            Support-medewerker uitnodigen. Die ziet dit overzicht en kan meekijken, maar maakt geen
+            klanten aan en wijzigt geen agents.
+          </p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+            <input
+              className={inputCls}
+              placeholder="Naam"
+              value={nieuw.naam}
+              onChange={(e) => setNieuw({ ...nieuw, naam: e.target.value })}
+            />
+            <input
+              className={inputCls}
+              placeholder="E-mail"
+              value={nieuw.email}
+              onChange={(e) => setNieuw({ ...nieuw, email: e.target.value })}
+            />
+            <button
+              className={btnCls}
+              disabled={bezig || !nieuw.naam.trim() || !nieuw.email.includes("@")}
+              onClick={uitnodigen}
+            >
+              {bezig ? "Bezig\u2026" : "Uitnodigen"}
+            </button>
+          </div>
+          {melding && <p className="mt-2 text-[12px] text-ink/70">{melding}</p>}
+        </div>
+      )}
+    </section>
   );
 }

@@ -162,6 +162,10 @@ export async function noteerVerbruik(
   } catch (err) {
     console.warn("assistent: tokenverbruik vastleggen mislukt", err);
   }
+
+  // Pas nu is het gesprek meegeteld, dus pas nu kan het over een drempel gaan.
+  const { meldFairUse } = await import("@/lib/fair-use.server");
+  await meldFairUse(agentId);
 }
 
 /** Hoogt de teller op en zegt of dit verzoek nog binnen de uurgrens valt. */

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { eigenKlant } from "@/lib/klant";
 
 export const CATEGORIES = [
   "bedrijf",
@@ -103,7 +104,7 @@ export const saveKnowledge = createServerFn({ method: "POST" })
     const zoeker = context.supabase
       .from("agents")
       .select("id")
-      .eq("client_id", context.userId);
+      .eq("client_id", await eigenKlant(context));
     const { data: agent, error: agentError } = await (
       data.agentId ? zoeker.eq("id", data.agentId) : zoeker.eq("slug", data.agentSlug)
     ).maybeSingle();
@@ -208,7 +209,7 @@ export const importeerPrijzen = createServerFn({ method: "POST" })
       .from("agents")
       .select("id")
       .eq("id", data.agentId)
-      .eq("client_id", context.userId)
+      .eq("client_id", await eigenKlant(context))
       .maybeSingle();
     if (agentFout) throw new Error(agentFout.message);
     if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");

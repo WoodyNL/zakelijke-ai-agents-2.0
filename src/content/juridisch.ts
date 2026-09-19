@@ -168,6 +168,7 @@ export const PRIVACY: JuridischBlok[] = [
     kop: "Beveiliging",
     alineas: [
       "Verkeer naar deze site gaat uitsluitend over een versleutelde verbinding. Wachtwoorden worden nooit leesbaar opgeslagen. Toegang tot klantgegevens is beperkt tot wie die toegang nodig heeft voor de opdracht. Alles wat een AI-agent doet, is terug te zien in een activiteitenlog.",
+      "Wij zien in ons beheer welke agents er draaien en hoeveel ze verbruiken, niet wat erin staat. Moeten we bij een storing toch meekijken, dan kan dat alleen met een opgegeven reden, voor maximaal een uur en alleen lezend. Je kennisbank blijft daarbij dicht. Wie wanneer en waarom heeft meegekeken, en welke schermen er zijn bekeken, zie je terug in je portaal onder Account.",
     ],
   },
   {

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { useMeekijken } from "@/hooks/use-meekijken";
 import { KennisUpload } from "@/components/kennis-upload";
 import { PrijsUpload } from "@/components/prijs-upload";
 import type { KennisVoorstel } from "@/lib/kennisimport.functions";
@@ -121,8 +122,9 @@ function KnowledgePage() {
     gekozenId ?? gekoppeld.find((a) => heeftKennisbank(a.kind))?.id ?? gekoppeld[0]?.id ?? null;
   const actieveAgent = gekoppeld.find((a) => a.id === actieveId) ?? null;
   const isAdmin = meQuery.data?.isAdmin === true;
-  // Geen enabled-vlag meer op de rol: RLS bepaalt wat iemand terugkrijgt. Een
-  // beheerder ziet alles, een klant alleen de kennis van zijn eigen agents.
+  const meekijken = useMeekijken();
+  // Geen enabled-vlag meer op de rol: RLS bepaalt wat iemand terugkrijgt. Ieder
+  // ziet alleen de kennis van zijn eigen agents, een beheerder ook.
   // De sleutel bevat de agent, zodat wisselen van agent ook echt een andere
   // lijst oplevert in plaats van dezelfde uit het geheugen.
   const itemsQuery = useQuery({
@@ -277,6 +279,21 @@ function KnowledgePage() {
     return (
       <DashboardShell>
         <p className="text-[13px] text-ink/55">Laden…</p>
+      </DashboardShell>
+    );
+  }
+
+  // De kennisbank blijft voor een beheerder dicht, ook tijdens meekijken. De
+  // database geeft hem toch niets; dit zegt het alleen hardop, in plaats van
+  // een lege lijst die op een fout lijkt.
+  if (meekijken.data) {
+    return (
+      <DashboardShell isAdmin={isAdmin} userName={meQuery.data?.name}>
+        <h1 className="font-display text-[24px] font-bold tracking-tight text-brand">Kennisbank</h1>
+        <p className="mt-3 max-w-[60ch] text-[13px]/[1.65] text-ink/60">
+          De kennisbank van {meekijken.data.klant} is niet zichtbaar bij meekijken. Hulp nodig bij
+          het vullen? Dat gaat samen met de klant, in zijn eigen portaal.
+        </p>
       </DashboardShell>
     );
   }

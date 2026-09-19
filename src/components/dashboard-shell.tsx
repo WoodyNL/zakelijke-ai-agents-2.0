@@ -1,9 +1,22 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowUpRight, LogOut } from "lucide-react";
-import type { ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowUpRight, Eye, LogOut } from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { useMeekijken } from "@/hooks/use-meekijken";
+import { schermenVoor, type Scherm } from "@/lib/agent-soorten";
+import { getMe, listAgents } from "@/lib/dashboard.functions";
+import { logMeekijkpagina, stopMeekijken } from "@/lib/meekijken.functions";
 import { supabase } from "@/lib/supabase-browser";
+
+const SCHERMLINKS: Record<Scherm, { to: string; label: string }> = {
+  contacten: { to: "/contacten", label: "Contacten" },
+  campagnes: { to: "/campagnes", label: "Campagnes" },
+  berichten: { to: "/berichten", label: "Berichten" },
+  antwoorden: { to: "/antwoorden", label: "Antwoorden" },
+  bezorgen: { to: "/bezorgen", label: "Bezorgen" },
+};
 
 /**
  * De schil om alles achter de inlog.
@@ -25,6 +38,46 @@ export function DashboardShell({
   const queryClient = useQueryClient();
   const pad = useRouterState({ select: (s) => s.location.pathname });
 
+  const meekijken = useMeekijken();
+  const sessie = meekijken.data ?? null;
+
+  // Beheer is voor wie bij ons werkt, ook support. Uit dezelfde "me" als de
+  // pagina's; de isAdmin die een pagina meegeeft is daarvoor te smal.
+  const meFn = useServerFn(getMe);
+  const me = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
+  const isStaf = me.data?.isStaf === true || isAdmin === true;
+
+  // Dezelfde sleutel als het dashboard, dus meestal al in het geheugen.
+  const agentsFn = useServerFn(listAgents);
+  const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: () => agentsFn() });
+  const kinds = ((agentsQuery.data ?? []) as Array<{ kind?: string | null }>).map((a) => a.kind);
+
+  // Begint of eindigt een meekijksessie, dan hoort alles wat in het geheugen
+  // staat bij de verkeerde klant. Opnieuw ophalen, niet hopen.
+  const vorigeSessie = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (meekijken.isLoading) return;
+    const nu = sessie?.id ?? null;
+    if (vorigeSessie.current !== undefined && vorigeSessie.current !== nu) {
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "meekijken" });
+    }
+    vorigeSessie.current = nu;
+  }, [sessie?.id, meekijken.isLoading, queryClient]);
+
+  // Elk scherm dat tijdens meekijken open gaat, komt in de toegangslog van de
+  // klant. Zonder sessie doet de database niets met deze aanroep.
+  const logFn = useServerFn(logMeekijkpagina);
+  useEffect(() => {
+    if (sessie) logFn({ data: { pad } }).catch(() => {});
+  }, [pad, sessie, logFn]);
+
+  const stopFn = useServerFn(stopMeekijken);
+  async function stoppen() {
+    await stopFn();
+    await queryClient.invalidateQueries();
+    navigate({ to: "/admin" });
+  }
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -32,26 +85,18 @@ export function DashboardShell({
     navigate({ to: "/auth", replace: true });
   }
 
-  // De kennisbank en de contactenlijst zijn voor iedereen: iedereen ziet daar
-  // alleen wat bij zijn eigen agents hoort, een beheerder ook. Alleen het
-  // beheerpaneel blijft afgeschermd.
+  // Het menu volgt de agents. Contacten, Campagnes en de rest horen bij de
+  // uitgaande e-mailagent; een klant met alleen een chat-assistent kreeg vijf
+  // lege schermen. Welke soort welke schermen krijgt, staat in agent-soorten.ts.
   //
-  // Contacten staat er ook voor een klant zonder e-mailagent, en dat is een
-  // afweging. Een menu-item dat niets doet is rommelig, maar een scherm dat
-  // bestaat zonder link is erger: dat is eerder in dit project gebeurd en toen
-  // dacht iedereen dat de functie ontbrak. De pagina legt zelf uit wanneer er
-  // niets te doen valt.
   // Een beheerder krijgt Beheer vooraan: daar komt hij na het inloggen uit. De
-  // rest van het menu is zijn eigen klantportaal, met alleen zijn eigen agents.
+  // rest is zijn eigen portaal, of tijdens meekijken dat van de klant, maar
+  // dan zonder Kennisbank: die blijft voor een beheerder altijd dicht.
   const links = [
-    ...(isAdmin ? [{ to: "/admin", label: "Beheer" }] : []),
+    ...(isStaf ? [{ to: "/admin", label: "Beheer" }] : []),
     { to: "/dashboard", label: "Dashboard" },
-    { to: "/knowledge", label: "Kennisbank" },
-    { to: "/contacten", label: "Contacten" },
-    { to: "/campagnes", label: "Campagnes" },
-    { to: "/berichten", label: "Berichten" },
-    { to: "/antwoorden", label: "Antwoorden" },
-    { to: "/bezorgen", label: "Bezorgen" },
+    ...(sessie ? [] : [{ to: "/knowledge", label: "Kennisbank" }]),
+    ...schermenVoor(kinds).map((s) => SCHERMLINKS[s]),
     { to: "/account", label: "Account" },
   ];
 
@@ -61,6 +106,32 @@ export function DashboardShell({
         className="sticky top-0 z-40 border-b border-white/[0.08] backdrop-blur-md"
         style={{ backgroundColor: "rgba(10,10,15,0.82)" }}
       >
+        {sessie && (
+          <div
+            role="status"
+            className="border-b border-amber-400/30 bg-amber-400/12 px-4 py-2 text-[12.5px] text-amber-100 sm:px-6"
+          >
+            <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-1.5">
+              <Eye className="h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+              <span>
+                Je kijkt mee bij <strong className="font-semibold">{sessie.klant}</strong>. Alleen
+                lezen, en de klant ziet dit terug in zijn toegangslog. Eindigt om{" "}
+                {new Date(sessie.verloopt_op).toLocaleTimeString("nl-NL", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+                .
+              </span>
+              <button
+                type="button"
+                onClick={stoppen}
+                className="ml-auto rounded-full border border-amber-300/40 px-3 py-1 text-[12px] font-semibold text-amber-100 hover:bg-amber-400/15"
+              >
+                Stoppen
+              </button>
+            </div>
+          </div>
+        )}
         <div className="mx-auto flex h-[68px] w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
           <Link to="/dashboard" className="flex shrink-0 items-center gap-3">
             <BrandLogo textClassName="text-[14px]" />

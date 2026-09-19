@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { mijnAgent } from "@/lib/agent-toegang";
+import { mijnAgent, nietGepauzeerd } from "@/lib/agent-toegang";
 
 /**
  * Proefpakketten inplannen op een vrijdag.
@@ -36,17 +36,19 @@ export const haalKandidaten = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    const [{ data: antwoorden, error: aFout }, { data: bezorgd, error: bFout }] = await Promise.all([
-      context.supabase
-        .from("outbound_replies")
-        .select("contact_id, outbound_contacts(naam, bedrijf, plaats, email)")
-        .eq("agent_id", data.agentId)
-        .not("contact_id", "is", null),
-      context.supabase
-        .from("outbound_deliveries")
-        .select("contact_id")
-        .eq("agent_id", data.agentId),
-    ]);
+    const [{ data: antwoorden, error: aFout }, { data: bezorgd, error: bFout }] = await Promise.all(
+      [
+        context.supabase
+          .from("outbound_replies")
+          .select("contact_id, outbound_contacts(naam, bedrijf, plaats, email)")
+          .eq("agent_id", data.agentId)
+          .not("contact_id", "is", null),
+        context.supabase
+          .from("outbound_deliveries")
+          .select("contact_id")
+          .eq("agent_id", data.agentId),
+      ],
+    );
     if (aFout) throw new Error(aFout.message);
     if (bFout) throw new Error(bFout.message);
 
@@ -85,10 +87,7 @@ export const planBezorging = createServerFn({ method: "POST" })
         .select("adres, postcode, plaats")
         .eq("id", data.contactId)
         .maybeSingle();
-      const delen = [
-        c?.adres,
-        [c?.postcode, c?.plaats].filter(Boolean).join(" "),
-      ].filter(Boolean);
+      const delen = [c?.adres, [c?.postcode, c?.plaats].filter(Boolean).join(" ")].filter(Boolean);
       adres = delen.length > 0 ? delen.join(", ") : null;
     }
 
@@ -196,6 +195,7 @@ export const vraagBevestiging = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await mijnAgent(context as never, data.agentId);
+    await nietGepauzeerd(context as never, data.agentId);
     const { verstuurBevestigingen } = await import("@/lib/bezorgbevestiging.server");
     return verstuurBevestigingen(data.agentId, data.bezorgdag);
   });

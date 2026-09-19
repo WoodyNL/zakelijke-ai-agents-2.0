@@ -41,9 +41,7 @@ const AFMELDBASIS = "https://zakelijkeaiagents.nl/afmelden";
  * een afmelding. De makkelijkste uitweg bieden is dus in je eigen belang.
  */
 function afmeldregel(sleutel: string): string {
-  return (
-    `\n\n—\nWil je geen post meer van ons? Meld je af via ${AFMELDBASIS}?s=${sleutel}`
-  );
+  return `\n\n—\nWil je geen post meer van ons? Meld je af via ${AFMELDBASIS}?s=${sleutel}`;
 }
 
 function sleutel(): string {
@@ -252,4 +250,52 @@ export async function trekOpvolgingIn(contactId: string): Promise<number> {
     ingetrokken++;
   }
   return ingetrokken;
+}
+
+/**
+ * Trekt alles in wat voor deze agent bij Resend klaarstaat. Voor de pauzeknop.
+ *
+ * Een e-mailagent pauzeren zonder dit zou niets doen: de berichten staan dan
+ * al ingepland bij Resend en gaan gewoon de deur uit. Wie op pauze drukt,
+ * verwacht dat er niets meer vertrekt.
+ *
+ * Wat niet kon worden ingetrokken blijft op 'gepland' staan en wordt geteld,
+ * zodat het scherm eerlijk kan zeggen dat er nog iets onderweg is.
+ */
+export async function trekGeplandeBerichtenIn(
+  agentId: string,
+): Promise<{ ingetrokken: number; nietGelukt: number }> {
+  const d = db();
+  const res = await fetch(
+    `${d.url}/rest/v1/outbound_messages?select=id,provider_id&agent_id=eq.${agentId}&status=eq.gepland`,
+    { headers: d.headers },
+  );
+  if (!res.ok) throw new Error(`Ingeplande berichten ophalen mislukt [${res.status}]`);
+
+  const rijen = (await res.json()) as Array<{ id: string; provider_id: string | null }>;
+  let ingetrokken = 0;
+  let nietGelukt = 0;
+
+  for (const r of rijen) {
+    if (!r.provider_id) {
+      nietGelukt++;
+      continue;
+    }
+    const annuleer = await fetch(`${RESEND}/emails/${r.provider_id}/cancel`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${sleutel()}` },
+    });
+    if (!annuleer.ok) {
+      console.warn(`Bericht ${r.id} kon niet worden ingetrokken: ${annuleer.status}`);
+      nietGelukt++;
+      continue;
+    }
+    await fetch(`${d.url}/rest/v1/outbound_messages?id=eq.${r.id}`, {
+      method: "PATCH",
+      headers: { ...d.headers, Prefer: "return=minimal" },
+      body: JSON.stringify({ status: "mislukt", fout: "ingetrokken: agent gepauzeerd" }),
+    });
+    ingetrokken++;
+  }
+  return { ingetrokken, nietGelukt };
 }

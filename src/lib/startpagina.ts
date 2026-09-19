@@ -3,7 +3,8 @@ import { supabase } from "@/lib/supabase-browser";
 /**
  * Waar iemand na het inloggen uitkomt.
  *
- * Een beheerder komt op /admin, waar hij ziet welke agents er draaien. Het
+ * Een beheerder of support-medewerker komt op /admin, waar hij ziet welke
+ * agents er draaien. Het
  * klantportaal op /dashboard toont alleen de eigen agents, ook voor een
  * beheerder. Daar landen was voor hem dus een leeg portaal.
  *
@@ -14,11 +15,10 @@ export async function startpagina(): Promise<"/admin" | "/dashboard"> {
   const { data: sessie } = await supabase.auth.getSession();
   const userId = sessie.session?.user.id;
   if (!userId) return "/dashboard";
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  return data ? "/admin" : "/dashboard";
+  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  // Beheerder of support: wie bij ons werkt, begint op /admin.
+  const staf = ((data ?? []) as Array<{ role: string }>).some(
+    (r) => r.role === "admin" || r.role === "support",
+  );
+  return staf ? "/admin" : "/dashboard";
 }

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { mijnAgent } from "@/lib/agent-toegang";
+import { mijnAgent, mijnCampagne } from "@/lib/agent-toegang";
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import type { TablesInsert } from "@/integrations/supabase/types";
 
@@ -30,7 +30,6 @@ const campagneSchema = z.object({
   dagmaximum: z.number().int().min(1).max(500),
   actief: z.boolean(),
 });
-
 
 export const haalCampagnes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -245,13 +244,8 @@ export const bereidCampagneVoor = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: campagne, error } = await context.supabase
-      .from("outbound_campaigns")
-      .select("id, agent_id")
-      .eq("id", data.campagneId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    // Eigendom, niet leesbaarheid: hierna gaat het door met de service-role.
+    await mijnCampagne(context as never, data.campagneId);
 
     const { bereidVoor } = await import("@/lib/campagne-uitvoeren.server");
     return bereidVoor(data.campagneId, data.portie);
@@ -262,13 +256,8 @@ export const verstuurCampagne = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ campagneId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    const { data: campagne, error } = await context.supabase
-      .from("outbound_campaigns")
-      .select("id, agent_id")
-      .eq("id", data.campagneId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    // Eigendom, niet leesbaarheid: hierna gaat het door met de service-role.
+    await mijnCampagne(context as never, data.campagneId);
 
     const { verstuurKlaarstaande } = await import("@/lib/campagne-uitvoeren.server");
     return verstuurKlaarstaande(data.campagneId);
@@ -303,13 +292,8 @@ export const bereidOpvolgingVoor = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: campagne, error } = await context.supabase
-      .from("outbound_campaigns")
-      .select("id")
-      .eq("id", data.campagneId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    // Eigendom, niet leesbaarheid: hierna gaat het door met de service-role.
+    await mijnCampagne(context as never, data.campagneId);
 
     const mod = await import("@/lib/campagne-uitvoeren.server");
     return mod.bereidOpvolgingVoor(data.campagneId, data.portie);
@@ -320,13 +304,8 @@ export const verstuurOpvolging = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ campagneId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    const { data: campagne, error } = await context.supabase
-      .from("outbound_campaigns")
-      .select("id")
-      .eq("id", data.campagneId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!campagne) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    // Eigendom, niet leesbaarheid: hierna gaat het door met de service-role.
+    await mijnCampagne(context as never, data.campagneId);
 
     const mod = await import("@/lib/campagne-uitvoeren.server");
     return mod.verstuurOpvolging(data.campagneId);
@@ -380,17 +359,15 @@ export const bereidNavraagVoor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
     z
-      .object({ campagneId: z.string().uuid(), portie: z.number().int().min(1).max(50).default(10) })
+      .object({
+        campagneId: z.string().uuid(),
+        portie: z.number().int().min(1).max(50).default(10),
+      })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: c, error } = await context.supabase
-      .from("outbound_campaigns")
-      .select("id")
-      .eq("id", data.campagneId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!c) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    // Eigendom, niet leesbaarheid: hierna gaat het door met de service-role.
+    await mijnCampagne(context as never, data.campagneId);
     const mod = await import("@/lib/campagne-uitvoeren.server");
     return mod.bereidNavraagVoor(data.campagneId, data.portie);
   });
@@ -400,13 +377,8 @@ export const verstuurNavraag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ campagneId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    const { data: c, error } = await context.supabase
-      .from("outbound_campaigns")
-      .select("id")
-      .eq("id", data.campagneId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!c) throw new Error("Deze campagne bestaat niet, of is niet van jou.");
+    // Eigendom, niet leesbaarheid: hierna gaat het door met de service-role.
+    await mijnCampagne(context as never, data.campagneId);
     const mod = await import("@/lib/campagne-uitvoeren.server");
     return mod.verstuurNavraag(data.campagneId);
   });

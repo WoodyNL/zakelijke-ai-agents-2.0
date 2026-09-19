@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { eigenKlant } from "@/lib/klant";
 
 /**
  * Een bestand omzetten naar kennisitems.
@@ -125,7 +126,7 @@ export const importeerKennis = createServerFn({ method: "POST" })
     const zoeker = context.supabase
       .from("agents")
       .select("id, name")
-      .eq("client_id", context.userId);
+      .eq("client_id", await eigenKlant(context));
     const { data: agent, error: agentFout } = await (
       data.agentId ? zoeker.eq("id", data.agentId) : zoeker.eq("slug", data.agentSlug ?? "")
     ).maybeSingle();
@@ -260,7 +261,7 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
       .from("agents")
       .select("id, name")
       .eq("id", data.agentId)
-      .eq("client_id", context.userId)
+      .eq("client_id", await eigenKlant(context))
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");

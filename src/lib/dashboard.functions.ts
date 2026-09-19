@@ -1,8 +1,36 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { leesKlant } from "@/lib/klant";
 
 type Ctx = { supabase: any; userId: string };
+
+/** Voor tabellen die nog niet in de gegenereerde types staan. */
+type Ongetypt = {
+  from: (tabel: string) => {
+    select: (kolommen: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+  };
+};
+
+type Rpc = {
+  rpc: (
+    naam: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
+};
+
+/** Beheerder of support: mag het overzicht in /admin zien, niets wijzigen. */
+async function assertStaf(context: Ctx) {
+  const { data, error } = await context.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", context.userId);
+  if (error) throw new Error(error.message);
+  const rollen = ((data ?? []) as Array<{ role: string }>).map((r) => r.role as string);
+  if (!rollen.includes("admin") && !rollen.includes("support")) {
+    throw new Error("Geen toegang tot het beheer");
+  }
+}
 
 async function assertAdmin(context: Ctx) {
   const { data, error } = await context.supabase
@@ -22,25 +50,35 @@ export const getMe = createServerFn({ method: "GET" })
       context.supabase.from("profiles").select("*").eq("id", context.userId).maybeSingle(),
       context.supabase.from("user_roles").select("role").eq("user_id", context.userId),
     ]);
-    const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+    const rollen = (roles ?? []).map((r: { role: string }) => r.role as string);
+    const isAdmin = rollen.includes("admin");
+    // Staf: wie bij ons werkt. Een support-medewerker ziet /admin en mag
+    // meekijken, maar wijzigt niets (fase 5).
+    const isStaf = isAdmin || rollen.includes("support");
+    // Eigenaar van het klantaccount, of een teamlid dat is uitgenodigd. Staat
+    // de functie er nog niet, dan is iedereen eigenaar, zoals tot nu toe.
+    const eigenaar = await (context.supabase as unknown as Rpc).rpc("ben_eigenaar");
     return {
       id: context.userId,
       name: profile?.name ?? "",
       email: profile?.email ?? "",
       isAdmin,
+      isStaf,
+      isEigenaar: eigenaar.error ? true : eigenaar.data === true,
     };
   });
 
 export const listAgents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Alleen de eigen agents, ook voor een beheerder. RLS laat een beheerder
-    // alle agents zien, want die heeft hij nodig in /admin; maar het
-    // klantportaal is voor ieder zijn eigen portaal.
+    // Alleen de agents van de eigen klant, ook voor een beheerder. RLS laat een
+    // beheerder alle agents zien, want die heeft hij nodig in /admin; maar het
+    // klantportaal is voor ieder zijn eigen portaal. Tijdens meekijken is dat
+    // het portaal van de klant bij wie wordt meegekeken (zie lib/klant.ts).
     const { data: agents, error } = await context.supabase
       .from("agents")
       .select("*")
-      .eq("client_id", context.userId)
+      .eq("client_id", await leesKlant(context))
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -77,7 +115,7 @@ export const getAgent = createServerFn({ method: "GET" })
       .from("agents")
       .select("*")
       .eq("id", data.agentId)
-      .eq("client_id", context.userId)
+      .eq("client_id", await leesKlant(context))
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!agent) throw new Error("Agent niet gevonden");
@@ -95,18 +133,54 @@ export const getAgent = createServerFn({ method: "GET" })
     return { agent, stats: stats ?? [] };
   });
 
+/** Het begin van de huidige maand in Nederlandse tijd, als ISO-tijdstip. */
+function begin_van_maand_amsterdam(nu = new Date()) {
+  const deel = (opties: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Amsterdam", ...opties }).format(nu);
+  const jaar = deel({ year: "numeric" });
+  const maand = deel({ month: "2-digit" });
+  // Op de eerste van de maand om middernacht geldt dezelfde tijdzone als nu,
+  // behalve in de nacht van een zomertijdwissel; die valt nooit op de eerste.
+  const verschil = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Amsterdam",
+    timeZoneName: "shortOffset",
+  })
+    .formatToParts(nu)
+    .find((p) => p.type === "timeZoneName")
+    ?.value.replace("GMT", "");
+  const uren = Number(verschil || "+1");
+  const teken = uren < 0 ? "-" : "+";
+  return `${jaar}-${maand}-01T00:00:00${teken}${String(Math.abs(uren)).padStart(2, "0")}:00`;
+}
+
 export const adminListClients = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context as Ctx);
-    const [{ data: profiles }, { data: agents }] = await Promise.all([
+    await assertStaf(context as Ctx);
+    const [{ data: profiles }, { data: agents }, { data: rollen }, leden] = await Promise.all([
       context.supabase.from("profiles").select("*").order("created_at", { ascending: true }),
       context.supabase.from("agents").select("*").order("created_at", { ascending: true }),
+      context.supabase.from("user_roles").select("user_id, role"),
+      (context.supabase as unknown as Ongetypt).from("klantleden").select("user_id, client_id"),
     ]);
+
+    // Een klant is een profiel zonder staf-rol dat geen teamlid van een ander
+    // account is. Medewerkers en teamleden staan anders als losse "klant" in
+    // de lijst, zonder agents.
+    const staf = new Set(
+      ((rollen ?? []) as Array<{ user_id: string; role: string }>)
+        .filter((r) => r.role === "admin" || r.role === "support")
+        .map((r) => r.user_id),
+    );
+    const teamleden = ((leden.data ?? []) as Array<{ user_id: string; client_id: string }>) ?? [];
+    const isTeamlid = new Set(teamleden.map((l) => l.user_id));
 
     // Wat een beheerder per agent moet weten om te zien of hij draait: wanneer
     // hij voor het laatst iets deed, en hoeveel hij deze maand verbruikt
     // tegenover de afgesproken fair use. Allemaal aantallen, geen inhoud.
+    // Rechtstreeks uit agent_usage en niet via agent_month_summary: die functie
+    // kent alleen de beheerder, en support moet hetzelfde getal zien.
+    const vanaf = begin_van_maand_amsterdam();
     const bijgewerkt = await Promise.all(
       (agents ?? []).map(async (a: any) => {
         const [laatste, maand] = await Promise.all([
@@ -118,21 +192,31 @@ export const adminListClients = createServerFn({ method: "GET" })
             .order("hour", { ascending: false })
             .limit(1)
             .maybeSingle(),
-          context.supabase.rpc("agent_month_summary", { _agent_id: a.id, _month_offset: 0 }),
+          context.supabase
+            .from("agent_usage")
+            .select("billable_requests")
+            .eq("agent_id", a.id)
+            .gte("hour", vanaf),
         ]);
-        const stand = ((maand.data ?? []) as Array<{ requests: number }>)[0] ?? null;
+        const verbruik = ((maand.data ?? []) as Array<{ billable_requests: number }>).reduce(
+          (som, r) => som + Number(r.billable_requests ?? 0),
+          0,
+        );
         return {
           ...a,
           laatste_activiteit: (laatste.data as { hour: string } | null)?.hour ?? null,
-          verbruik_maand: stand?.requests ?? 0,
+          verbruik_maand: verbruik,
         };
       }),
     );
 
-    return (profiles ?? []).map((p: any) => ({
-      ...p,
-      agents: bijgewerkt.filter((a: any) => a.client_id === p.id),
-    }));
+    return (profiles ?? [])
+      .filter((p: any) => !staf.has(p.id) && !isTeamlid.has(p.id))
+      .map((p: any) => ({
+        ...p,
+        teamleden: teamleden.filter((l) => l.client_id === p.id).length,
+        agents: bijgewerkt.filter((a: any) => a.client_id === p.id),
+      }));
   });
 
 export const adminCreateClient = createServerFn({ method: "POST" })
@@ -345,7 +429,7 @@ export const getMaandstand = createServerFn({ method: "GET" })
     const { data: agents, error } = await context.supabase
       .from("agents")
       .select("id, name, kind, status")
-      .eq("client_id", context.userId);
+      .eq("client_id", await leesKlant(context));
     if (error) throw new Error(error.message);
 
     type Stand = {
@@ -376,4 +460,83 @@ export const getMaandstand = createServerFn({ method: "GET" })
     );
 
     return perAgent;
+  });
+
+/** Wie er bij ons werkt: beheerders en support (fase 5). */
+export const adminListMedewerkers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertStaf(context as Ctx);
+    const [{ data: rollen }, { data: profielen }] = await Promise.all([
+      context.supabase.from("user_roles").select("user_id, role"),
+      context.supabase.from("profiles").select("id, name, email"),
+    ]);
+    const perId = new Map<string, string>();
+    for (const r of (rollen ?? []) as Array<{ user_id: string; role: string }>) {
+      if (r.role === "admin") perId.set(r.user_id, "Beheerder");
+      else if (r.role === "support" && !perId.has(r.user_id)) perId.set(r.user_id, "Support");
+    }
+    return ((profielen ?? []) as Array<{ id: string; name: string; email: string }>)
+      .filter((p) => perId.has(p.id))
+      .map((p) => ({ ...p, rol: perId.get(p.id)! }));
+  });
+
+/**
+ * Een support-medewerker toevoegen. Die ziet het overzicht in /admin en mag
+ * meekijken, maar maakt geen klanten aan en wijzigt geen agents. Alleen de
+ * beheerder kan dit.
+ */
+export const adminNodigMedewerkerUit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        naam: z.string().trim().min(1).max(100),
+        email: z.string().trim().toLowerCase().email(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: "invite",
+      email: data.email,
+      options: {
+        data: { name: data.naam },
+        redirectTo: "https://zakelijkeaiagents.nl/reset-password",
+      },
+    });
+    if (error || !link.user) throw new Error(error?.message ?? "Uitnodigen lukte niet");
+
+    // 'support' staat pas na de migratie van fase 5 in de gegenereerde types.
+    const { error: rolFout } = await (
+      supabaseAdmin as unknown as {
+        from: (t: string) => {
+          insert: (r: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+        };
+      }
+    )
+      .from("user_roles")
+      .insert({ user_id: link.user.id, role: "support" });
+    if (rolFout) {
+      await supabaseAdmin.auth.admin.deleteUser(link.user.id);
+      throw new Error(rolFout.message);
+    }
+
+    const { esc, opmaak, stuurMail } = await import("@/lib/mail.server");
+    await stuurMail({
+      aan: [data.email],
+      onderwerp: "Je account voor het beheer van Zakelijke AI Agents",
+      html: opmaak(
+        [
+          `Hoi ${esc(data.naam)},`,
+          "Je bent toegevoegd als support-medewerker. Je ziet welke agents er bij klanten draaien en kunt bij een storing meekijken. Wat je bij een klant bekijkt, ziet die klant terug in zijn toegangslog.",
+          "Kies via de knop een wachtwoord. De link werkt één keer.",
+        ],
+        { tekst: "Wachtwoord kiezen", url: link.properties.action_link },
+      ),
+    });
+    return { ok: true as const };
   });

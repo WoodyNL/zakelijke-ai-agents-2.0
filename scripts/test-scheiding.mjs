@@ -292,6 +292,43 @@ meld(
   "het ontvangstadres lekt niet mee in de publieke configuratie",
 );
 
+// --- Beheerplan fase 1 t/m 5 ------------------------------------------------
+//
+// Meekijken, de toegangslog, teamleden en de fair-use-meldingen. Allemaal
+// dicht voor een bezoeker. Geeft een controle "BESTAAT NIET", dan zijn de
+// migraties van 19 september nog niet gedraaid.
+console.log("\nBeheer, meekijken en teams");
+
+for (const tabel of [
+  "meekijksessies",
+  "meekijkpaginas",
+  "klantleden",
+  "agent_gebeurtenissen",
+  "fair_use_meldingen",
+]) {
+  const lezen = await rest(`${tabel}?select=*&limit=1`);
+  meld(
+    lezen.status === 401 || lezen.status === 403,
+    `een bezoeker kan ${tabel} niet lezen`,
+    `HTTP ${lezen.status}${lezen.status === 200 ? " \u2014 LEK" : ""}${lezen.status === 404 ? " \u2014 BESTAAT NIET (migratie gedraaid?)" : ""}`,
+  );
+}
+
+for (const [functie, args] of [
+  ["start_meekijken", { _client_id: NEP, _reden: "lektest van een bezoeker" }],
+  ["fair_use_melding", { _agent_id: NEP }],
+  ["zet_agent_pauze", { _agent_id: NEP, _pauze: true }],
+  ["mijn_team", {}],
+  ["mijn_toegangslog", {}],
+]) {
+  const poging = await rest(`rpc/${functie}`, { method: "POST", body: JSON.stringify(args) });
+  meld(
+    poging.status === 401 || poging.status === 403,
+    `een bezoeker kan ${functie} niet aanroepen`,
+    `HTTP ${poging.status}${poging.status < 300 ? " \u2014 AANROEPBAAR, DIT HOORT DICHT" : ""}${poging.status === 404 ? " \u2014 BESTAAT NIET (migratie gedraaid?)" : ""}`,
+  );
+}
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) {
   console.log("Alles in orde: geen lek gevonden.\n");

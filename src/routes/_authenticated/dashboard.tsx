@@ -101,6 +101,8 @@ function Dashboard() {
         </div>
       )}
 
+      <FairUseWaarschuwing standen={(maandQuery.data ?? []) as AgentStand[]} />
+
       {(maandQuery.data ?? []).length > 0 && (
         <div className="mt-4">
           <OpbrengstPaneel standen={maandQuery.data as AgentStand[]} />
@@ -307,6 +309,44 @@ function Kerncijfer({
         {waarde}
       </p>
       <p className="mt-1.5 text-[11.5px] text-ink/55">{label}</p>
+    </div>
+  );
+}
+
+/**
+ * Bij 80% van de fair use een waarschuwing bovenaan, bij 100% een duidelijkere.
+ * De mail gaat ook (zie fair-use.server.ts), maar wie inlogt hoort het meteen
+ * te zien en niet pas onderaan in een balk.
+ */
+function FairUseWaarschuwing({ standen }: { standen: AgentStand[] }) {
+  const krap = standen
+    .map((s) => ({
+      naam: s.agent.name,
+      gebruikt: s.stand?.requests ?? 0,
+      grens: s.stand?.fair_use_per_month ?? null,
+    }))
+    .filter((s) => s.grens != null && s.grens > 0 && s.gebruikt >= s.grens * 0.8);
+  if (krap.length === 0) return null;
+
+  const over = krap.some((s) => s.gebruikt >= (s.grens ?? 0));
+  return (
+    <div
+      role="status"
+      className={`mt-5 rounded-2xl border px-4 py-3 text-[13px]/[1.6] ${
+        over
+          ? "border-warn/35 bg-warn/10 text-ink/85"
+          : "border-amber-400/30 bg-amber-400/10 text-ink/85"
+      }`}
+    >
+      {krap.map((s) => (
+        <p key={s.naam}>
+          <strong className="font-semibold">{s.naam}</strong> heeft deze maand {s.gebruikt} van de{" "}
+          {s.grens} afgesproken gesprekken gevoerd
+          {s.gebruikt >= (s.grens ?? 0)
+            ? ". Hij blijft werken; wat erboven zit, rekenen we af tegen het afgesproken tarief."
+            : ". Je zit dicht bij de grens."}
+        </p>
+      ))}
     </div>
   );
 }
