@@ -66,11 +66,25 @@ function naarPad(bestand: string) {
   return pad === "" ? "/" : pad;
 }
 
-/** De datum van de laatste commit op dit bestand, als JJJJ-MM-DD. */
+/**
+ * De tekst van veel pagina's staat niet in het routebestand maar in
+ * src/content/. De privacyverklaring is juridisch.ts; het routebestand zelf
+ * verandert bijna nooit. Telde alleen dat bestand, dan bleef de datum staan
+ * terwijl de pagina wel veranderde. Daarom tellen de content-bestanden die de
+ * route importeert mee.
+ */
+function contentBestanden(bestand: string) {
+  const bron = readFileSync(join(ROUTES, bestand), "utf8");
+  const namen = [...bron.matchAll(/from "@\/content\/([\w-]+)"/g)].map((m) => m[1]);
+  return [...new Set(namen)].map((n) => `src/content/${n}.ts`);
+}
+
+/** De datum van de laatste commit op de pagina of zijn content, als JJJJ-MM-DD. */
 function laatstGewijzigd(bestand: string) {
   const relatief = relative(WORTEL, join(ROUTES, bestand));
+  const paden = [relatief, ...contentBestanden(bestand)];
   try {
-    const uit = execFileSync("git", ["log", "-1", "--format=%cs", "--", relatief], {
+    const uit = execFileSync("git", ["log", "-1", "--format=%cs", "--", ...paden], {
       cwd: WORTEL,
       encoding: "utf8",
     }).trim();
