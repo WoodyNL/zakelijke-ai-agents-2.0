@@ -127,6 +127,20 @@ export async function verwerkSupportMail(mailId: string): Promise<string> {
     );
     if (!agent) throw new Error("Agent niet gevonden");
 
+    // Automatische post (bevestigingsmail bij het instellen van doorsturen,
+    // bounces, nieuwsbrieven) tonen we wel, want soms staat er iets in wat de
+    // klant nodig heeft, zoals de bevestigingscode van Gmail. Maar niet
+    // beantwoorden: dat kost een gesprek uit de fair use, en een antwoord aan
+    // een no-reply-adres komt nergens aan.
+    if (isAutomatischeAfzender(mail.van_email)) {
+      await patch(mailId, {
+        status: "mens_nodig",
+        toelichting:
+          "Automatisch bericht van een no-reply-adres. Niet beantwoord; bekijk het en handel het zelf af.",
+      });
+      return "automatisch";
+    }
+
     if (agent.status === "paused") {
       await patch(mailId, { status: "nieuw", toelichting: "De agent stond op pauze." });
       return "gepauzeerd";
@@ -203,6 +217,14 @@ export async function verwerkSupportMail(mailId: string): Promise<string> {
     await patch(mailId, { status: "mislukt", fout: fout.slice(0, 500) }).catch(() => {});
     return "mislukt";
   }
+}
+
+const AUTOMATISCH =
+  /^(no-?reply|do-?not-?reply|donotreply|mailer-daemon|postmaster|bounce[s]?|notifications?|forwarding-noreply)([+._-].*)?@/i;
+
+/** Een adres waar geen mens achter zit en waar een antwoord nergens aankomt. */
+export function isAutomatischeAfzender(adres: string): boolean {
+  return AUTOMATISCH.test(adres.trim());
 }
 
 /** Telt de mail mee voor de fair use, zoals een gesprek met de chat-assistent. */
