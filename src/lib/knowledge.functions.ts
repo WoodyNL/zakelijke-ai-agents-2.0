@@ -100,7 +100,10 @@ export const saveKnowledge = createServerFn({ method: "POST" })
     // Bewust via de agents-tabel en niet via resolve_live_agent: die geeft
     // alleen live agents terug, en je moet kennis kunnen klaarzetten voor een
     // agent van een nieuwe klant die nog op setup staat.
-    const zoeker = context.supabase.from("agents").select("id");
+    const zoeker = context.supabase
+      .from("agents")
+      .select("id")
+      .eq("client_id", context.userId);
     const { data: agent, error: agentError } = await (
       data.agentId ? zoeker.eq("id", data.agentId) : zoeker.eq("slug", data.agentSlug)
     ).maybeSingle();
@@ -205,6 +208,7 @@ export const importeerPrijzen = createServerFn({ method: "POST" })
       .from("agents")
       .select("id")
       .eq("id", data.agentId)
+      .eq("client_id", context.userId)
       .maybeSingle();
     if (agentFout) throw new Error(agentFout.message);
     if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");

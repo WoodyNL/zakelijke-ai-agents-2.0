@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { AgentAannames } from "@/components/agent-aannames";
 import { LEGE_AANNAMES, alsGetal, alsTekst, type Aannamewaarden } from "@/lib/agent-aannames";
+import { soortVan } from "@/lib/agent-soorten";
 import {
   getMe,
   adminListClients,
@@ -100,6 +101,8 @@ function AdminPanel() {
       <p className="mt-1.5 text-[13px] text-ink/55">Klanten, agents en statistieken.</p>
       {msg && <p className="mt-3 text-[12px] font-medium text-violet">{msg}</p>}
 
+      <AgentOverzicht clients={clients} laden={clientsQuery.isLoading} />
+
       <section className="card-glass-lg mt-5 rounded-3xl p-5">
         <p className="font-display text-[15px] font-semibold text-brand">Nieuwe klant</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -157,6 +160,102 @@ function AdminPanel() {
       </div>
     </DashboardShell>
   );
+}
+
+type OverzichtAgent = {
+  id: string;
+  name: string;
+  kind?: string | null;
+  status: string;
+  fair_use_per_month?: number | null;
+  laatste_activiteit: string | null;
+  verbruik_maand: number;
+};
+
+/**
+ * Alle agents van alle klanten op één plek: draait hij, wanneer deed hij voor
+ * het laatst iets, en hoe staat het verbruik ervoor tegenover de fair use.
+ *
+ * Bewust alleen aantallen. De inhoud (contacten, berichten, kennisbank) is van
+ * de klant en is voor een beheerder niet te zien.
+ */
+function AgentOverzicht({
+  clients,
+  laden,
+}: {
+  clients: Array<{ name?: string | null; email?: string | null; agents?: OverzichtAgent[] }>;
+  laden: boolean;
+}) {
+  const rijen = clients.flatMap((c) =>
+    (c.agents ?? []).map((a) => ({ klant: c.name || c.email || "", agent: a })),
+  );
+  const telling = (st: string) => rijen.filter((r) => r.agent.status === st).length;
+
+  return (
+    <section className="card-glass-lg mt-5 rounded-3xl p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-display text-[15px] font-semibold text-brand">Agents</p>
+        <p className="text-[12px] text-ink/50">
+          {telling("live")} live · {telling("paused")} gepauzeerd · {telling("setup")} in opbouw
+        </p>
+      </div>
+
+      {laden && <p className="mt-3 text-[13px] text-ink/55">Laden…</p>}
+      {!laden && rijen.length === 0 && (
+        <p className="mt-3 text-[13px] text-ink/55">Nog geen agents.</p>
+      )}
+
+      <div className="mt-3 space-y-2">
+        {rijen.map(({ klant, agent: a }) => {
+          const st = STATUS_META[a.status] ?? STATUS_META["setup"]!;
+          const stil =
+            a.status === "live" &&
+            (!a.laatste_activiteit ||
+              Date.now() - new Date(a.laatste_activiteit).getTime() > 24 * 3600 * 1000);
+          const grens = a.fair_use_per_month ?? null;
+          const aandeel = grens ? a.verbruik_maand / grens : null;
+          return (
+            <div
+              key={a.id}
+              className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 rounded-2xl border border-white/12 bg-white/5 px-4 py-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-semibold text-brand">{a.name}</p>
+                <p className="text-[11.5px] text-ink/55">
+                  {klant} · {soortVan(a.kind).label}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-ink/60">
+                <span className={stil ? "text-amber-300" : undefined}>
+                  {a.laatste_activiteit
+                    ? `actief ${sinds(a.laatste_activiteit)}`
+                    : "nog nooit actief"}
+                  {stil ? " · stil" : ""}
+                </span>
+                <span className={aandeel != null && aandeel >= 0.8 ? "text-amber-300" : undefined}>
+                  {a.verbruik_maand.toLocaleString("nl-NL")}
+                  {grens ? ` / ${grens.toLocaleString("nl-NL")}` : ""} deze maand
+                </span>
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${st.chip}`}>
+                  {st.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/** "3 min geleden", "5 uur geleden", "2 dagen geleden". Per uur geteld, dus grof. */
+function sinds(iso: string) {
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (min < 60) return "dit uur";
+  const uur = Math.round(min / 60);
+  if (uur < 24) return `${uur} uur geleden`;
+  const dagen = Math.round(uur / 24);
+  return dagen === 1 ? "gisteren" : `${dagen} dagen geleden`;
 }
 
 function LeadRequests({ enabled }: { enabled: boolean }) {

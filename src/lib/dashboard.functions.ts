@@ -34,9 +34,13 @@ export const getMe = createServerFn({ method: "GET" })
 export const listAgents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Alleen de eigen agents, ook voor een beheerder. RLS laat een beheerder
+    // alle agents zien, want die heeft hij nodig in /admin; maar het
+    // klantportaal is voor ieder zijn eigen portaal.
     const { data: agents, error } = await context.supabase
       .from("agents")
       .select("*")
+      .eq("client_id", context.userId)
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -73,6 +77,7 @@ export const getAgent = createServerFn({ method: "GET" })
       .from("agents")
       .select("*")
       .eq("id", data.agentId)
+      .eq("client_id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!agent) throw new Error("Agent niet gevonden");
@@ -98,9 +103,35 @@ export const adminListClients = createServerFn({ method: "GET" })
       context.supabase.from("profiles").select("*").order("created_at", { ascending: true }),
       context.supabase.from("agents").select("*").order("created_at", { ascending: true }),
     ]);
+
+    // Wat een beheerder per agent moet weten om te zien of hij draait: wanneer
+    // hij voor het laatst iets deed, en hoeveel hij deze maand verbruikt
+    // tegenover de afgesproken fair use. Allemaal aantallen, geen inhoud.
+    const bijgewerkt = await Promise.all(
+      (agents ?? []).map(async (a: any) => {
+        const [laatste, maand] = await Promise.all([
+          context.supabase
+            .from("agent_usage")
+            .select("hour")
+            .eq("agent_id", a.id)
+            .gt("requests", 0)
+            .order("hour", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          context.supabase.rpc("agent_month_summary", { _agent_id: a.id, _month_offset: 0 }),
+        ]);
+        const stand = ((maand.data ?? []) as Array<{ requests: number }>)[0] ?? null;
+        return {
+          ...a,
+          laatste_activiteit: (laatste.data as { hour: string } | null)?.hour ?? null,
+          verbruik_maand: stand?.requests ?? 0,
+        };
+      }),
+    );
+
     return (profiles ?? []).map((p: any) => ({
       ...p,
-      agents: (agents ?? []).filter((a: any) => a.client_id === p.id),
+      agents: bijgewerkt.filter((a: any) => a.client_id === p.id),
     }));
   });
 
@@ -313,7 +344,8 @@ export const getMaandstand = createServerFn({ method: "GET" })
 
     const { data: agents, error } = await context.supabase
       .from("agents")
-      .select("id, name, kind, status");
+      .select("id, name, kind, status")
+      .eq("client_id", context.userId);
     if (error) throw new Error(error.message);
 
     type Stand = {

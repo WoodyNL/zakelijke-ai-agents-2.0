@@ -1,6 +1,7 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { startpagina } from "@/lib/startpagina";
 import { supabase } from "@/lib/supabase-browser";
 import { paginaMeta } from "@/lib/seo";
 
@@ -33,7 +34,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) startpagina().then((to) => navigate({ to, replace: true }));
     });
   }, [navigate]);
 
@@ -46,7 +47,7 @@ function AuthPage() {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/dashboard", replace: true });
+        navigate({ to: await startpagina(), replace: true });
       } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,

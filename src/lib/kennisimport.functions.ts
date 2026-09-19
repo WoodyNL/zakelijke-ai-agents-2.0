@@ -122,7 +122,10 @@ export const importeerKennis = createServerFn({ method: "POST" })
     // Controleer dat deze gebruiker bij die agent hoort vóór we iets aan het
     // model voorleggen, zodat niemand ons modeltegoed kan gebruiken voor een
     // agent die niet van hem is.
-    const zoeker = context.supabase.from("agents").select("id, name");
+    const zoeker = context.supabase
+      .from("agents")
+      .select("id, name")
+      .eq("client_id", context.userId);
     const { data: agent, error: agentFout } = await (
       data.agentId ? zoeker.eq("id", data.agentId) : zoeker.eq("slug", data.agentSlug ?? "")
     ).maybeSingle();
@@ -257,6 +260,7 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
       .from("agents")
       .select("id, name")
       .eq("id", data.agentId)
+      .eq("client_id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");

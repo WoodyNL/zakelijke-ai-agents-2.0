@@ -54,6 +54,7 @@ export const importeerContacten = createServerFn({ method: "POST" })
       .from("agents")
       .select("id")
       .eq("id", data.agentId)
+      .eq("client_id", context.userId)
       .maybeSingle();
     if (agentFout) throw new Error(agentFout.message);
     if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");
@@ -329,6 +330,7 @@ export const vulContactenAan = createServerFn({ method: "POST" })
       .from("agents")
       .select("id")
       .eq("id", data.agentId)
+      .eq("client_id", context.userId)
       .maybeSingle();
     if (agentFout) throw new Error(agentFout.message);
     if (!agent) throw new Error("Deze agent bestaat niet, of is niet van jou.");
