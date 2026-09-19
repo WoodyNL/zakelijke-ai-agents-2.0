@@ -197,11 +197,19 @@ function AgentOverzicht({
   clients,
   laden,
 }: {
-  clients: Array<{ name?: string | null; email?: string | null; agents?: OverzichtAgent[] }>;
+  clients: Array<{
+    name?: string | null;
+    email?: string | null;
+    eigen?: boolean;
+    agents?: OverzichtAgent[];
+  }>;
   laden: boolean;
 }) {
   const rijen = clients.flatMap((c) =>
-    (c.agents ?? []).map((a) => ({ klant: c.name || c.email || "", agent: a })),
+    (c.agents ?? []).map((a) => ({
+      klant: c.eigen ? "Zakelijke AI Agents" : c.name || c.email || "",
+      agent: a,
+    })),
   );
   const telling = (st: string) => rijen.filter((r) => r.agent.status === st).length;
 
@@ -466,7 +474,7 @@ function ClientBlock({
     <section className="card-glass-lg rounded-3xl p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-display text-[15px] font-semibold text-brand">
-          {client.name || "(geen naam)"}
+          {client.eigen ? "Eigen agents" : client.name || "(geen naam)"}
         </p>
         <p className="text-[12px] text-ink/50">
           {client.email}
@@ -476,7 +484,7 @@ function ClientBlock({
         </p>
       </div>
 
-      {client.agents.length > 0 && (
+      {client.agents.length > 0 && !client.eigen && (
         <MeekijkKnop clientId={client.id} naam={client.name || client.email} />
       )}
 

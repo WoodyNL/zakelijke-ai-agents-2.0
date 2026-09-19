@@ -210,13 +210,17 @@ export const adminListClients = createServerFn({ method: "GET" })
       }),
     );
 
+    // Een medewerker met eigen agents (onze website-assistent hangt aan het
+    // account van de beheerder) komt er wél in, gemarkeerd als eigen. Anders
+    // ontbreekt juist de agent die altijd live staat.
     return (profiles ?? [])
-      .filter((p: any) => !staf.has(p.id) && !isTeamlid.has(p.id))
       .map((p: any) => ({
         ...p,
+        eigen: staf.has(p.id),
         teamleden: teamleden.filter((l) => l.client_id === p.id).length,
         agents: bijgewerkt.filter((a: any) => a.client_id === p.id),
-      }));
+      }))
+      .filter((p: any) => !isTeamlid.has(p.id) && (!p.eigen || p.agents.length > 0));
   });
 
 export const adminCreateClient = createServerFn({ method: "POST" })
