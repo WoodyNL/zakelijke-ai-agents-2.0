@@ -29,6 +29,7 @@ import { listLeadRequests, verwijderAanvraag } from "@/lib/leads.functions";
 import { adminZetAgentOpties, haalAgentOpties } from "@/lib/opties.functions";
 import { startMeekijken } from "@/lib/meekijken.functions";
 import { haalLogboek, type Logregel } from "@/lib/logboek.functions";
+import { supabase } from "@/lib/supabase-browser";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -68,6 +69,7 @@ const btnCls =
 
 function AdminPanel() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const meFn = useServerFn(getMe);
   const listFn = useServerFn(adminListClients);
   const createClientFn = useServerFn(adminCreateClient);
@@ -139,6 +141,23 @@ function AdminPanel() {
 
       {/* Eén wachtwoord geeft hier toegang tot de gegevens van elke klant.
           Zolang er geen tweede stap staat, hoort dat te wringen. */}
+      {meQuery.data?.tweestaps?.ingesteld === true && meQuery.data.tweestaps.niveau !== "aal2" && (
+        <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3 text-[12.5px]/[1.6] text-amber-100">
+          Je bent ingelogd met alleen je wachtwoord. Zolang je de code uit je app niet hebt
+          ingevuld, laat het beheer geen klantgegevens zien en kun je niets wijzigen.{" "}
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate({ to: "/auth", replace: true });
+            }}
+            className="font-semibold underline underline-offset-2"
+          >
+            Opnieuw inloggen
+          </button>
+          .
+        </div>
+      )}
+
       {meQuery.data && meQuery.data.tweestaps?.ingesteld === false && (
         <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3 text-[12.5px]/[1.6] text-amber-100">
           Tweestapsverificatie staat uit. Nu is één wachtwoord genoeg om bij de gegevens van al je
@@ -150,7 +169,11 @@ function AdminPanel() {
         </div>
       )}
 
-      <AgentOverzicht clients={clients} laden={clientsQuery.isLoading} />
+      <AgentOverzicht
+        clients={clients}
+        laden={clientsQuery.isLoading}
+        fout={clientsQuery.error instanceof Error ? clientsQuery.error.message : null}
+      />
 
       {isAdmin && (
         <section className="card-glass-lg mt-5 rounded-3xl p-5">
@@ -238,7 +261,9 @@ type OverzichtAgent = {
 function AgentOverzicht({
   clients,
   laden,
+  fout,
 }: {
+  fout?: string | null;
   clients: Array<{
     name?: string | null;
     email?: string | null;
@@ -297,7 +322,14 @@ function AgentOverzicht({
       )}
 
       {laden && <p className="mt-3 text-[13px] text-ink/55">Laden…</p>}
-      {!laden && rijen.length === 0 && (
+      {/* Niets opgehaald is iets anders dan niets te tonen. Zonder dit
+          onderscheid leest een geweigerde aanvraag als "er zijn geen agents". */}
+      {!laden && fout && (
+        <p className="mt-3 rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-[12.5px]/[1.6] text-ink/85">
+          Het overzicht kon niet worden opgehaald. {fout}
+        </p>
+      )}
+      {!laden && !fout && rijen.length === 0 && (
         <p className="mt-3 text-[13px] text-ink/55">Nog geen agents.</p>
       )}
 
