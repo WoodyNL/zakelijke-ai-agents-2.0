@@ -37,6 +37,12 @@ type Beschrijving = {
   kennisbank: boolean;
   /** Wat de klant hier in één zin over moet weten. */
   uitleg: string;
+  /**
+   * Waar de cijfers op het dashboard naar heten. Bij het aanmaken van een
+   * agent vullen deze de velden alvast in, zodat een beheerder niet bij elke
+   * nieuwe agent "acties" en "prestatiescore" hoeft te verzinnen.
+   */
+  labels: { metric: string; score: string };
   /** Welke schermen de klant standaard krijgt, naast de vaste. */
   schermen: Scherm[];
   /**
@@ -65,6 +71,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Beantwoordt vragen van bezoekers op je website. Wat hij weet, komt uit zijn kennisbank.",
+    labels: { metric: "gesprekken", score: "zelf afgehandeld" },
     schermen: [],
     optioneel: [],
     bronnen: ["gesprekken", "leads"],
@@ -77,6 +84,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Neemt zelf contact op met je relaties en volgt op. Wat hij over je bedrijf zegt, komt uit zijn kennisbank.",
+    labels: { metric: "berichten verstuurd", score: "reactiepercentage" },
     schermen: ["contacten", "campagnes", "berichten", "antwoorden"],
     optioneel: ["bezorgen"],
     bronnen: ["trechter", "gesprekken"],
@@ -87,6 +95,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Kwalificeert binnenkomende leads en volgt ze op. Wie je ideale klant is en hoe je bezwaren beantwoordt, staat in zijn kennisbank.",
+    labels: { metric: "leads gekwalificeerd", score: "nauwkeurigheid" },
     schermen: [],
     optioneel: [],
     bronnen: ["leads", "metingen"],
@@ -99,6 +108,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     // concept; direct versturen zet de klant zelf aan als hij hem vertrouwt.
     uitleg:
       "Beantwoordt supportmail met wat in zijn kennisbank staat. Standaard als concept dat jij goedkeurt; als je hem vertrouwt, zet je direct versturen aan.",
+    labels: { metric: "supportmails beantwoord", score: "ongewijzigd verstuurd" },
     schermen: ["support"],
     optioneel: [],
     bronnen: ["support"],
@@ -109,6 +119,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Houdt leads warm via WhatsApp en draagt over aan een mens zodra het ingewikkeld wordt.",
+    labels: { metric: "berichten verstuurd", score: "reacties" },
     schermen: [],
     optioneel: [],
     bronnen: ["metingen"],
@@ -118,6 +129,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     label: "Maatwerk",
     kennisbank: true,
     uitleg: "Een automatisering op maat voor jouw situatie.",
+    labels: { metric: "acties", score: "prestatiescore" },
     schermen: [],
     optioneel: [],
     bronnen: ["metingen"],

@@ -5,7 +5,14 @@ import { useState } from "react";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { AgentAannames } from "@/components/agent-aannames";
 import { LEGE_AANNAMES, alsGetal, alsTekst, type Aannamewaarden } from "@/lib/agent-aannames";
-import { soortVan } from "@/lib/agent-soorten";
+import {
+  SOORTEN,
+  actieveSchermen,
+  beschikbareSchermen,
+  soortVan,
+  type AgentSoort,
+  type Scherm,
+} from "@/lib/agent-soorten";
 import {
   getMe,
   adminListClients,
@@ -34,6 +41,15 @@ export const Route = createFileRoute("/_authenticated/admin")({
   }),
   component: AdminPanel,
 });
+
+const SCHERMNAMEN: Record<Scherm, string> = {
+  support: "Supportmail",
+  contacten: "Contacten",
+  campagnes: "Campagnes",
+  berichten: "Berichten",
+  antwoorden: "Antwoorden",
+  bezorgen: "Bezorgen",
+};
 
 const inputCls =
   "w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-[13px] text-brand outline-none placeholder:text-ink/35 focus:border-violet/55";
@@ -617,13 +633,34 @@ function ClientBlock({
   onDeleteAgent: (id: string) => void;
   onSaveStat: (p: any) => void;
 }) {
+  // De soort staat vooraan, want die bepaalt de rest: welke schermen de klant
+  // krijgt, welk dashboard hij ziet en waar de cijfers naar heten. Werd hij
+  // pas later gekozen, dan begon elke nieuwe agent als "Maatwerk" — en dan
+  // mist de klant zijn schermen tot iemand het opmerkt.
+  const [soort, setSoort] = useState<AgentSoort>("chat_assistent");
+  const [schermen, setSchermen] = useState<Scherm[]>(SOORTEN.chat_assistent.schermen);
   const [newAgent, setNewAgent] = useState({
-    name: "",
-    description: "",
-    metricLabel: "leads gekwalificeerd",
-    scoreLabel: "nauwkeurigheid",
+    name: SOORTEN.chat_assistent.label,
+    description: SOORTEN.chat_assistent.uitleg,
+    metricLabel: SOORTEN.chat_assistent.labels.metric,
+    scoreLabel: SOORTEN.chat_assistent.labels.score,
     status: "setup" as "live" | "paused" | "setup",
   });
+
+  /** Een andere soort: de velden volgen, tenzij er al iets eigens is getypt. */
+  function kiesSoort(nieuw: AgentSoort) {
+    const oud = SOORTEN[soort];
+    const n = SOORTEN[nieuw];
+    setSoort(nieuw);
+    setSchermen(n.schermen);
+    setNewAgent((v) => ({
+      ...v,
+      name: v.name === oud.label || v.name === "" ? n.label : v.name,
+      description: v.description === oud.uitleg || v.description === "" ? n.uitleg : v.description,
+      metricLabel: v.metricLabel === oud.labels.metric ? n.labels.metric : v.metricLabel,
+      scoreLabel: v.scoreLabel === oud.labels.score ? n.labels.score : v.scoreLabel,
+    }));
+  }
 
   return (
     <section className="card-glass-lg rounded-3xl p-5">
@@ -665,10 +702,66 @@ function ClientBlock({
           <summary className="cursor-pointer text-[12px] font-medium text-violet">
             + Agent toevoegen
           </summary>
+
+          <p className="mt-3 text-[11px] font-semibold tracking-[0.12em] text-ink/45 uppercase">
+            Wat voor agent is dit?
+          </p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {(Object.keys(SOORTEN) as AgentSoort[]).map((k) => {
+              const s = SOORTEN[k];
+              const gekozen = soort === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => kiesSoort(k)}
+                  className={`rounded-2xl border p-3 text-left transition ${
+                    gekozen
+                      ? "border-violet/45 bg-violet/10"
+                      : "border-white/10 hover:border-white/25"
+                  }`}
+                >
+                  <span className="block text-[13px] font-semibold text-brand">{s.label}</span>
+                  <span className="mt-0.5 block text-[12px]/[1.5] text-ink/55">{s.uitleg}</span>
+                  <span className="mt-1.5 block text-[11px] text-ink/40">
+                    {s.schermen.length + s.optioneel.length > 0
+                      ? `Schermen: ${[...s.schermen, ...s.optioneel].map((x) => SCHERMNAMEN[x]).join(", ")}`
+                      : "Geen eigen schermen"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {beschikbareSchermen(soort).length > 0 && (
+            <div className="mt-3">
+              <p className="text-[11px] font-semibold tracking-[0.12em] text-ink/45 uppercase">
+                Schermen voor deze klant
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-2">
+                {beschikbareSchermen(soort).map((scherm) => (
+                  <label key={scherm} className="flex items-center gap-2 text-[13px] text-ink/80">
+                    <input
+                      type="checkbox"
+                      className="accent-violet"
+                      checked={schermen.includes(scherm)}
+                      onChange={(e) =>
+                        setSchermen((v) =>
+                          e.target.checked ? [...v, scherm] : v.filter((x) => x !== scherm),
+                        )
+                      }
+                    />
+                    {SCHERMNAMEN[scherm]}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <input
               className={inputCls}
-              placeholder="Naam (bijv. Lead Qualification Assistant)"
+              placeholder="Naam"
               value={newAgent.name}
               onChange={(e) => setNewAgent({ ...newAgent, name: e.target.value })}
             />
@@ -680,13 +773,13 @@ function ClientBlock({
             />
             <input
               className={inputCls}
-              placeholder="Label output (bijv. leads gekwalificeerd)"
+              placeholder="Label output"
               value={newAgent.metricLabel}
               onChange={(e) => setNewAgent({ ...newAgent, metricLabel: e.target.value })}
             />
             <input
               className={inputCls}
-              placeholder="Label score (bijv. nauwkeurigheid)"
+              placeholder="Label score"
               value={newAgent.scoreLabel}
               onChange={(e) => setNewAgent({ ...newAgent, scoreLabel: e.target.value })}
             />
@@ -702,14 +795,23 @@ function ClientBlock({
             <button
               className={btnCls}
               disabled={busy || !newAgent.name}
-              onClick={() => {
-                onSaveAgent({ ...newAgent, clientId: client.id });
-                setNewAgent({ ...newAgent, name: "", description: "" });
+              onClick={async () => {
+                const r = await onSaveAgent({
+                  ...newAgent,
+                  clientId: client.id,
+                  kind: soort,
+                  modules: schermen,
+                });
+                if (r.ok) kiesSoort("chat_assistent");
               }}
             >
               Opslaan
             </button>
           </div>
+          <p className="mt-2 text-[11.5px] text-ink/45">
+            De rest (tarief, fair use, slug, ontvangstadres) stel je daarna in bij "Afspraken over
+            tijd en tarief", waar je de schermen ook later nog kunt wijzigen.
+          </p>
         </details>
       )}
     </section>
@@ -747,6 +849,17 @@ function AgentRow({
         <div>
           <p className="text-[13px] font-semibold text-brand">{agent.name}</p>
           <p className="text-[11px] text-ink/50">{agent.description}</p>
+          {/* Soort en schermen in één regel: dan zie je zonder klikken wat
+              deze klant in zijn menu heeft staan. Wijzigen kan hieronder. */}
+          <p className="mt-1 text-[11px] text-ink/40">
+            {soortVan(agent.kind).label}
+            {" · "}
+            {actieveSchermen(agent.kind, agent.modules).length > 0
+              ? actieveSchermen(agent.kind, agent.modules)
+                  .map((x) => SCHERMNAMEN[x])
+                  .join(", ")
+              : "geen eigen schermen"}
+          </p>
         </div>
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${st.chip}`}>
           {st.label}
