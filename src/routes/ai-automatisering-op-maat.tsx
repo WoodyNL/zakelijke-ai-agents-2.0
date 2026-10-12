@@ -35,7 +35,7 @@ const SECTIONS: SeoSection[] = [
     body: "Niet elk bedrijf heeft maatwerk nodig. Deze drie lossen de meest voorkomende knelpunten op in sales, inbox en opvolging — en staan meestal binnen een week te draaien.",
     bullets: [
       "[AI Sales Assistant](/ai-lead-opvolging) — leest elke nieuwe lead, kwalificeert, reageert binnen een minuut, boekt zelf de afspraak",
-      "[Inbox Draft Assistant](/ai-klantenservice-automatiseren) — concept-antwoorden in Gmail of Outlook, geen autosend, jij beslist",
+      "[Inbox Draft Assistant](/ai-klantenservice-automatiseren) — concept-antwoorden op je supportmail, werkt met elke mailbox, jij beslist wat er weggaat",
       "[WhatsApp Follow-up Agent](/whatsapp-follow-up-automatiseren) — volgt leads op via WhatsApp, draagt over aan een mens zodra het complex wordt",
     ],
   },

@@ -461,7 +461,7 @@ export const AGENTS = {
     {
       icon: "mail",
       title: "Inbox Draft Assistant",
-      body: "Koppelt aan Gmail of Outlook, leest binnenkomende mail en zet een concept-antwoord klaar in jouw toon. Standaard verstuurt hij niets zelf — jij keurt goed. Hij leert van elke wijziging die je maakt.",
+      body: "Werkt met elke mailbox: je stuurt je supportadres door en hij antwoordt vanaf je eigen adres. Hij leest de vraag, zoekt het antwoord in je kennisbank en zet een concept klaar in jouw toon. Standaard verstuurt hij niets zelf — jij keurt goed.",
       badge: "Standaard concept · jij beslist",
     },
     {

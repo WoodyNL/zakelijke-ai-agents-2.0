@@ -44,6 +44,13 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
 });
 
+/**
+ * Wanneer een live agent "stil" heet. Drie dagen en geen 24 uur: bij een site
+ * met een paar bezoekers per week is een dag zonder verkeer normaal, en een
+ * melding die bijna altijd aanstaat leest niemand meer.
+ */
+const STIL_NA_UREN = 72;
+
 const SCHERMNAMEN: Record<Scherm, string> = {
   support: "Supportmail",
   contacten: "Contacten",
@@ -239,7 +246,7 @@ function AgentOverzicht({
     if (
       a.status === "live" &&
       (!a.laatste_activiteit ||
-        Date.now() - new Date(a.laatste_activiteit).getTime() > 24 * 3600 * 1000)
+        Date.now() - new Date(a.laatste_activiteit).getTime() > STIL_NA_UREN * 3600 * 1000)
     ) {
       punten.push(
         a.laatste_activiteit
@@ -284,7 +291,7 @@ function AgentOverzicht({
           const stil =
             a.status === "live" &&
             (!a.laatste_activiteit ||
-              Date.now() - new Date(a.laatste_activiteit).getTime() > 24 * 3600 * 1000);
+              Date.now() - new Date(a.laatste_activiteit).getTime() > STIL_NA_UREN * 3600 * 1000);
           const grens = a.fair_use_per_month ?? null;
           const aandeel = grens ? a.verbruik_maand / grens : null;
           return (

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { getMe } from "@/lib/dashboard.functions";
+import { getMe, zetMijnNaam } from "@/lib/dashboard.functions";
 import { haalToegangslog, type Toegang } from "@/lib/meekijken.functions";
 import { haalTeam, nodigTeamlidUit, verwijderTeamlid } from "@/lib/team.functions";
 import { supabase } from "@/lib/supabase-browser";
@@ -80,6 +80,8 @@ function AccountPage() {
           {meQuery.data?.email ? `Ingelogd als ${meQuery.data.email}.` : "Je accountinstellingen."}
         </p>
       </div>
+
+      <Naam />
 
       <div className="card-glass-lg mt-6 max-w-md rounded-3xl p-6">
         <h2 className="font-display text-[16px] font-semibold text-brand">Wachtwoord wijzigen</h2>
@@ -299,5 +301,65 @@ function Team() {
       )}
       {melding && <p className="mt-3 text-[12px] text-ink/70">{melding}</p>}
     </section>
+  );
+}
+
+/** Je naam, zoals die in het portaal staat en zoals klanten hem zien. */
+function Naam() {
+  const qc = useQueryClient();
+  const meFn = useServerFn(getMe);
+  const zetFn = useServerFn(zetMijnNaam);
+  const me = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
+  const [naam, setNaam] = useState<string | null>(null);
+  const [bezig, setBezig] = useState(false);
+  const [melding, setMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
+
+  const waarde = naam ?? me.data?.name ?? "";
+
+  async function bewaar() {
+    setBezig(true);
+    setMelding(null);
+    try {
+      await zetFn({ data: { naam: waarde } });
+      setMelding({ ok: true, tekst: "Opgeslagen." });
+      await qc.invalidateQueries({ queryKey: ["me"] });
+      setNaam(null);
+    } catch (err) {
+      setMelding({ ok: false, tekst: err instanceof Error ? err.message : "Opslaan lukte niet" });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <div className="card-glass-lg mt-6 max-w-md rounded-3xl p-6">
+      <h2 className="font-display text-[16px] font-semibold text-brand">Je naam</h2>
+      <p className="mt-1.5 text-[12.5px]/[1.6] text-ink/55">
+        Zo word je in het portaal aangesproken. Klanten zien deze naam ook, bijvoorbeeld in hun
+        toegangslog.
+      </p>
+      <label className="mt-4 block text-[12px] font-medium text-ink/70">
+        Naam
+        <input
+          className={inputClass}
+          value={waarde}
+          onChange={(e) => setNaam(e.target.value)}
+          autoComplete="name"
+        />
+      </label>
+      {melding && (
+        <p className={`mt-2 text-[12px] ${melding.ok ? "text-mint" : "text-destructive"}`}>
+          {melding.tekst}
+        </p>
+      )}
+      <button
+        type="button"
+        onClick={bewaar}
+        disabled={bezig || waarde.trim() === "" || waarde === me.data?.name}
+        className="mt-3 w-full rounded-full bg-brand px-4 py-2.5 text-[13px] font-medium text-primary-foreground disabled:opacity-50"
+      >
+        {bezig ? "Bezig…" : "Naam opslaan"}
+      </button>
+    </div>
   );
 }

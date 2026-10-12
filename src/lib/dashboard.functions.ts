@@ -671,3 +671,23 @@ export const adminNodigMedewerkerUit = createServerFn({ method: "POST" })
     });
     return { ok: true as const };
   });
+
+/**
+ * Je eigen naam wijzigen.
+ *
+ * Die naam staat in het portaal ("Welkom terug, …"), bovenin de balk, en bij
+ * een klant in zijn toegangslog en bij de statuswissels van zijn agent. Hij
+ * was alleen in te vullen bij het aanmaken van een account, dus stond er bij
+ * de beheerder "Admin" — ook in wat de klant van ons te zien krijgt.
+ */
+export const zetMijnNaam = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ naam: z.string().trim().min(1).max(100) }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({ name: data.naam })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });

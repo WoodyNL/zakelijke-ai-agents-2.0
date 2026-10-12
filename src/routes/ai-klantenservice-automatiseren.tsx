@@ -9,7 +9,7 @@ const FAQS = [
   },
   {
     q: "Werkt het met Gmail en Outlook?",
-    a: "Ja, de Inbox Draft Assistant koppelt aan Gmail en Outlook en werkt gewoon in je bestaande mailbox.",
+    a: "Ja, met elke mailbox. Je stuurt je supportadres door naar het adres van de agent; hij leest de vraag en antwoordt vanaf je eigen adres, zodat je klant niets van de omweg merkt. Een directe koppeling met Gmail en Outlook is in de maak.",
   },
   {
     q: "Hoe weet de agent wat het juiste antwoord is?",
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/ai-klantenservice-automatiseren")({
         children: dienstJsonLd({
           naam: "Inbox Draft Assistant — AI-klantenservice",
           beschrijving:
-            "Een AI-agent die binnenkomende e-mail leest en in Gmail of Outlook een concept-antwoord klaarzet in jouw toon. Verstuurt standaard niets zelf.",
+            "Een AI-agent die binnenkomende klantmail leest en een concept-antwoord klaarzet in jouw toon, op basis van je eigen kennisbank. Werkt met elke mailbox en verstuurt standaard niets zelf.",
           pad: "/ai-klantenservice-automatiseren",
           vanafPrijs: 795,
         }),
