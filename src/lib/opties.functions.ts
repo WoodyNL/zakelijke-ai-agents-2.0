@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { mijnAgent } from "@/lib/agent-toegang";
-import { verdeelOpslag } from "@/lib/agent-opties";
+import { verdeelOpslag, optiesVoor } from "@/lib/agent-opties";
+import { legVast } from "@/lib/beheerlog";
 
 /**
  * Opties lezen en schrijven.
@@ -108,7 +109,7 @@ export const adminZetAgentOpties = createServerFn({ method: "POST" })
 
     const { data: agent, error: leesFout } = await (context.supabase as unknown as Ongetypt)
       .from("agents")
-      .select("id, kind, opties")
+      .select("id, kind, opties, client_id")
       .eq("id", data.agentId)
       .maybeSingle();
     if (leesFout) throw new Error(leesFout.message);
@@ -127,8 +128,26 @@ export const adminZetAgentOpties = createServerFn({ method: "POST" })
       .update(nieuw)
       .eq("id", data.agentId);
     if (error) throw new Error(error.message);
+
+    await legVast(context, {
+      actie: "functies.gewijzigd",
+      omschrijving: `Functies aangepast: ${labels(rij.kind, data.waarden)}`,
+      clientId: (agent as { client_id?: string }).client_id ?? null,
+      agentId: data.agentId,
+      details: { velden: Object.keys(data.waarden) },
+    });
     return { ok: true as const, gewijzigd: Object.keys(nieuw).length };
   });
+
+/** De namen van de gewijzigde opties, voor in het logboek. */
+function labels(kind: string | null | undefined, waarden: Record<string, unknown>): string {
+  const alle = optiesVoor(kind);
+  return (
+    Object.keys(waarden)
+      .map((k) => alle.find((o) => o.sleutel === k)?.label ?? k)
+      .join(", ") || "niets"
+  );
+}
 
 /** De klant zet alleen wat van hem is, en alleen bij zijn eigen agent. */
 export const zetMijnAgentOpties = createServerFn({ method: "POST" })
@@ -139,7 +158,7 @@ export const zetMijnAgentOpties = createServerFn({ method: "POST" })
 
     const { data: agent } = await context.supabase
       .from("agents")
-      .select("kind")
+      .select("kind, client_id")
       .eq("id", data.agentId)
       .maybeSingle();
 
@@ -177,5 +196,15 @@ export const zetMijnAgentOpties = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
+
+    // Ook de klant zelf komt in het logboek. Zo kan hij later zien wanneer hij
+    // iets omzette, en wij of een wijziging van hem kwam of van ons.
+    await legVast(context, {
+      actie: "functies.gewijzigd",
+      omschrijving: `Eigen instellingen aangepast: ${labels((agent as { kind?: string | null } | null)?.kind, data.waarden)}`,
+      clientId: (agent as { client_id?: string } | null)?.client_id ?? null,
+      agentId: data.agentId,
+      details: { velden: Object.keys(data.waarden) },
+    });
     return { ok: true as const };
   });

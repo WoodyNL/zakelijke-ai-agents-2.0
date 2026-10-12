@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { legVast } from "@/lib/beheerlog";
 
 /**
  * Meekijken bij een klant (fase 2 van het beheerplan).
@@ -50,6 +51,11 @@ export const startMeekijken = createServerFn({ method: "POST" })
       _reden: data.reden,
     });
     if (error) throw new Error(error.message);
+    await legVast(context, {
+      actie: "meekijken.gestart",
+      omschrijving: `Meegekeken, reden: ${data.reden}`,
+      clientId: data.clientId,
+    });
     return { ok: true as const };
   });
 

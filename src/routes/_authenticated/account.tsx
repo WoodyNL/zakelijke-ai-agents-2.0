@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe, zetMijnNaam } from "@/lib/dashboard.functions";
 import { haalToegangslog, type Toegang } from "@/lib/meekijken.functions";
+import { haalMijnLogboek, type MijnLogregel } from "@/lib/logboek.functions";
 import { haalTeam, nodigTeamlidUit, verwijderTeamlid } from "@/lib/team.functions";
 import { supabase } from "@/lib/supabase-browser";
 
@@ -135,6 +136,7 @@ function AccountPage() {
       </div>
 
       <Team />
+      <MijnLogboek />
       <Toegangslog />
     </DashboardShell>
   );
@@ -361,5 +363,47 @@ function Naam() {
         {bezig ? "Bezig…" : "Naam opslaan"}
       </button>
     </div>
+  );
+}
+
+/**
+ * Wat er aan jouw account en agents is veranderd, en door wie.
+ *
+ * Hetzelfde idee als de toegangslog: wij leggen vast wat wij doen, en jij
+ * kunt het nalezen. Wijzigingen die je zelf maakte staan er ook in, met je
+ * eigen naam, zodat de regel klopt en niet alles op ons lijkt te staan.
+ */
+function MijnLogboek() {
+  const fn = useServerFn(haalMijnLogboek);
+  const query = useQuery({ queryKey: ["mijn-logboek"], queryFn: () => fn() });
+  const regels = (query.data ?? []) as MijnLogregel[];
+  if (regels.length === 0) return null;
+
+  return (
+    <section className="card-glass-lg mt-6 max-w-2xl rounded-3xl p-6">
+      <h2 className="font-display text-[16px] font-semibold text-brand">Wat er is gewijzigd</h2>
+      <p className="mt-1.5 text-[12.5px]/[1.6] text-ink/55">
+        Elke wijziging aan je agents en je account, door ons of door jezelf.
+      </p>
+      <ul className="mt-4 divide-y divide-white/[0.06]">
+        {regels.map((r) => (
+          <li
+            key={r.id}
+            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5"
+          >
+            <p className="min-w-0 text-[12.5px]/[1.55] text-ink/80">
+              {r.omschrijving}
+              <span className="text-ink/45"> · {r.door}</span>
+            </p>
+            <p className="shrink-0 text-[11.5px] text-ink/40">
+              {new Date(r.moment).toLocaleString("nl-NL", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

@@ -28,6 +28,7 @@ import {
 import { listLeadRequests, verwijderAanvraag } from "@/lib/leads.functions";
 import { adminZetAgentOpties, haalAgentOpties } from "@/lib/opties.functions";
 import { startMeekijken } from "@/lib/meekijken.functions";
+import { haalLogboek, type Logregel } from "@/lib/logboek.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -198,6 +199,8 @@ function AdminPanel() {
       </div>
 
       <Medewerkers magUitnodigen={isAdmin} />
+
+      <Logboek />
     </DashboardShell>
   );
 }
@@ -1264,5 +1267,70 @@ function FunctiesBlok({ agentId }: { agentId: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Wie veranderde wat. Onderaan, want je kijkt hier pas als je iets wilt
+ * terugvinden: waarom staat deze agent op pauze, wie heeft die fair use
+ * aangepast. De klant ziet de regels over zijn eigen account in zijn portaal.
+ */
+function Logboek() {
+  const fn = useServerFn(haalLogboek);
+  const [aantal, setAantal] = useState(30);
+  const query = useQuery({
+    queryKey: ["logboek", aantal],
+    queryFn: () => fn({ data: { aantal } }),
+  });
+  const regels = (query.data ?? []) as Logregel[];
+
+  const wanneer = (iso: string) =>
+    new Date(iso).toLocaleString("nl-NL", { dateStyle: "medium", timeStyle: "short" });
+
+  return (
+    <section className="card-glass-lg mt-5 rounded-3xl p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-display text-[15px] font-semibold text-brand">Logboek</p>
+        <p className="text-[12px] text-ink/50">
+          Wijzigingen aan klanten en agents, en wanneer er is meegekeken
+        </p>
+      </div>
+
+      {query.isLoading && <p className="mt-3 text-[13px] text-ink/55">Laden…</p>}
+      {!query.isLoading && regels.length === 0 && (
+        <p className="mt-3 text-[13px] text-ink/55">
+          Nog niets vastgelegd. Vanaf nu komt elke wijziging hier te staan.
+        </p>
+      )}
+
+      <ul className="mt-3 divide-y divide-white/[0.06]">
+        {regels.map((r) => (
+          <li
+            key={r.id}
+            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5"
+          >
+            <p className="min-w-0 text-[12.5px]/[1.55] text-ink/80">
+              {r.omschrijving || r.actie}
+              <span className="text-ink/45">
+                {" · "}
+                {r.door_naam}
+                {r.door_rol === "klant" ? " (klant)" : r.door_rol === "support" ? " (support)" : ""}
+              </span>
+            </p>
+            <p className="shrink-0 text-[11.5px] text-ink/40">{wanneer(r.moment)}</p>
+          </li>
+        ))}
+      </ul>
+
+      {regels.length >= aantal && (
+        <button
+          type="button"
+          onClick={() => setAantal((v) => Math.min(v + 60, 200))}
+          className="mt-3 text-[12px] font-medium text-violet hover:underline"
+        >
+          Meer tonen
+        </button>
+      )}
+    </section>
   );
 }

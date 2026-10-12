@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { leesKlant } from "@/lib/klant";
 import { ALLE_SCHERMEN, SOORTEN, type AgentSoort, type Scherm } from "@/lib/agent-soorten";
+import { legVast, verschillen } from "@/lib/beheerlog";
 
 type Ctx = { supabase: any; userId: string };
 
@@ -279,9 +280,42 @@ export const adminCreateClient = createServerFn({ method: "POST" })
     const id = created.user?.id;
     if (id) {
       await supabaseAdmin.from("profiles").update({ name: data.name }).eq("id", id);
+      await legVast(context, {
+        actie: "klant.aangemaakt",
+        omschrijving: `Klant "${data.name}" aangemaakt`,
+        clientId: id,
+      });
     }
     return { id };
   });
+
+/** Hoe de velden van een agent in het logboek heten. */
+const AGENTVELDEN: Record<string, string> = {
+  name: "Naam",
+  description: "Omschrijving",
+  status: "Status",
+  kind: "Soort",
+  modules: "Schermen",
+  metric_label: "Label output",
+  score_label: "Label score",
+  minutes_saved_per_action: "Minuten per bericht",
+  minutes_saved_basis: "Grondslag tijdwinst",
+  hourly_rate: "Uurtarief",
+  hourly_rate_basis: "Grondslag uurtarief",
+  fair_use_per_month: "Fair use per maand",
+  overage_price: "Prijs per bericht erboven",
+  slug: "Slug",
+  inbound_local: "Ontvangstadres",
+  model: "Taalmodel",
+  tone: "Toon",
+  extra_instructions: "Extra instructies",
+  notify_email: "Meldadres",
+  welcome_text: "Welkomsttekst",
+  capture_leads: "Contactgegevens vragen",
+  allowed_domains: "Toegestane websites",
+  rate_limit_per_hour: "Vragen per uur",
+  opties: "Functies",
+};
 
 export const adminSaveAgent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -372,10 +406,36 @@ export const adminSaveAgent = createServerFn({ method: "POST" })
       ...optioneel(data.inboundLocal, "inbound_local"),
       ...optioneel(data.modules, "modules"),
     };
+    // De oude waarden erbij halen vóór het opslaan, zodat het logboek kan
+    // zeggen wat er veranderde en niet alleen dát er iets veranderde.
+    const voor = data.id
+      ? ((await context.supabase.from("agents").select("*").eq("id", data.id).maybeSingle())
+          .data as Record<string, unknown> | null)
+      : null;
+
     const { error } = data.id
       ? await context.supabase.from("agents").update(row).eq("id", data.id)
       : await context.supabase.from("agents").insert(row);
     if (error) throw new Error(error.message);
+
+    if (!data.id) {
+      await legVast(context, {
+        actie: "agent.aangemaakt",
+        omschrijving: `Agent "${data.name}" aangemaakt (${SOORTEN[(data.kind ?? "overig") as AgentSoort]?.label ?? "Maatwerk"})`,
+        clientId: data.clientId,
+      });
+    } else {
+      const { zin, details } = verschillen(voor ?? {}, row, AGENTVELDEN);
+      if (zin) {
+        await legVast(context, {
+          actie: "agent.gewijzigd",
+          omschrijving: `${data.name}: ${zin}`,
+          clientId: data.clientId,
+          agentId: data.id,
+          details,
+        });
+      }
+    }
     return { ok: true };
   });
 
@@ -384,8 +444,19 @@ export const adminDeleteAgent = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as Ctx);
+    const { data: agent } = await context.supabase
+      .from("agents")
+      .select("name, client_id")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await context.supabase.from("agents").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    const weg = agent as { name?: string; client_id?: string } | null;
+    await legVast(context, {
+      actie: "agent.verwijderd",
+      omschrijving: `Agent "${weg?.name ?? "onbekend"}" verwijderd, met kennisbank en geschiedenis`,
+      clientId: weg?.client_id ?? null,
+    });
     return { ok: true };
   });
 
@@ -473,6 +544,15 @@ export const adminDeleteClient = createServerFn({ method: "POST" })
 
     // Het account zelf. Het profiel, de agents en alles wat eraan hangt gaan
     // mee via ON DELETE CASCADE.
+    // Vastleggen vóór het verwijderen: daarna bestaat het profiel niet meer,
+    // en een vreemde sleutel in het logboek zou dan leeg worden. De naam staat
+    // in de omschrijving, dus de regel blijft leesbaar.
+    await legVast(context, {
+      actie: "klant.verwijderd",
+      omschrijving: `Klant "${profiel.name || profiel.email}" verwijderd, met ${(agents ?? []).length} agent(s) en ${(leden ?? []).length} teamlid/teamleden`,
+      details: { email: profiel.email, agents: (agents ?? []).length },
+    });
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.clientId);
     if (error) throw new Error(error.message);
     return { ok: true as const, agents: (agents ?? []).length, teamleden: (leden ?? []).length };
@@ -655,6 +735,12 @@ export const adminNodigMedewerkerUit = createServerFn({ method: "POST" })
       await supabaseAdmin.auth.admin.deleteUser(link.user.id);
       throw new Error(rolFout.message);
     }
+
+    await legVast(context, {
+      actie: "medewerker.uitgenodigd",
+      omschrijving: `Support-medewerker "${data.naam}" uitgenodigd`,
+      details: { email: data.email },
+    });
 
     const { esc, opmaak, stuurMail } = await import("@/lib/mail.server");
     await stuurMail({

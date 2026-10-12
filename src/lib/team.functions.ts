@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { legVast } from "@/lib/beheerlog";
 
 /**
  * Teamleden per klant (fase 5 van het beheerplan).
@@ -108,6 +109,12 @@ export const nodigTeamlidUit = createServerFn({ method: "POST" })
       ),
     });
 
+    await legVast(context, {
+      actie: "teamlid.uitgenodigd",
+      omschrijving: `${data.naam} uitgenodigd voor het portaal`,
+      clientId: context.userId,
+      details: { email: data.email },
+    });
     return { ok: true as const };
   });
 
@@ -131,6 +138,11 @@ export const verwijderTeamlid = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
+    await legVast(context, {
+      actie: "teamlid.verwijderd",
+      omschrijving: "Een teamlid uit het portaal gehaald",
+      clientId: context.userId,
+    });
     return { ok: true as const };
   });
 

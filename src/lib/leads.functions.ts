@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { eigenKlant } from "@/lib/klant";
+import { legVast } from "@/lib/beheerlog";
 
 const leadSchema = z.object({
   name: z.string().trim().min(1, "Vul je naam in").max(100),
@@ -100,5 +101,9 @@ export const verwijderAanvraag = createServerFn({ method: "POST" })
     if (!weg || weg.length === 0) {
       throw new Error("Deze aanvraag kon niet worden verwijderd.");
     }
+    await legVast(context, {
+      actie: "aanvraag.verwijderd",
+      omschrijving: "Een aanvraag verwijderd",
+    });
     return { ok: true as const };
   });
