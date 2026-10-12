@@ -2,6 +2,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { startpagina } from "@/lib/startpagina";
+import { bevestigTweedeStap, tweedeStapNodig } from "@/lib/tweede-stap";
 import { supabase } from "@/lib/supabase-browser";
 import { paginaMeta } from "@/lib/seo";
 
@@ -22,6 +23,12 @@ export const Route = createFileRoute("/auth")({
 
 type Mode = "login" | "signup" | "forgot";
 
+/**
+ * Twee stappen, twee schermen. Het wachtwoord geeft een sessie, maar wie een
+ * app heeft ingesteld komt daarmee nog nergens: dan volgt de code.
+ */
+type Stap = "wachtwoord" | "code";
+
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
@@ -31,10 +38,20 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [stap, setStap] = useState<Stap>("wachtwoord");
+  const [code, setCode] = useState("");
 
+  // Wie hier komt met een sessie die al compleet is, gaat door. Staat de
+  // tweede stap nog open, dan is dit het scherm dat erom vraagt: ook als
+  // iemand terugkomt op een tabblad of door het portaal is teruggestuurd.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) startpagina().then((to) => navigate({ to, replace: true }));
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      if (await tweedeStapNodig()) {
+        setStap("code");
+        return;
+      }
+      navigate({ to: await startpagina(), replace: true });
     });
   }, [navigate]);
 
@@ -47,6 +64,12 @@ function AuthPage() {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // Het wachtwoord alleen is niet genoeg zodra er een app is ingesteld.
+        if (await tweedeStapNodig()) {
+          setPassword("");
+          setStap("code");
+          return;
+        }
         navigate({ to: await startpagina(), replace: true });
       } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -76,6 +99,30 @@ function AuthPage() {
     }
   }
 
+  async function onCode(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await bevestigTweedeStap(code);
+      navigate({ to: await startpagina(), replace: true });
+    } catch (err) {
+      setCode("");
+      setError(err instanceof Error ? err.message : "Er ging iets mis");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // De uitweg. Zonder deze knop zit iemand die zijn app kwijt is vast op een
+  // scherm dat om een code vraagt die hij niet heeft.
+  async function afbreken() {
+    await supabase.auth.signOut();
+    setCode("");
+    setError(null);
+    setStap("wachtwoord");
+  }
+
   return (
     <div className="theme-dark surface-gradient flex min-h-screen w-full items-center justify-center px-4 py-10 font-sans text-ink antialiased">
       <div className="w-full max-w-sm animate-rise">
@@ -84,108 +131,171 @@ function AuthPage() {
         </Link>
 
         <div className="card-glass-lg rounded-3xl p-6">
-          <h1 className="font-display text-[20px] font-bold text-brand">
-            {mode === "login" && "Klantportaal"}
-            {mode === "signup" && "Account aanmaken"}
-            {mode === "forgot" && "Wachtwoord vergeten"}
-          </h1>
-          <p className="mt-1.5 text-[12px]/[1.6] text-ink/55">
-            {mode === "login" && "Log in om de prestaties van je AI-agents te bekijken."}
-            {mode === "signup" && "Maak je account aan met e-mail en wachtwoord."}
-            {mode === "forgot" && "Vul je e-mailadres in, dan sturen we een herstel-link."}
-          </p>
-
-          <form onSubmit={onSubmit} className="mt-5 space-y-3">
-            {mode === "signup" && (
-              <Field
-                label="Naam"
-                value={name}
-                onChange={setName}
-                type="text"
-                placeholder="Bedrijfsnaam"
-              />
-            )}
-            <Field
-              label="E-mailadres"
-              value={email}
-              onChange={setEmail}
-              type="email"
-              placeholder="jij@bedrijf.nl"
-            />
-            {mode !== "forgot" && (
-              <Field
-                label="Wachtwoord"
-                value={password}
-                onChange={setPassword}
-                type="password"
-                placeholder="••••••••"
-              />
-            )}
-
-            {error && (
-              <p
-                role="alert"
-                className="rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] font-medium text-ink/85"
-              >
-                {error}
+          {stap === "code" ? (
+            <>
+              <h1 className="font-display text-[20px] font-bold text-brand">
+                Tweestapsverificatie
+              </h1>
+              <p className="mt-1.5 text-[12px]/[1.6] text-ink/55">
+                Je wachtwoord is goed. Vul nu de zescijferige code uit je authenticator-app in.
               </p>
-            )}
-            {info && (
-              <p
-                role="status"
-                className="rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-[12px] font-medium text-ink/85"
-              >
-                {info}
+
+              <form onSubmit={onCode} className="mt-5 space-y-3">
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/50">
+                    Code uit je app
+                  </span>
+                  <input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    placeholder="000000"
+                    className="w-full rounded-xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-center text-[18px] tracking-[0.3em] text-ink outline-none transition placeholder:text-ink/25 focus:border-violet/55 focus:bg-white/[0.06] focus:ring-2 focus:ring-violet/25"
+                  />
+                </label>
+
+                {error && (
+                  <p
+                    role="alert"
+                    className="rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] font-medium text-ink/85"
+                  >
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={busy || code.length < 6}
+                  className="cta-dark mt-1 w-full rounded-full px-6 py-3 text-[13px] font-semibold text-white disabled:opacity-50"
+                >
+                  {busy ? "Bezig\u2026" : "Bevestigen"}
+                </button>
+              </form>
+
+              <div className="mt-4 text-[12px] text-ink/55">
+                <button onClick={afbreken} className="transition-colors hover:text-violet">
+                  Terug naar inloggen
+                </button>
+              </div>
+              <p className="mt-3 text-[11.5px]/[1.7] text-ink/40">
+                App kwijt of geen code? Mail{" "}
+                <a
+                  href="mailto:info@zakelijkeaiagents.nl"
+                  className="underline underline-offset-2 hover:text-ink/70"
+                >
+                  info@zakelijkeaiagents.nl
+                </a>
+                , dan zetten we hem voor je uit.
               </p>
-            )}
+            </>
+          ) : (
+            <>
+              <h1 className="font-display text-[20px] font-bold text-brand">
+                {mode === "login" && "Klantportaal"}
+                {mode === "signup" && "Account aanmaken"}
+                {mode === "forgot" && "Wachtwoord vergeten"}
+              </h1>
+              <p className="mt-1.5 text-[12px]/[1.6] text-ink/55">
+                {mode === "login" && "Log in om de prestaties van je AI-agents te bekijken."}
+                {mode === "signup" && "Maak je account aan met e-mail en wachtwoord."}
+                {mode === "forgot" && "Vul je e-mailadres in, dan sturen we een herstel-link."}
+              </p>
 
-            <button
-              type="submit"
-              disabled={busy}
-              className="cta-dark mt-1 w-full rounded-full px-6 py-3 text-[13px] font-semibold text-white disabled:opacity-50"
-            >
-              {busy
-                ? "Bezig…"
-                : mode === "login"
-                  ? "Inloggen"
-                  : mode === "signup"
-                    ? "Account aanmaken"
-                    : "Stuur herstel-link"}
-            </button>
-          </form>
+              <form onSubmit={onSubmit} className="mt-5 space-y-3">
+                {mode === "signup" && (
+                  <Field
+                    label="Naam"
+                    value={name}
+                    onChange={setName}
+                    type="text"
+                    placeholder="Bedrijfsnaam"
+                  />
+                )}
+                <Field
+                  label="E-mailadres"
+                  value={email}
+                  onChange={setEmail}
+                  type="email"
+                  placeholder="jij@bedrijf.nl"
+                />
+                {mode !== "forgot" && (
+                  <Field
+                    label="Wachtwoord"
+                    value={password}
+                    onChange={setPassword}
+                    type="password"
+                    placeholder="••••••••"
+                  />
+                )}
 
-          <div className="mt-4 flex flex-wrap justify-between gap-2 text-[12px] text-ink/55">
-            {mode !== "forgot" ? (
-              <button
-                onClick={() => setMode("forgot")}
-                className="transition-colors hover:text-violet"
-              >
-                Wachtwoord vergeten?
-              </button>
-            ) : (
-              <button
-                onClick={() => setMode("login")}
-                className="transition-colors hover:text-violet"
-              >
-                Terug naar inloggen
-              </button>
-            )}
-            {mode === "login" ? (
-              <button
-                onClick={() => setMode("signup")}
-                className="transition-colors hover:text-violet"
-              >
-                Account aanmaken
-              </button>
-            ) : mode === "signup" ? (
-              <button
-                onClick={() => setMode("login")}
-                className="transition-colors hover:text-violet"
-              >
-                Ik heb al een account
-              </button>
-            ) : null}
-          </div>
+                {error && (
+                  <p
+                    role="alert"
+                    className="rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] font-medium text-ink/85"
+                  >
+                    {error}
+                  </p>
+                )}
+                {info && (
+                  <p
+                    role="status"
+                    className="rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-[12px] font-medium text-ink/85"
+                  >
+                    {info}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="cta-dark mt-1 w-full rounded-full px-6 py-3 text-[13px] font-semibold text-white disabled:opacity-50"
+                >
+                  {busy
+                    ? "Bezig…"
+                    : mode === "login"
+                      ? "Inloggen"
+                      : mode === "signup"
+                        ? "Account aanmaken"
+                        : "Stuur herstel-link"}
+                </button>
+              </form>
+
+              <div className="mt-4 flex flex-wrap justify-between gap-2 text-[12px] text-ink/55">
+                {mode !== "forgot" ? (
+                  <button
+                    onClick={() => setMode("forgot")}
+                    className="transition-colors hover:text-violet"
+                  >
+                    Wachtwoord vergeten?
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setMode("login")}
+                    className="transition-colors hover:text-violet"
+                  >
+                    Terug naar inloggen
+                  </button>
+                )}
+                {mode === "login" ? (
+                  <button
+                    onClick={() => setMode("signup")}
+                    className="transition-colors hover:text-violet"
+                  >
+                    Account aanmaken
+                  </button>
+                ) : mode === "signup" ? (
+                  <button
+                    onClick={() => setMode("login")}
+                    className="transition-colors hover:text-violet"
+                  >
+                    Ik heb al een account
+                  </button>
+                ) : null}
+              </div>
+            </>
+          )}
         </div>
 
         <p className="mt-5 text-center text-[11.5px]/[1.7] text-ink/40">
