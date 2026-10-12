@@ -22,6 +22,30 @@ type Rpc = {
 };
 
 /** Beheerder of support: mag het overzicht in /admin zien, niets wijzigen. */
+/**
+ * Heeft iemand tweestapsverificatie aan, dan moet hij hem in deze sessie ook
+ * gebruikt hebben voordat hij iets in het beheer doet.
+ *
+ * Alleen voor wie hem al aan heeft: wie hem nog niet heeft, wordt niet
+ * buitengesloten. Zo kan het aanzetten nooit tot een dichte deur leiden, en
+ * blijft de drang om het aan te zetten een melding in plaats van een val.
+ */
+async function assertTweedeStap(context: Ctx) {
+  const { data, error } = await (
+    context.supabase as unknown as {
+      rpc: (n: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }
+  ).rpc("mijn_tweestaps");
+  // Staat de migratie er nog niet, dan verandert er niets aan wat er mocht.
+  if (error) return;
+  const stand = ((data ?? []) as Array<{ ingesteld: boolean; niveau: string }>)[0];
+  if (stand?.ingesteld && stand.niveau !== "aal2") {
+    throw new Error(
+      "Bevestig eerst je tweestapsverificatie. Log opnieuw in en vul de code uit je app in.",
+    );
+  }
+}
+
 async function assertStaf(context: Ctx) {
   const { data, error } = await context.supabase
     .from("user_roles")
@@ -32,6 +56,7 @@ async function assertStaf(context: Ctx) {
   if (!rollen.includes("admin") && !rollen.includes("support")) {
     throw new Error("Geen toegang tot het beheer");
   }
+  await assertTweedeStap(context);
 }
 
 async function assertAdmin(context: Ctx) {
@@ -43,6 +68,7 @@ async function assertAdmin(context: Ctx) {
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Geen beheerdersrechten");
+  await assertTweedeStap(context);
 }
 
 export const getMe = createServerFn({ method: "GET" })
@@ -60,6 +86,8 @@ export const getMe = createServerFn({ method: "GET" })
     // Eigenaar van het klantaccount, of een teamlid dat is uitgenodigd. Staat
     // de functie er nog niet, dan is iedereen eigenaar, zoals tot nu toe.
     const eigenaar = await (context.supabase as unknown as Rpc).rpc("ben_eigenaar");
+    const tweestaps = await (context.supabase as unknown as Rpc).rpc("mijn_tweestaps");
+    const stand = ((tweestaps.data ?? []) as Array<{ ingesteld: boolean; niveau: string }>)[0];
     return {
       id: context.userId,
       name: profile?.name ?? "",
@@ -67,6 +95,7 @@ export const getMe = createServerFn({ method: "GET" })
       isAdmin,
       isStaf,
       isEigenaar: eigenaar.error ? true : eigenaar.data === true,
+      tweestaps: { ingesteld: stand?.ingesteld === true, niveau: stand?.niveau ?? "aal1" },
     };
   });
 

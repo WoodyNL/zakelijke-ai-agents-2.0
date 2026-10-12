@@ -83,6 +83,7 @@ function AccountPage() {
       </div>
 
       <Naam />
+      <Tweestaps />
 
       <div className="card-glass-lg mt-6 max-w-md rounded-3xl p-6">
         <h2 className="font-display text-[16px] font-semibold text-brand">Wachtwoord wijzigen</h2>
@@ -405,5 +406,191 @@ function MijnLogboek() {
         ))}
       </ul>
     </section>
+  );
+}
+
+/**
+ * Tweestapsverificatie aanzetten met een authenticator-app.
+ *
+ * Supabase doet het werk; dit scherm leidt er alleen doorheen: een QR-code
+ * scannen, de code uit de app invullen, klaar. Vanaf dan vraagt het inloggen
+ * om die code, en weigert het beheer handelingen in een sessie waarin die stap
+ * niet is gezet.
+ *
+ * Uitzetten kan, met een waarschuwing erbij. Een beveiliging die je niet kunt
+ * uitzetten, zet niemand aan.
+ */
+function Tweestaps() {
+  const qc = useQueryClient();
+  const meFn = useServerFn(getMe);
+  const me = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
+
+  const [qr, setQr] = useState<{ id: string; svg: string; geheim: string } | null>(null);
+  const [code, setCode] = useState("");
+  const [bezig, setBezig] = useState(false);
+  const [melding, setMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
+
+  const ingesteld = me.data?.tweestaps?.ingesteld === true;
+  const bevestigdInSessie = me.data?.tweestaps?.niveau === "aal2";
+
+  async function start() {
+    setBezig(true);
+    setMelding(null);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        friendlyName: `Zakelijke AI Agents ${new Date().toLocaleDateString("nl-NL")}`,
+      });
+      if (error) throw error;
+      setQr({ id: data.id, svg: data.totp.qr_code, geheim: data.totp.secret });
+    } catch (err) {
+      setMelding({ ok: false, tekst: err instanceof Error ? err.message : "Aanzetten lukte niet" });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  async function bevestig() {
+    if (!qr) return;
+    setBezig(true);
+    setMelding(null);
+    try {
+      const uitdaging = await supabase.auth.mfa.challenge({ factorId: qr.id });
+      if (uitdaging.error) throw uitdaging.error;
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: qr.id,
+        challengeId: uitdaging.data.id,
+        code: code.replace(/\s/g, ""),
+      });
+      if (error) throw error;
+      setQr(null);
+      setCode("");
+      setMelding({ ok: true, tekst: "Tweestapsverificatie staat aan." });
+      await qc.invalidateQueries({ queryKey: ["me"] });
+    } catch (err) {
+      setMelding({
+        ok: false,
+        tekst: err instanceof Error ? err.message : "Die code klopte niet. Probeer de volgende.",
+      });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  async function uitzetten() {
+    if (
+      !window.confirm(
+        "Tweestapsverificatie uitzetten?\n\nDaarna is alleen je wachtwoord nog nodig om bij alle klantgegevens te komen.",
+      )
+    ) {
+      return;
+    }
+    setBezig(true);
+    setMelding(null);
+    try {
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (error) throw error;
+      for (const f of data.totp) {
+        const uit = await supabase.auth.mfa.unenroll({ factorId: f.id });
+        if (uit.error) throw uit.error;
+      }
+      setMelding({ ok: true, tekst: "Tweestapsverificatie staat uit." });
+      await qc.invalidateQueries({ queryKey: ["me"] });
+    } catch (err) {
+      setMelding({ ok: false, tekst: err instanceof Error ? err.message : "Uitzetten lukte niet" });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <div className="card-glass-lg mt-6 max-w-md rounded-3xl p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-display text-[16px] font-semibold text-brand">Tweestapsverificatie</h2>
+        <span
+          className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+            ingesteld
+              ? "border-mint/30 bg-mint/12 text-mint"
+              : "border-amber-400/30 bg-amber-400/12 text-amber-300"
+          }`}
+        >
+          {ingesteld ? "Aan" : "Uit"}
+        </span>
+      </div>
+      <p className="mt-1.5 text-[12.5px]/[1.6] text-ink/55">
+        Naast je wachtwoord vraagt het inloggen om een code uit een app op je telefoon, zoals Google
+        Authenticator of 1Password.
+        {me.data?.isStaf &&
+          " Jij kunt bij gegevens van klanten, dus hier is dit het verschil tussen één wachtwoord en een echte sleutel."}
+      </p>
+
+      {ingesteld && !bevestigdInSessie && (
+        <p className="mt-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] px-3 py-2 text-[12px] text-amber-100">
+          In deze sessie heb je de code nog niet ingevuld. Log opnieuw in om beheerhandelingen te
+          kunnen doen.
+        </p>
+      )}
+
+      {!ingesteld && !qr && (
+        <button
+          type="button"
+          onClick={start}
+          disabled={bezig}
+          className="mt-4 w-full rounded-full bg-brand px-4 py-2.5 text-[13px] font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {bezig ? "Bezig…" : "Aanzetten"}
+        </button>
+      )}
+
+      {qr && (
+        <div className="mt-4 grid gap-3">
+          <p className="text-[12.5px] text-ink/70">
+            Scan deze code met je authenticator-app en vul daarna de zes cijfers in die hij toont.
+          </p>
+          <div
+            className="mx-auto rounded-xl bg-white p-3"
+            // De QR-code komt als SVG van Supabase, niet van een gebruiker.
+            dangerouslySetInnerHTML={{ __html: qr.svg }}
+          />
+          <details className="text-[11.5px] text-ink/45">
+            <summary className="cursor-pointer">Kan je niet scannen?</summary>
+            <p className="mt-1 break-all">Voer deze sleutel met de hand in: {qr.geheim}</p>
+          </details>
+          <input
+            className={inputClass}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="123456"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={bevestig}
+            disabled={bezig || code.replace(/\s/g, "").length < 6}
+            className="w-full rounded-full bg-brand px-4 py-2.5 text-[13px] font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {bezig ? "Bezig…" : "Bevestigen"}
+          </button>
+        </div>
+      )}
+
+      {ingesteld && (
+        <button
+          type="button"
+          onClick={uitzetten}
+          disabled={bezig}
+          className="mt-4 text-[12px] font-medium text-ink/45 transition-colors hover:text-destructive"
+        >
+          Tweestapsverificatie uitzetten
+        </button>
+      )}
+
+      {melding && (
+        <p className={`mt-3 text-[12px] ${melding.ok ? "text-mint" : "text-destructive"}`}>
+          {melding.tekst}
+        </p>
+      )}
+    </div>
   );
 }

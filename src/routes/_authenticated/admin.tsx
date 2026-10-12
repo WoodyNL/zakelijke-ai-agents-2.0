@@ -137,6 +137,19 @@ function AdminPanel() {
       </p>
       {msg && <p className="mt-3 text-[12px] font-medium text-violet">{msg}</p>}
 
+      {/* Eén wachtwoord geeft hier toegang tot de gegevens van elke klant.
+          Zolang er geen tweede stap staat, hoort dat te wringen. */}
+      {meQuery.data && meQuery.data.tweestaps?.ingesteld === false && (
+        <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3 text-[12.5px]/[1.6] text-amber-100">
+          Tweestapsverificatie staat uit. Nu is één wachtwoord genoeg om bij de gegevens van al je
+          klanten te komen.{" "}
+          <Link to="/account" className="font-semibold underline underline-offset-2">
+            Zet hem aan op je account
+          </Link>
+          .
+        </div>
+      )}
+
       <AgentOverzicht clients={clients} laden={clientsQuery.isLoading} />
 
       {isAdmin && (
