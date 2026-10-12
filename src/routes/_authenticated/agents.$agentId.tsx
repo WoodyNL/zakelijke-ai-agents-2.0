@@ -6,6 +6,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { TrechterPaneel } from "@/components/trechter-paneel";
 import { VerbruikPaneel } from "@/components/verbruik-paneel";
+import { AgentOptiesFormulier, type Waarden } from "@/components/agent-opties-formulier";
 import { useMeekijken } from "@/hooks/use-meekijken";
 import {
   haalGebeurtenissen,
@@ -14,6 +15,7 @@ import {
   pauzeerAgent,
 } from "@/lib/agent.functions";
 import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
+import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
 import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
 
@@ -292,6 +294,8 @@ function AgentDetail() {
           </div>
         </>
       )}
+      {agent && !meekijken.data && <MijnInstellingen agentId={agentId} />}
+
       {agent && <Gebeurtenissen agentId={agentId} />}
 
       <div className="mt-4">
@@ -407,6 +411,77 @@ function Gebeurtenissen({ agentId }: { agentId: string }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/**
+ * Wat de klant zelf mag instellen aan deze agent.
+ *
+ * Dezelfde catalogus en dezelfde uitleg als in het beheer, maar dan alleen de
+ * regels die van hem zijn. Daarmee is "jij houdt de controle" geen zin op de
+ * website maar een scherm: hij ziet wat de agent doet, en zet het zelf anders.
+ *
+ * Tijdens meekijken staat dit scherm er niet: dan is het alleen lezen.
+ */
+function MijnInstellingen({ agentId }: { agentId: string }) {
+  const qc = useQueryClient();
+  const haalFn = useServerFn(haalAgentOpties);
+  const zetFn = useServerFn(zetMijnAgentOpties);
+  const [waarden, setWaarden] = useState<Waarden>({});
+  const [bezig, setBezig] = useState(false);
+  const [melding, setMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
+
+  const query = useQuery({
+    queryKey: ["agent-opties", agentId],
+    queryFn: () => haalFn({ data: { agentId } }),
+  });
+  if (!query.data) return null;
+
+  async function bewaar() {
+    setBezig(true);
+    setMelding(null);
+    try {
+      await zetFn({ data: { agentId, waarden } });
+      setWaarden({});
+      setMelding({ ok: true, tekst: "Opgeslagen. De agent werkt vanaf nu zo." });
+      await qc.invalidateQueries({ queryKey: ["agent-opties", agentId] });
+    } catch (err) {
+      setMelding({ ok: false, tekst: err instanceof Error ? err.message : "Opslaan lukte niet" });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <div className="card-glass-lg mt-3 rounded-3xl p-5">
+      <p className="text-[11px] font-semibold tracking-[0.14em] text-ink/50 uppercase">
+        Instellingen
+      </p>
+      <p className="mt-1.5 max-w-[62ch] text-[12.5px]/[1.6] text-ink/55">
+        Dit bepaal je zelf. Wat hier staat, verandert meteen hoe de agent werkt.
+      </p>
+      <div className="mt-4">
+        <AgentOptiesFormulier
+          agent={query.data}
+          wie="klant"
+          waarden={waarden}
+          onWijzig={setWaarden}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={bewaar}
+        disabled={bezig || Object.keys(waarden).length === 0}
+        className="mt-4 rounded-full bg-violet px-4 py-2 text-[12.5px] font-semibold text-white transition hover:bg-violet/85 disabled:opacity-40"
+      >
+        {bezig ? "Bezig\u2026" : "Opslaan"}
+      </button>
+      {melding && (
+        <p className={`mt-2 text-[12px] ${melding.ok ? "text-mint" : "text-destructive"}`}>
+          {melding.tekst}
+        </p>
+      )}
     </div>
   );
 }

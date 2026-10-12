@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { AgentAannames } from "@/components/agent-aannames";
+import { AgentOptiesFormulier, type Waarden } from "@/components/agent-opties-formulier";
 import { LEGE_AANNAMES, alsGetal, alsTekst, type Aannamewaarden } from "@/lib/agent-aannames";
 import {
   SOORTEN,
@@ -25,6 +26,7 @@ import {
   adminSaveStat,
 } from "@/lib/dashboard.functions";
 import { listLeadRequests, verwijderAanvraag } from "@/lib/leads.functions";
+import { adminZetAgentOpties, haalAgentOpties } from "@/lib/opties.functions";
 import { startMeekijken } from "@/lib/meekijken.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -866,6 +868,8 @@ function AgentRow({
         </span>
       </div>
 
+      <FunctiesBlok agentId={agent.id} />
+
       <AannamesBlok agent={agent} busy={busy} onSaveAgent={onSaveAgent} />
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1175,5 +1179,83 @@ function Medewerkers({ magUitnodigen }: { magUitnodigen: boolean }) {
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Wat deze agent wel en niet doet. Uitklapbaar, want je gebruikt het bij het
+ * inrichten en daarna zelden. Wat de klant zelf mag zetten, staat erbij
+ * gemarkeerd; hij ziet dezelfde regels in zijn eigen portaal.
+ */
+function FunctiesBlok({ agentId }: { agentId: string }) {
+  const qc = useQueryClient();
+  const haalFn = useServerFn(haalAgentOpties);
+  const zetFn = useServerFn(adminZetAgentOpties);
+  const [open, setOpen] = useState(false);
+  const [waarden, setWaarden] = useState<Waarden>({});
+  const [bezig, setBezig] = useState(false);
+  const [melding, setMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
+
+  const query = useQuery({
+    queryKey: ["agent-opties", agentId],
+    queryFn: () => haalFn({ data: { agentId } }),
+    enabled: open,
+  });
+
+  async function bewaar() {
+    setBezig(true);
+    setMelding(null);
+    try {
+      await zetFn({ data: { agentId, waarden } });
+      setWaarden({});
+      setMelding({ ok: true, tekst: "Opgeslagen" });
+      await qc.invalidateQueries({ queryKey: ["agent-opties", agentId] });
+      await qc.invalidateQueries({ queryKey: ["admin-clients"] });
+    } catch (err) {
+      setMelding({ ok: false, tekst: err instanceof Error ? err.message : "Opslaan lukte niet" });
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <span className="text-[12.5px] font-semibold text-ink/80">Functies van deze agent</span>
+        <span className="text-[11px] text-ink/45">{open ? "verbergen" : "tonen"}</span>
+      </button>
+
+      {open && (
+        <div className="mt-4">
+          {query.isLoading && <p className="text-[12.5px] text-ink/55">Laden…</p>}
+          {query.data && (
+            <>
+              <AgentOptiesFormulier
+                agent={query.data}
+                wie="beheerder"
+                waarden={waarden}
+                onWijzig={setWaarden}
+              />
+              <button
+                className={`${btnCls} mt-4`}
+                disabled={bezig || Object.keys(waarden).length === 0}
+                onClick={bewaar}
+              >
+                {bezig ? "Bezig\u2026" : "Functies opslaan"}
+              </button>
+              {melding && (
+                <p className={`mt-2 text-[12px] ${melding.ok ? "text-mint" : "text-destructive"}`}>
+                  {melding.tekst}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
