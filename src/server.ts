@@ -46,6 +46,7 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 /** Het pad waarop Resend binnengekomen antwoorden meldt. */
 const INBOUND_PAD = "/api/inbound";
+const POSTVAK_PAD = "/api/postvak/terug";
 
 /** Waar een afmeldlink op uitkomt; ook het adres in List-Unsubscribe. */
 const AFMELD_PAD = "/afmelden";
@@ -121,6 +122,14 @@ export default {
         return Response.redirect(doel.toString(), 301);
       }
 
+      // Waar de klant terugkomt na het koppelen van zijn mailbox. Staat open
+      // op internet; wat hem beschermt is de handtekening op het briefje dat
+      // bij het starten is meegegeven.
+      if (pad === POSTVAK_PAD) {
+        const { verwerkTerugkomst } = await import("./lib/postvak/terugkomst.server");
+        return await verwerkTerugkomst(request);
+      }
+
       if (pad === INBOUND_PAD) {
         const { verwerkInboundWebhook } = await import("./lib/inbound.server");
         // Het opstellen van een supportantwoord mag na het antwoord aan Resend
@@ -133,10 +142,17 @@ export default {
       // en logregels die over hun bewaartermijn zijn. Loopt na het antwoord,
       // hoogstens eens per uur per instantie, en de database bepaalt of het
       // werkelijk tijd is.
-      const wachtOpruimen = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | null)?.waitUntil;
+      const wachtOpruimen = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | null)
+        ?.waitUntil;
       if (wachtOpruimen) {
         const { ruimOpIndienNodig } = await import("./lib/opruimen.server");
         wachtOpruimen.call(ctx, ruimOpIndienNodig());
+
+        // En langs de gekoppelde mailboxen, hoogstens eens per drie minuten.
+        // Dezelfde reden als hierboven: dit project heeft geen klok, dus
+        // liften we mee op het verkeer dat er toch is.
+        const { rondePostvakken } = await import("./lib/postvak/postvak.server");
+        wachtOpruimen.call(ctx, rondePostvakken());
       }
 
       const handler = await getServerEntry();

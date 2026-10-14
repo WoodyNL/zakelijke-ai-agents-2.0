@@ -27,6 +27,10 @@ function db() {
 type Mail = {
   id: string;
   agent_id: string;
+  /** Het id bij de aanbieder: Resend, of het bericht in een gekoppelde mailbox. */
+  provider_id: string;
+  /** Het gesprek bij een gekoppelde mailbox; leeg bij doorsturen. */
+  gesprek_id: string | null;
   message_id: string | null;
   van_email: string;
   van_naam: string | null;
@@ -70,6 +74,8 @@ export async function ontvangSupportMail(m: {
   agentId: string;
   providerId: string;
   messageId?: string | null;
+  /** Het gesprek bij de aanbieder, zodat een antwoord onder de vraag komt. */
+  gesprekId?: string | null;
   vanEmail: string;
   vanNaam?: string | null;
   onderwerp?: string | null;
@@ -83,6 +89,7 @@ export async function ontvangSupportMail(m: {
       agent_id: m.agentId,
       provider_id: m.providerId,
       message_id: m.messageId ?? null,
+      gesprek_id: m.gesprekId ?? null,
       van_email: m.vanEmail,
       van_naam: m.vanNaam ?? null,
       onderwerp: m.onderwerp ?? null,
@@ -203,6 +210,22 @@ export async function verwerkSupportMail(mailId: string): Promise<string> {
       !!inst.afzender_email;
 
     if (!magZelf) {
+      // Staat er een mailbox gekoppeld, dan hoort het concept daar te staan:
+      // in zijn eigen Postvak IN, onder de vraag. Mislukt dat, dan blijft het
+      // gewoon in het portaal staan — dat is nooit een reden om de mail te
+      // laten liggen.
+      try {
+        const { heeftKoppeling, conceptInPostvak } = await import("@/lib/postvak/postvak.server");
+        if (await heeftKoppeling(mail.agent_id)) {
+          await conceptInPostvak(mail.agent_id, mail, {
+            onderwerp: concept.onderwerp,
+            tekst: concept.tekst,
+          });
+        }
+      } catch (e) {
+        console.warn("supportmail: concept in de mailbox zetten mislukte", e);
+      }
+
       await patch(mailId, {
         ...velden,
         status: "concept",
@@ -308,6 +331,34 @@ export async function verstuurSupportAntwoord(
   if (!inst?.afzender_email) {
     await terug();
     throw new Error("Vul eerst bij de instellingen het adres in waarvandaan de agent antwoordt.");
+  }
+
+  // Een gekoppelde mailbox gaat voor. Dan vertrekt het antwoord vanaf het
+  // eigen adres van de klant, komt het onder de vraag te staan, en belandt het
+  // in zijn eigen map Verzonden — precies wat doorsturen niet kan.
+  try {
+    const { heeftKoppeling, verstuurUitPostvak } = await import("@/lib/postvak/postvak.server");
+    if (await heeftKoppeling(mail.agent_id)) {
+      const gelukt = await verstuurUitPostvak(mail.agent_id, mail, {
+        onderwerp: a.onderwerp,
+        tekst: a.tekst,
+      });
+      if (gelukt) {
+        await patch(mailId, {
+          status: "verzonden",
+          verzonden_onderwerp: a.onderwerp,
+          verzonden_tekst: a.tekst,
+          verzonden_op: new Date().toISOString(),
+          verzonden_door: a.door,
+          fout: null,
+        });
+        return;
+      }
+    }
+  } catch (e) {
+    // Lukt het via de mailbox niet, dan is terugvallen op ons eigen adres
+    // beter dan een onbeantwoorde klant. Wel vastleggen waarom.
+    console.warn("supportmail: versturen via de koppeling mislukte", e);
   }
 
   const sleutel = process.env["RESEND_API_KEY"];

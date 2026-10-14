@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Inbox, Send, RotateCcw, Check, BookPlus, ShieldCheck, Zap } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { useMeekijken } from "@/hooks/use-meekijken";
+import { haalKoppeling, startKoppeling, verbreekKoppeling } from "@/lib/postvak.functions";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
   bewaarAlsKennis,
@@ -193,6 +194,180 @@ function SupportPagina() {
         )}
       </div>
     </DashboardShell>
+  );
+}
+
+/**
+ * De mailbox koppelen.
+ *
+ * Doorsturen werkt, maar het concept staat dan in ons portaal en het antwoord
+ * vertrekt vanaf ons adres. Een koppeling zet het concept in zijn eigen
+ * Postvak IN, onder de vraag, en verstuurt vanaf zijn eigen adres.
+ *
+ * Daar hoort eerlijkheid bij over wat hij weggeeft: welke map we lezen, dat we
+ * niet in de rest van zijn mail kijken, en dat hij het met één knop weer
+ * verbreekt. Die knop staat er daarom prominent bij en niet verstopt.
+ */
+function Mailbox({ agentId, alleenLezen }: { agentId: string; alleenLezen: boolean }) {
+  const qc = useQueryClient();
+  const haalFn = useServerFn(haalKoppeling);
+  const startFn = useServerFn(startKoppeling);
+  const verbreekFn = useServerFn(verbreekKoppeling);
+
+  const query = useQuery({
+    queryKey: ["koppeling", agentId],
+    queryFn: () => haalFn({ data: { agentId } }),
+  });
+  const [map, setMap] = useState("INBOX");
+  const [bezig, setBezig] = useState<string | null>(null);
+  const [fout, setFout] = useState<string | null>(null);
+
+  // De terugkomst uit Google of Microsoft zet het resultaat in de link.
+  const [melding, setMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const gelukt = p.get("gekoppeld");
+    const mis = p.get("koppelfout");
+    if (!gelukt && !mis) return;
+    setMelding(
+      gelukt
+        ? { ok: true, tekst: `${gelukt} is gekoppeld. Nieuwe vragen komen hier binnen.` }
+        : {
+            ok: false,
+            tekst:
+              mis === "geannuleerd"
+                ? "Je hebt het koppelen afgebroken."
+                : mis === "verlopen"
+                  ? "Het koppelen duurde te lang. Probeer het opnieuw."
+                  : "Het koppelen is niet gelukt. Probeer het opnieuw of mail ons.",
+          },
+    );
+    window.history.replaceState({}, "", window.location.pathname);
+    qc.invalidateQueries({ queryKey: ["koppeling", agentId] });
+  }, [agentId, qc]);
+
+  async function koppel(aanbieder: "google" | "microsoft") {
+    setBezig(aanbieder);
+    setFout(null);
+    try {
+      const { url } = await startFn({ data: { agentId, aanbieder, map: map.trim() || "INBOX" } });
+      window.location.href = url;
+    } catch (err) {
+      setFout(err instanceof Error ? err.message : "Dat lukte niet");
+      setBezig(null);
+    }
+  }
+
+  async function verbreek() {
+    if (
+      !window.confirm(
+        "De koppeling met je mailbox verbreken? De agent kan dan geen vragen meer ophalen en geen antwoorden meer klaarzetten.",
+      )
+    )
+      return;
+    setBezig("verbreken");
+    try {
+      await verbreekFn({ data: { agentId } });
+      await qc.invalidateQueries({ queryKey: ["koppeling", agentId] });
+      setMelding({ ok: true, tekst: "De koppeling is verbroken." });
+    } catch (err) {
+      setFout(err instanceof Error ? err.message : "Dat lukte niet");
+    } finally {
+      setBezig(null);
+    }
+  }
+
+  const k = query.data?.koppeling ?? null;
+  const kan = query.data?.kanKoppelen ?? { google: false, microsoft: false };
+  const naam = (p: string) =>
+    p === "google" ? "Gmail / Google Workspace" : "Outlook / Microsoft 365";
+
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <p className="text-[12.5px] font-semibold text-ink/85">Of koppel je mailbox</p>
+      <p className="mt-1 text-[12px]/[1.6] text-ink/55">
+        Dan zet de agent zijn concept klaar in je eigen Postvak IN, onder de vraag, en vertrekt het
+        antwoord vanaf je eigen adres. We lezen alleen de map die je hieronder aanwijst.
+      </p>
+
+      {melding && (
+        <p
+          className={`mt-3 rounded-xl border px-3 py-2 text-[12px] font-medium ${
+            melding.ok
+              ? "border-mint/30 bg-mint/10 text-ink/85"
+              : "border-warn/30 bg-warn/10 text-ink/85"
+          }`}
+        >
+          {melding.tekst}
+        </p>
+      )}
+      {fout && (
+        <p className="mt-3 rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] text-ink/85">
+          {fout}
+        </p>
+      )}
+
+      {k ? (
+        <div className="mt-3 grid gap-2">
+          <p className="text-[12.5px] text-ink/80">
+            Gekoppeld met <strong>{naam(k.provider)}</strong>: {k.email}
+            <span className="text-ink/50"> · map {k.map}</span>
+          </p>
+          {k.status !== "actief" && k.laatste_fout && (
+            <p className="rounded-xl border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] text-ink/85">
+              {k.laatste_fout}
+            </p>
+          )}
+          <p className="text-[11.5px] text-ink/45">
+            {k.laatste_keer
+              ? `Laatst gekeken: ${wanneer(k.laatste_keer)}`
+              : "Nog niet gekeken; dat gebeurt binnen een paar minuten."}
+          </p>
+          <div>
+            <button
+              type="button"
+              disabled={alleenLezen || bezig !== null}
+              onClick={verbreek}
+              className={knopRand}
+            >
+              Koppeling verbreken
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 grid gap-2">
+          <label className="text-[12px] text-ink/60">
+            Welke map of welk label?
+            <input
+              className={`${veld} mt-1`}
+              value={map}
+              disabled={alleenLezen}
+              onChange={(e) => setMap(e.target.value)}
+              placeholder="INBOX"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {(["google", "microsoft"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                disabled={alleenLezen || !kan[p] || bezig !== null}
+                onClick={() => koppel(p)}
+                className={knopRand}
+                title={kan[p] ? undefined : "Dit staat nog niet ingesteld op de server."}
+              >
+                {bezig === p ? "Bezig…" : `Koppel ${naam(p)}`}
+              </button>
+            ))}
+          </div>
+          {!kan.google && !kan.microsoft && (
+            <p className="text-[11.5px] text-ink/45">
+              Koppelen staat nog niet aan. Mail ons, dan zetten we het voor je klaar.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -437,17 +612,9 @@ function Instellingen({
                 )}
               </p>
             )}
-            {(["gmail", "outlook"] as const).map((k) => (
-              <label key={k} className="flex items-center gap-2 text-ink/45">
-                <input type="radio" className="accent-violet" disabled checked={w.kanaal === k} />
-                Mailbox koppelen:{" "}
-                {k === "gmail" ? "Gmail / Google Workspace" : "Outlook / Microsoft 365"}
-                <span className="rounded-full border border-white/12 px-2 py-0.5 text-[10.5px]">
-                  binnenkort
-                </span>
-              </label>
-            ))}
           </div>
+
+          <Mailbox agentId={agentId} alleenLezen={alleenLezen} />
 
           <button
             type="button"

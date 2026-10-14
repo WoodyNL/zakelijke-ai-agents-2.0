@@ -118,7 +118,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     schermen: ["support"],
     optioneel: [],
     bronnen: ["support"],
-    binnenkort: ["Mailbox koppelen (Gmail, Outlook)", "Wijzigingen waarvan hij leerde"],
+    binnenkort: ["Wijzigingen waarvan hij leerde"],
   },
   whatsapp_followup: {
     label: "WhatsApp-opvolger",
