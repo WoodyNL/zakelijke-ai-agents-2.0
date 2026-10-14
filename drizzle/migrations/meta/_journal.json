@@ -15,6 +15,20 @@
       "when": 1791810463328,
       "tag": "0001_beheerlog",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791811108521,
+      "tag": "0002_tweestapsverificatie",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791991010082,
+      "tag": "0003_tweede_stap_afdwingen",
+      "breakpoints": true
     }
   ]
 }
