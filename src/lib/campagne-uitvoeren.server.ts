@@ -1,5 +1,6 @@
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import { opvolgmoment, planBericht, verdeelOverDagen } from "@/lib/verzenden.server";
+import { leesVenster, STANDAARD_VENSTER, type Venster } from "@/lib/verzendvenster";
 
 /**
  * Een campagne klaarzetten en verzenden.
@@ -37,6 +38,28 @@ async function haal<T>(d: Db, pad: string): Promise<T[]> {
   const res = await fetch(`${d.url}/rest/v1/${pad}`, { headers: d.headers });
   if (!res.ok) throw new Error(`Ophalen mislukt [${res.status}]: ${await res.text()}`);
   return (await res.json()) as T[];
+}
+
+/**
+ * Het verzendvenster van de agent achter deze campagne.
+ *
+ * Staat bij de agent en niet bij de campagne: het gaat over het verzenddomein
+ * en de reputatie daarvan, en die zijn van de agent. Twee campagnes die elkaar
+ * met verschillende vensters in de weg zitten, is precies wat je niet wilt.
+ *
+ * Mislukt het ophalen, dan het standaardvenster. Een campagne die blijft staan
+ * omdat een instelling niet te lezen was, helpt niemand.
+ */
+async function venstervan(d: Db, agentId: string): Promise<Venster> {
+  try {
+    const [agent] = await haal<{ opties: Record<string, unknown> | null }>(
+      d,
+      `agents?select=opties&id=eq.${agentId}`,
+    );
+    return leesVenster(agent?.opties?.["verzendvenster"]);
+  } catch {
+    return STANDAARD_VENSTER;
+  }
 }
 
 export type Campagne = {
@@ -218,7 +241,12 @@ export async function verstuurKlaarstaande(campagneId: string): Promise<Verzendi
 
   if (concepten.length === 0) return { ingepland: 0, mislukt: [] };
 
-  const momenten = verdeelOverDagen(concepten.length, campagne.dagmaximum, new Date());
+  const momenten = verdeelOverDagen(
+    concepten.length,
+    campagne.dagmaximum,
+    new Date(),
+    await venstervan(d, campagne.agent_id),
+  );
   const afzender = {
     naam: campagne.afzender_naam ?? campagne.ondertekening ?? "",
     email: campagne.afzender_email,
@@ -302,6 +330,8 @@ export async function bereidOpvolgingVoor(campagneId: string, portie = 10): Prom
     throw new Error("Vul eerst het aanbod en de ondertekening in bij de campagne.");
   }
 
+  const venster = await venstervan(d, campagne.agent_id);
+
   const kennis = await haal<KennisRegel>(
     d,
     `knowledge_items?select=category,title,content&agent_id=eq.${campagne.agent_id}&is_active=eq.true&order=sort_order`,
@@ -365,6 +395,7 @@ export async function bereidOpvolgingVoor(campagneId: string, portie = 10): Prom
           gepland_voor: opvolgmoment(
             m.verzonden_op ? new Date(m.verzonden_op) : new Date(),
             campagne.opvolg_na_dagen ?? 7,
+            venster,
           ).toISOString(),
         }),
       });
@@ -502,6 +533,8 @@ export async function bereidNavraagVoor(campagneId: string, portie = 10): Promis
     throw new Error("Vul eerst het aanbod en de ondertekening in bij de campagne.");
   }
 
+  const venster = await venstervan(d, campagne.agent_id);
+
   const kennis = await haal<KennisRegel>(
     d,
     `knowledge_items?select=category,title,content&agent_id=eq.${campagne.agent_id}&is_active=eq.true&order=sort_order`,
@@ -552,6 +585,7 @@ export async function bereidNavraagVoor(campagneId: string, portie = 10): Promis
       const wanneer = opvolgmoment(
         new Date(b.bezorgdag + "T12:00:00"),
         campagne.navraag_na_dagen ?? 7,
+        venster,
       );
 
       const res = await fetch(`${d.url}/rest/v1/outbound_messages`, {

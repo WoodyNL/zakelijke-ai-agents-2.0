@@ -1,5 +1,6 @@
 import { controleerHandtekening } from "@/lib/webhook-handtekening";
 import { eersteEmail } from "@/lib/contactimport";
+import type { Stopmelding } from "@/lib/bounces.server";
 
 /**
  * Binnenkomende antwoorden van klanten.
@@ -151,6 +152,19 @@ export async function verwerkInboundWebhook(
         }),
       });
       if (!res.ok) return new Response("Bounce failed", { status: 503 });
+
+      // De database beslist of dit een grens overschrijdt. Zo ja, dan is er
+      // post in te trekken en moet de klant het weten. Dat mag na het antwoord
+      // aan Resend: die wil binnen een paar seconden een 200 zien.
+      const stops = (await res.json()) as Stopmelding[];
+      for (const stop of stops ?? []) {
+        const werk = (async () => {
+          const { verwerkStopmelding } = await import("@/lib/bounces.server");
+          await verwerkStopmelding(stop);
+        })();
+        if (naAfloop) naAfloop(werk);
+        else await werk;
+      }
       return new Response("ok", { status: 200 });
     }
 

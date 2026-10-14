@@ -18,6 +18,14 @@
  * tegenhouden.
  */
 
+import {
+  binnenVenster,
+  delen,
+  verdeelInVenster,
+  STANDAARD_VENSTER,
+  type Venster,
+} from "@/lib/verzendvenster";
+
 const RESEND = "https://api.resend.com";
 
 /**
@@ -93,41 +101,9 @@ export function verdeelOverDagen(
   aantal: number,
   perDag: number,
   vanaf: Date,
-  beginUur = 9,
+  venster: Venster = STANDAARD_VENSTER,
 ): Date[] {
-  const uit: Date[] = [];
-  const max = Math.max(perDag, 1);
-  const stapMinuten = Math.max(Math.floor((8 * 60) / max), 3);
-
-  // Werkdagen vooruit lopen in plaats van een datum uitrekenen en daarna het
-  // weekend overslaan. Die eerste aanpak lijkt hetzelfde maar is het niet: een
-  // zaterdag en een zondag schuiven dan allebei naar dezelfde maandag, en dan
-  // staan er drie dagen berichten op één dag. Precies de piek die het
-  // dagmaximum moest voorkomen.
-  const dag = new Date(vanaf);
-  dag.setHours(beginUur, 0, 0, 0);
-  const naarWerkdag = (d: Date) => {
-    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
-  };
-  naarWerkdag(dag);
-
-  let opDezeDag = 0;
-  for (let i = 0; i < aantal; i++) {
-    if (opDezeDag === max) {
-      dag.setDate(dag.getDate() + 1);
-      naarWerkdag(dag);
-      dag.setHours(beginUur, 0, 0, 0);
-      opDezeDag = 0;
-    }
-
-    const moment = new Date(dag);
-    moment.setMinutes(moment.getMinutes() + opDezeDag * stapMinuten);
-    opDezeDag++;
-
-    // Nooit in het verleden inplannen; Resend weigert dat en dan valt er één uit.
-    uit.push(moment.getTime() < Date.now() ? new Date(Date.now() + 60_000) : moment);
-  }
-  return uit;
+  return verdeelInVenster(aantal, perDag, vanaf, venster);
 }
 
 /**
@@ -141,14 +117,21 @@ export function verdeelOverDagen(
  * binnenkomt is maandag ondergesneeuwd, en dat is precies het bericht dat je
  * niet wilt verspillen.
  */
-export function opvolgmoment(verzondenOp: Date, naDagen: number): Date {
-  const d = new Date(verzondenOp);
-  d.setDate(d.getDate() + naDagen);
-  d.setHours(9, 30, 0, 0);
-  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
-  // Nooit in het verleden: bij een campagne die al langer loopt zou de
-  // opvolging anders geweigerd worden en stilletjes uitvallen.
-  return d.getTime() < Date.now() ? new Date(Date.now() + 5 * 60_000) : d;
+export function opvolgmoment(
+  verzondenOp: Date,
+  naDagen: number,
+  venster: Venster = STANDAARD_VENSTER,
+): Date {
+  // Een half uur na de opening: niet als eerste in een inbox die 's ochtends
+  // toch wordt leeggeveegd, maar wel ruim binnen de ochtend.
+  const doel = new Date(verzondenOp.getTime() + naDagen * 24 * 60 * 60_000);
+  const halfNaOpening = new Date(doel.getTime());
+  const { minuten } = delen(halfNaOpening);
+  halfNaOpening.setTime(halfNaOpening.getTime() + (venster.begin + 30 - minuten) * 60_000);
+  // binnenVenster regelt de rest: weekend, buiten de uren, en nooit in het
+  // verleden — dat laatste zou bij een campagne die al langer loopt betekenen
+  // dat Resend het weigert en de opvolging stilletjes uitvalt.
+  return binnenVenster(halfNaOpening, venster);
 }
 
 /**
@@ -264,10 +247,13 @@ export async function trekOpvolgingIn(contactId: string): Promise<number> {
  */
 export async function trekGeplandeBerichtenIn(
   agentId: string,
+  /** Alleen deze campagne; zonder dit alles wat van de agent openstaat. */
+  campagneId?: string,
 ): Promise<{ ingetrokken: number; nietGelukt: number }> {
   const d = db();
   const res = await fetch(
-    `${d.url}/rest/v1/outbound_messages?select=id,provider_id&agent_id=eq.${agentId}&status=eq.gepland`,
+    `${d.url}/rest/v1/outbound_messages?select=id,provider_id&agent_id=eq.${agentId}&status=eq.gepland` +
+      (campagneId ? `&campaign_id=eq.${campagneId}` : ""),
     { headers: d.headers },
   );
   if (!res.ok) throw new Error(`Ingeplande berichten ophalen mislukt [${res.status}]`);
