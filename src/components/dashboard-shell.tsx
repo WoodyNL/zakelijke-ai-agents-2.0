@@ -11,6 +11,7 @@ import { logMeekijkpagina, stopMeekijken } from "@/lib/meekijken.functions";
 import { supabase } from "@/lib/supabase-browser";
 
 const SCHERMLINKS: Record<Scherm, { to: string; label: string }> = {
+  gesprekken: { to: "/gesprekken", label: "Gesprekken" },
   support: { to: "/support", label: "Supportmail" },
   contacten: { to: "/contacten", label: "Contacten" },
   campagnes: { to: "/campagnes", label: "Campagnes" },

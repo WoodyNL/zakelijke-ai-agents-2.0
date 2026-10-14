@@ -54,6 +54,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const STIL_NA_UREN = 72;
 
 const SCHERMNAMEN: Record<Scherm, string> = {
+  gesprekken: "Gesprekken",
   support: "Supportmail",
   contacten: "Contacten",
   campagnes: "Campagnes",

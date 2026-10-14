@@ -168,6 +168,45 @@ export async function noteerVerbruik(
   await meldFairUse(agentId);
 }
 
+/**
+ * Legt deze beurt vast in het gespreksarchief van de klant.
+ *
+ * Met de service-role, want een bezoeker mag hier niet bij: anders kon hij het
+ * archief van een willekeurige agent vullen. De database beslist wat ermee
+ * gebeurt — staat "gesprekken bewaren" uit, dan slaat hij niets op, en na de
+ * bewaartermijn ruimt hij het zelf weer op.
+ *
+ * Mislukt het, dan merkt de bezoeker daar niets van. Een archief dat hapert mag
+ * nooit een antwoord kosten.
+ */
+async function noteerGesprek(
+  agentId: string,
+  gesprek: string | null,
+  vraag: string,
+  antwoord: string,
+  pagina: string | null,
+  lead: boolean,
+) {
+  const rest = supabaseRest(true);
+  if (!rest) return;
+  try {
+    await fetch(`${rest.url}/rest/v1/rpc/noteer_chatbeurt`, {
+      method: "POST",
+      headers: rest.headers,
+      body: JSON.stringify({
+        _agent_id: agentId,
+        _gesprek: gesprek,
+        _vraag: vraag,
+        _antwoord: antwoord,
+        _pagina: pagina,
+        _lead: lead,
+      }),
+    });
+  } catch (err) {
+    console.warn("assistent: gesprek vastleggen mislukt", err);
+  }
+}
+
 /** Hoogt de teller op en zegt of dit verzoek nog binnen de uurgrens valt. */
 export async function binnenLimiet(agentId: string): Promise<boolean> {
   const rest = supabaseRest();
@@ -458,6 +497,9 @@ export async function beantwoord(
   berichten: ChatBericht[],
   slug = EIGEN_AGENT_SLUG,
   origin: string | null = null,
+  // Waar deze beurt bij hoort. Het id komt van de browser en knoopt de losse
+  // verzoeken van één bezoeker aan elkaar; de chat zelf is staatloos.
+  gesprek: { id: string | null; pagina: string | null } = { id: null, pagina: null },
 ) {
   const config = await haalAgent(slug);
 
@@ -531,9 +573,16 @@ export async function beantwoord(
     .join("\n")
     .trim();
 
+  const uit =
+    zonderStreepjes(tekst) || "Sorry, daar kwam ik even niet uit. Stel je vraag gerust anders.";
+
+  // Wat de bezoeker vroeg is de laatste beurt die binnenkwam; het antwoord is
+  // wat we nu teruggeven. Samen zijn dat de twee regels in het archief.
+  const laatsteVraag = [...berichten].reverse().find((b) => b.role === "user")?.content ?? "";
+  await noteerGesprek(config.id, gesprek.id, laatsteVraag, uit, gesprek.pagina, leadVastgelegd);
+
   return {
-    tekst:
-      zonderStreepjes(tekst) || "Sorry, daar kwam ik even niet uit. Stel je vraag gerust anders.",
+    tekst: uit,
     leadVastgelegd,
     verbruik: antwoord.usage,
   };

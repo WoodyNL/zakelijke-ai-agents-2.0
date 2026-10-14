@@ -36,6 +36,14 @@ export function AssistantChat({
   const [bezig, setBezig] = React.useState(false);
   const [leadVastgelegd, setLeadVastgelegd] = React.useState(false);
 
+  // Eén id voor dit gesprek, zodat de losse vragen van deze bezoeker bij de
+  // klant als één gesprek terugkomen en niet als een rij losse vragen. Het
+  // leeft zolang het tabblad openstaat en verder nergens: geen cookie, geen
+  // opslag, niets dat een bezoeker over bezoeken heen volgt.
+  const gesprek = React.useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "",
+  );
+
   const scrollDoel = React.useRef<HTMLDivElement>(null);
   const invoerveld = React.useRef<HTMLTextAreaElement>(null);
 
@@ -56,7 +64,14 @@ export function AssistantChat({
     setBezig(true);
 
     try {
-      const antwoord = await vraag({ data: { messages: nieuw, agent } });
+      const antwoord = await vraag({
+        data: {
+          messages: nieuw,
+          agent,
+          gesprek: gesprek.current || null,
+          pagina: typeof window !== "undefined" ? window.location.pathname : null,
+        },
+      });
       setBerichten([...nieuw, { role: "assistant", content: antwoord.tekst }]);
       if (antwoord.leadVastgelegd) setLeadVastgelegd(true);
     } catch (err) {

@@ -18,7 +18,13 @@ export type AgentSoort =
 
 /** Schermen in het klantportaal die alleen bij bepaalde soorten horen. */
 export type Scherm =
-  "contacten" | "campagnes" | "berichten" | "antwoorden" | "bezorgen" | "support";
+  | "gesprekken"
+  | "contacten"
+  | "campagnes"
+  | "berichten"
+  | "antwoorden"
+  | "bezorgen"
+  | "support";
 
 /**
  * Een kerncijfer op het dashboard van een agent, en waar het vandaan komt.
@@ -72,10 +78,10 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Beantwoordt vragen van bezoekers op je website. Wat hij weet, komt uit zijn kennisbank.",
     labels: { metric: "gesprekken", score: "zelf afgehandeld" },
-    schermen: [],
+    schermen: ["gesprekken"],
     optioneel: [],
     bronnen: ["gesprekken", "leads"],
-    binnenkort: ["Gesprekken teruglezen", "Vragen die hij niet kon beantwoorden"],
+    binnenkort: ["Vragen die hij niet kon beantwoorden"],
   },
   uitgaande_email: {
     label: "Uitgaande e-mailagent",
@@ -151,6 +157,7 @@ export function heeftKennisbank(kind: string | null | undefined): boolean {
 }
 
 export const ALLE_SCHERMEN: Scherm[] = [
+  "gesprekken",
   "support",
   "contacten",
   "campagnes",

@@ -129,6 +129,16 @@ export default {
         return await verwerkInboundWebhook(request, wacht ? (p) => wacht.call(ctx, p) : undefined);
       }
 
+      // Een haakje voor het huishouden: verlopen gesprekken, oude supportmail
+      // en logregels die over hun bewaartermijn zijn. Loopt na het antwoord,
+      // hoogstens eens per uur per instantie, en de database bepaalt of het
+      // werkelijk tijd is.
+      const wachtOpruimen = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | null)?.waitUntil;
+      if (wachtOpruimen) {
+        const { ruimOpIndienNodig } = await import("./lib/opruimen.server");
+        wachtOpruimen.call(ctx, ruimOpIndienNodig());
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

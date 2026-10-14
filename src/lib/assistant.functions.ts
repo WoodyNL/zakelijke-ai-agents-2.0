@@ -25,6 +25,17 @@ const chatSchema = z.object({
     .trim()
     .regex(/^[a-z0-9-]{1,64}$/, "Ongeldige agent")
     .default("website-assistent"),
+  // Waar deze beurt bij hoort, zodat de klant later een gesprek terugleest in
+  // plaats van losse vragen. De browser verzint dit id; meer dan beurten aan
+  // elkaar knopen kan het niet, want de database controleert dat het id bij
+  // dezelfde agent hoort.
+  gesprek: z.string().uuid().nullish(),
+  // Alleen het pad, nooit de querystring: daar staan zoektermen en soms namen in.
+  pagina: z
+    .string()
+    .max(300)
+    .nullish()
+    .transform((v) => (v ? v.replace(/[?#].*$/, "") : null)),
 });
 
 export type ChatInvoer = z.input<typeof chatSchema>;
@@ -51,7 +62,10 @@ export const vraagAssistent = createServerFn({ method: "POST" })
     const berichten = data.messages.slice(-MAX_BERICHTEN);
 
     try {
-      const { tekst, leadVastgelegd } = await beantwoord(berichten, data.agent, origin);
+      const { tekst, leadVastgelegd } = await beantwoord(berichten, data.agent, origin, {
+        id: data.gesprek ?? null,
+        pagina: data.pagina ?? null,
+      });
       return { ok: true as const, tekst, leadVastgelegd };
     } catch (err) {
       // De echte fout hoort in de serverlogs, niet bij de bezoeker: hij zegt

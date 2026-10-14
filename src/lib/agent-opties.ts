@@ -113,6 +113,21 @@ const ALGEMEEN: Optie[] = [
     groep: "grenzen",
   },
   {
+    sleutel: "bewaartermijn_dagen",
+    label: "Bewaartermijn",
+    uitleg:
+      "Hoe lang gesprekken en e-mails van deze agent blijven staan. Daarna wist de database ze vanzelf.",
+    type: "getal",
+    min: 7,
+    max: 730,
+    eenheid: "dagen",
+    wie: "klant",
+    bron: { soort: "optie" },
+    gebouwd: true,
+    standaard: 90,
+    groep: "grenzen",
+  },
+  {
     sleutel: "dagrapport",
     label: "Dagoverzicht per mail",
     uitleg: "Elke werkdag om 8:00 een mail met wat de agent gisteren deed en wat op je wacht.",
@@ -127,6 +142,18 @@ const ALGEMEEN: Optie[] = [
 
 const PER_SOORT: Record<AgentSoort, Optie[]> = {
   chat_assistent: [
+    {
+      sleutel: "gesprekken_bewaren",
+      label: "Gesprekken bewaren",
+      uitleg:
+        "Aan: je leest terug wat de assistent met bezoekers besprak. Uit: er blijft niets van staan, ook niet voor jou.",
+      type: "schakelaar",
+      wie: "klant",
+      bron: { soort: "optie" },
+      gebouwd: true,
+      standaard: true,
+      groep: "grenzen",
+    },
     {
       sleutel: "welcome_text",
       label: "Welkomsttekst",
