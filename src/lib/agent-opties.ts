@@ -201,32 +201,6 @@ const PER_SOORT: Record<AgentSoort, Optie[]> = {
       groep: "grenzen",
     },
     {
-      sleutel: "gesprekken_bewaren",
-      label: "Gesprekken bewaren",
-      uitleg:
-        "Gesprekken teruglezen in je portaal, zodat je ziet wat bezoekers vragen en wat hij antwoordde.",
-      type: "schakelaar",
-      wie: "klant",
-      bron: { soort: "optie" },
-      gebouwd: false,
-      standaard: true,
-      groep: "gedrag",
-    },
-    {
-      sleutel: "bewaartermijn_dagen",
-      label: "Gesprekken bewaren voor",
-      uitleg: "Na deze termijn worden gesprekken automatisch verwijderd.",
-      type: "getal",
-      min: 7,
-      max: 730,
-      eenheid: "dagen",
-      wie: "klant",
-      bron: { soort: "optie" },
-      gebouwd: false,
-      standaard: 90,
-      groep: "grenzen",
-    },
-    {
       sleutel: "onbeantwoord_verzamelen",
       label: "Onbeantwoorde vragen verzamelen",
       uitleg:
