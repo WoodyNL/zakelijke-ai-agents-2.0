@@ -24,7 +24,7 @@ import { SITE } from "@/content/site";
  * ────────────────────────────────────────────────────────────────────────
  */
 
-export const BIJGEWERKT = "19 september 2026";
+export const BIJGEWERKT = "14 oktober 2026";
 
 /** Terugkerend blok: wie is de verwerkingsverantwoordelijke / contractpartij. */
 const WIE: JuridischBlok = {
@@ -141,21 +141,35 @@ export const PRIVACY: JuridischBlok[] = [
     paren: [
       {
         naam: "Aanvragen zonder opdracht",
-        toelichting: "Twaalf maanden na het laatste contact, daarna verwijderd.",
+        toelichting:
+          "Twaalf maanden. Daarna verdwijnt de aanvraag automatisch, inclusief je naam en e-mailadres.",
       },
       {
-        naam: "Klantgegevens",
-        toelichting: "Gedurende de opdracht en twaalf maanden daarna.",
+        naam: "Wat een agent verwerkt",
+        toelichting:
+          "Gesprekken met je chat-assistent en e-mails die je supportagent behandelt: standaard negentig dagen. Als klant stel je dit zelf in, tussen een week en twee jaar, en je kunt het bewaren ook helemaal uitzetten.",
       },
       {
-        naam: "Facturen en administratie",
-        toelichting: "Zeven jaar, omdat de belastingwet dat voorschrijft.",
+        naam: "Facturatie en administratie",
+        toelichting:
+          "Zeven jaar, want dat schrijft de fiscale bewaarplicht voor. Het gaat om aantallen en bedragen, niet om de inhoud van gesprekken.",
       },
       {
-        naam: "Technische logs",
-        toelichting: "Maximaal dertig dagen.",
+        naam: "Beveiligingslogs",
+        toelichting:
+          "Twee jaar. Dat zijn handelingen — wie wat wijzigde, wie meekeek — en geen inhoud. Ze staan los van de termijn hierboven, want een log dat je zelf kort kunt zetten bewijst niets meer.",
+      },
+      {
+        naam: "Technische logs van de hosting",
+        toelichting: "Maximaal dertig dagen. IP-adres, browsertype en tijdstip.",
+      },
+      {
+        naam: "Je account",
+        toelichting:
+          "Zolang je klant bent. Zeg je op, dan verwijderen we het account en wat eraan hangt, op de administratie na die we wettelijk moeten bewaren.",
       },
     ],
+    alineas: ["Het opruimen gebeurt automatisch; het is geen voornemen maar een taak die draait."],
   },
   {
     kop: "Je rechten",
@@ -167,8 +181,8 @@ export const PRIVACY: JuridischBlok[] = [
   {
     kop: "Beveiliging",
     alineas: [
-      "Verkeer naar deze site gaat uitsluitend over een versleutelde verbinding. Wachtwoorden worden nooit leesbaar opgeslagen. Toegang tot klantgegevens is beperkt tot wie die toegang nodig heeft voor de opdracht. Alles wat een AI-agent doet, is terug te zien in een activiteitenlog.",
-      "Wij zien in ons beheer welke agents er draaien en hoeveel ze verbruiken, niet wat erin staat. Moeten we bij een storing toch meekijken, dan kan dat alleen met een opgegeven reden, voor maximaal een uur en alleen lezend. Je kennisbank blijft daarbij dicht. Wie wanneer en waarom heeft meegekeken, en welke schermen er zijn bekeken, zie je terug in je portaal onder Account.",
+      "Verkeer naar deze site gaat uitsluitend over een versleutelde verbinding. Wachtwoorden worden nooit leesbaar opgeslagen, en wie bij ons klantgegevens kan inzien, logt in met een tweede stap: een code uit een app, naast het wachtwoord. Wat je agents doen lees je terug in je eigen portaal — de gesprekken van je chat-assistent, de e-mails van je supportagent, en per agent wanneer hij aan- of uitging en wie dat deed.",
+      "Wij zien in ons beheer welke agents er draaien en hoeveel ze verbruiken, niet wat erin staat. Gesprekken en e-mails van je agents zijn voor ons niet in te zien. Moeten we bij een storing toch meekijken, dan kan dat alleen met een opgegeven reden, voor maximaal een uur en alleen lezend. Je kennisbank blijft daarbij dicht. Wie wanneer en waarom heeft meegekeken, en welke schermen er zijn bekeken, zie je terug in je portaal onder Account.",
     ],
   },
   {
@@ -297,7 +311,7 @@ export const AI_BELEID: JuridischBlok[] = [
       "Jij bepaalt per proces wat de AI zelfstandig mag en wat eerst langs een mens gaat.",
       "De Inbox Draft Assistant verstuurt standaard niets zelf — hij zet een concept klaar.",
       "Bij klachten, gevoelige vragen of twijfel draagt de agent over aan een mens.",
-      "Alles wat een agent doet, staat in een activiteitenlog dat je kunt nalezen.",
+      "Wat een agent doet, lees je terug in je portaal: zijn gesprekken of e-mails, en wanneer hij aan of uit werd gezet.",
       "Werkt een automatisering niet zoals bedoeld, dan kun je hem zelf uitzetten.",
     ],
   },
