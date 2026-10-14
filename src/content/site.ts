@@ -748,6 +748,7 @@ export const FOOTER = {
   // die er echt zijn — vereist door de AVG, en op een site die naleving
   // verkoopt ook gewoon een kwestie van geloofwaardigheid.
   legal: [
+    { label: "Veiligheid", href: "/veiligheid" },
     { label: "Privacyverklaring", href: "/privacyverklaring" },
     { label: "Algemene voorwaarden", href: "/algemene-voorwaarden" },
     { label: "AI-beleid", href: "/ai-beleid" },

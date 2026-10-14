@@ -26,6 +26,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PrivacyverklaringRouteImport } from './routes/privacyverklaring'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TarievenRouteImport } from './routes/tarieven'
+import { Route as VeiligheidRouteImport } from './routes/veiligheid'
 import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/whatsapp-follow-up-automatiseren'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -128,6 +129,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const TarievenRoute = TarievenRouteImport.update({
   id: '/tarieven',
   path: '/tarieven',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VeiligheidRoute = VeiligheidRouteImport.update({
+  id: '/veiligheid',
+  path: '/veiligheid',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WhatsappFollowUpAutomatiserenRoute =
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/privacyverklaring': typeof PrivacyverklaringRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tarieven': typeof TarievenRoute
+  '/veiligheid': typeof VeiligheidRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -279,6 +286,7 @@ export interface FileRoutesByTo {
   '/privacyverklaring': typeof PrivacyverklaringRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tarieven': typeof TarievenRoute
+  '/veiligheid': typeof VeiligheidRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/privacyverklaring': typeof PrivacyverklaringRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tarieven': typeof TarievenRoute
+  '/veiligheid': typeof VeiligheidRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/privacyverklaring'
     | '/reset-password'
     | '/tarieven'
+    | '/veiligheid'
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
     | '/admin'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/privacyverklaring'
     | '/reset-password'
     | '/tarieven'
+    | '/veiligheid'
     | '/whatsapp-follow-up-automatiseren'
     | '/account'
     | '/admin'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/privacyverklaring'
     | '/reset-password'
     | '/tarieven'
+    | '/veiligheid'
     | '/whatsapp-follow-up-automatiseren'
     | '/_authenticated/account'
     | '/_authenticated/admin'
@@ -466,6 +478,7 @@ export interface RootRouteChildren {
   PrivacyverklaringRoute: typeof PrivacyverklaringRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TarievenRoute: typeof TarievenRoute
+  VeiligheidRoute: typeof VeiligheidRoute
   WhatsappFollowUpAutomatiserenRoute: typeof WhatsappFollowUpAutomatiserenRoute
   BlogWaaromAiPilotsMislukkenRoute: typeof BlogWaaromAiPilotsMislukkenRoute
   EmbedSlugRoute: typeof EmbedSlugRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/tarieven'
       fullPath: '/tarieven'
       preLoaderRoute: typeof TarievenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/veiligheid': {
+      id: '/veiligheid'
+      path: '/veiligheid'
+      fullPath: '/veiligheid'
+      preLoaderRoute: typeof VeiligheidRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/whatsapp-follow-up-automatiseren': {
@@ -777,6 +797,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyverklaringRoute: PrivacyverklaringRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TarievenRoute: TarievenRoute,
+  VeiligheidRoute: VeiligheidRoute,
   WhatsappFollowUpAutomatiserenRoute: WhatsappFollowUpAutomatiserenRoute,
   BlogWaaromAiPilotsMislukkenRoute: BlogWaaromAiPilotsMislukkenRoute,
   EmbedSlugRoute: EmbedSlugRoute,
