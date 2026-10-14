@@ -30,12 +30,24 @@ export type SupportOpdracht = {
 export type SupportConcept = {
   beantwoordbaar: boolean;
   zekerheid: "hoog" | "laag";
+  /**
+   * Waar de vraag over ging, in de woorden van de klant: een categorie uit
+   * zijn eigen kennisbank, of "overig" als er niets bij past. Dat laatste is
+   * geen restcategorie maar een signaal: er ontbreekt kennis.
+   */
+  categorie: string;
   bronnen: string[];
   onderwerp: string;
   tekst: string;
   toelichting: string;
   verbruik: { input: number; output: number; cache: number };
 };
+
+/** De categorieën die in de kennisbank van deze klant voorkomen. */
+function categorieen(kennis: KennisRegel[]): string {
+  const uniek = [...new Set(kennis.map((k) => k.category.trim()).filter(Boolean))];
+  return uniek.length > 0 ? uniek.map((c) => `"${c}"`).join(", ") : '(geen; kies "overig")';
+}
 
 function kennisAlsTekst(kennis: KennisRegel[]): string {
   if (kennis.length === 0) return "(De kennisbank is leeg. Je weet niets over dit bedrijf.)";
@@ -77,7 +89,9 @@ ${kennisAlsTekst(o.kennis)}
 # Je antwoord
 
 Geef uitsluitend JSON terug, zonder omhulsel of toelichting:
-{"beantwoordbaar": true/false, "zekerheid": "hoog"/"laag", "bronnen": ["titels van de kennisitems die je gebruikte"], "onderwerp": "Re: ...", "tekst": "...", "toelichting": "één zin: waarop het antwoord rust, of wat er ontbreekt"}`;
+{"beantwoordbaar": true/false, "zekerheid": "hoog"/"laag", "categorie": "...", "bronnen": ["titels van de kennisitems die je gebruikte"], "onderwerp": "Re: ...", "tekst": "...", "toelichting": "één zin: waarop het antwoord rust, of wat er ontbreekt"}
+
+"categorie" is waar de vráág over gaat, letterlijk gekozen uit deze lijst: ${categorieen(o.kennis)}. Past er geen enkele bij, dan precies "overig". Kies niet op het antwoord maar op de vraag, en verzin geen nieuwe categorie.`;
 }
 
 export async function stelSupportAntwoordOp(o: SupportOpdracht): Promise<SupportConcept> {
@@ -153,9 +167,19 @@ export async function stelSupportAntwoordOp(o: SupportOpdracht): Promise<Support
   const beantwoordbaar = c.beantwoordbaar === true && bronnen.length > 0;
   const zekerheid = beantwoordbaar && !verzonnen && c.zekerheid === "hoog" ? "hoog" : "laag";
 
+  // Alleen een categorie die werkelijk bestaat. Een verzonnen categorie zou
+  // de knop "direct versturen alleen voor…" stil omzeilen.
+  const bekend = new Map(
+    o.kennis.map((k) => [k.category.trim().toLowerCase(), k.category.trim()] as const),
+  );
+  const gekozen = (c as { categorie?: unknown }).categorie;
+  const categorie =
+    typeof gekozen === "string" ? (bekend.get(gekozen.trim().toLowerCase()) ?? "overig") : "overig";
+
   return {
     beantwoordbaar,
     zekerheid,
+    categorie,
     bronnen,
     onderwerp: (c.onderwerp?.trim() || `Re: ${o.mail.onderwerp ?? ""}`).slice(0, 200),
     tekst: c.tekst.trim(),

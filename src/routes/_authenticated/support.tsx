@@ -138,6 +138,7 @@ function SupportPagina() {
         {query.data?.beschikbaar && agentId && (
           <>
             <Cijfers cijfers={query.data.cijfers} />
+            <Signalen mails={mails} opties={query.data.opties} />
             <Instellingen
               agentId={agentId}
               instellingen={query.data.instellingen}
@@ -192,6 +193,71 @@ function SupportPagina() {
         )}
       </div>
     </DashboardShell>
+  );
+}
+
+/**
+ * Wat er opvalt aan de stapel, in plaats van alleen de stapel.
+ *
+ * Twee signalen, allebei uit instellingen die de klant zelf heeft gezet. Ze
+ * staan hier en niet in een melding per mail, omdat ze pas iets betekenen over
+ * meerdere vragen heen: één vraag die blijft liggen is pech, vijf is een
+ * patroon.
+ */
+function Signalen({
+  mails,
+  opties,
+}: {
+  mails: SupportMail[];
+  opties: { directOnderwerpen: string[]; vragenGroeperen: boolean; reactietijdDoel: number };
+}) {
+  const nu = Date.now();
+  const openStaand = mails.filter((m) =>
+    ["nieuw", "concept", "mens_nodig", "mislukt"].includes(m.status),
+  );
+  const teLang = openStaand.filter(
+    (m) => (nu - new Date(m.ontvangen_op).getTime()) / 60_000 > opties.reactietijdDoel,
+  );
+
+  // Terugkerende onderwerpen, maar alleen de vragen die niet vanzelf gingen.
+  // Waar de agent zelf antwoord op geeft, is geen probleem om op te lossen.
+  const telling = new Map<string, number>();
+  if (opties.vragenGroeperen) {
+    for (const m of mails) {
+      if (m.status === "verzonden" && m.zekerheid === "hoog") continue;
+      const c = (m.categorie ?? "").trim();
+      if (!c) continue;
+      telling.set(c, (telling.get(c) ?? 0) + 1);
+    }
+  }
+  const vaakst = [...telling.entries()].sort((a, z) => z[1] - a[1])[0];
+  const terugkerend = vaakst && vaakst[1] >= 3 ? vaakst : null;
+
+  if (teLang.length === 0 && !terugkerend) return null;
+
+  const uren = Math.round((opties.reactietijdDoel / 60) * 10) / 10;
+  const doelInWoorden =
+    opties.reactietijdDoel >= 60 ? `${uren} uur` : `${opties.reactietijdDoel} minuten`;
+
+  return (
+    <div className="grid gap-2">
+      {teLang.length > 0 && (
+        <p className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] px-4 py-3 text-[12.5px]/[1.6] text-amber-100">
+          {teLang.length === 1 ? "Eén vraag ligt" : `${teLang.length} vragen liggen`} langer dan je
+          streeftijd van {doelInWoorden}.
+        </p>
+      )}
+      {terugkerend && (
+        <p className="rounded-2xl border border-violet/25 bg-violet/[0.08] px-4 py-3 text-[12.5px]/[1.6] text-ink/85">
+          {terugkerend[1]}× ging het over <strong>{terugkerend[0]}</strong> zonder dat de agent het
+          zelf kon afhandelen.{" "}
+          <Link to="/knowledge" className="text-violet underline-offset-2 hover:underline">
+            Eén kennisitem erover
+          </Link>{" "}
+          scheelt je die vragen voortaan.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -498,6 +564,11 @@ function MailKaart({
             {mail.van_naam && <span className="font-normal text-ink/50"> · {mail.van_email}</span>}
           </p>
           <p className="mt-0.5 text-[12.5px] text-ink/65">{mail.onderwerp || "(geen onderwerp)"}</p>
+          {mail.categorie && (
+            <span className="mt-1.5 inline-block rounded-full border border-white/12 bg-white/[0.04] px-2 py-0.5 text-[11px] text-ink/55">
+              {mail.categorie}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2.5">
           <span className="text-[11.5px] text-ink/45">{wanneer(mail.ontvangen_op)}</span>

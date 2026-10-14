@@ -122,8 +122,9 @@ export async function verwerkSupportMail(mailId: string): Promise<string> {
       extra_instructions: string | null;
       model: string | null;
       client_id: string;
+      opties: Record<string, unknown> | null;
     }>(
-      `agents?select=id,name,status,tone,extra_instructions,model,client_id&id=eq.${mail.agent_id}`,
+      `agents?select=id,name,status,tone,extra_instructions,model,client_id,opties&id=eq.${mail.agent_id}`,
     );
     if (!agent) throw new Error("Agent niet gevonden");
 
@@ -174,6 +175,7 @@ export async function verwerkSupportMail(mailId: string): Promise<string> {
       concept_tekst: concept.tekst,
       bronnen: concept.bronnen,
       zekerheid: concept.zekerheid,
+      categorie: concept.categorie,
       toelichting: concept.toelichting || null,
     };
 
@@ -182,14 +184,36 @@ export async function verwerkSupportMail(mailId: string): Promise<string> {
       return "mens_nodig";
     }
 
+    // Heeft de klant onderwerpen aangewezen, dan geldt direct versturen alleen
+    // daarvoor. Een lege lijst betekent: alles waar hij zeker over is. Dat
+    // onderscheid is het hele punt van de knop — "ja, maar niet over facturen".
+    const toegestaan = Array.isArray(agent.opties?.["direct_onderwerpen"])
+      ? (agent.opties["direct_onderwerpen"] as unknown[])
+          .map((x) => String(x).trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+    const magDitOnderwerp =
+      toegestaan.length === 0 || toegestaan.includes(concept.categorie.trim().toLowerCase());
+
     const magZelf =
       inst?.modus === "direct" &&
       concept.zekerheid === "hoog" &&
       agent.status === "live" &&
+      magDitOnderwerp &&
       !!inst.afzender_email;
 
     if (!magZelf) {
-      await patch(mailId, { ...velden, status: "concept" });
+      await patch(mailId, {
+        ...velden,
+        status: "concept",
+        toelichting:
+          !magDitOnderwerp && inst?.modus === "direct"
+            ? `Gaat over "${concept.categorie}"; daarvoor staat direct versturen uit. ${concept.toelichting}`.slice(
+                0,
+                300,
+              )
+            : velden.toelichting,
+      });
       return "concept";
     }
 

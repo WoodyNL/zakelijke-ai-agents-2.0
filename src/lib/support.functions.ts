@@ -36,12 +36,16 @@ export type SupportMail = {
   concept_tekst: string | null;
   bronnen: string[];
   zekerheid: "hoog" | "laag" | null;
+  /** Waar de vraag over ging: een categorie uit de kennisbank, of "overig". */
+  categorie: string | null;
   toelichting: string | null;
   verzonden_tekst: string | null;
   verzonden_op: string | null;
   verzonden_door: string | null;
   fout: string | null;
 };
+
+type Opties = Record<string, unknown>;
 
 export type SupportInstellingen = {
   kanaal: "doorsturen" | "gmail" | "outlook";
@@ -78,15 +82,15 @@ export const haalSupport = createServerFn({ method: "GET" })
       sb
         .from("support_mails")
         .select(
-          "id, van_email, van_naam, onderwerp, vraag, ontvangen_op, status, concept_onderwerp, concept_tekst, bronnen, zekerheid, toelichting, verzonden_tekst, verzonden_op, verzonden_door, fout",
+          "id, van_email, van_naam, onderwerp, vraag, ontvangen_op, status, concept_onderwerp, concept_tekst, bronnen, zekerheid, categorie, toelichting, verzonden_tekst, verzonden_op, verzonden_door, fout",
         )
         .eq("agent_id", data.agentId)
         .order("ontvangen_op", { ascending: false })
         .limit(150),
       sb.from("support_instellingen").select("*").eq("agent_id", data.agentId).maybeSingle(),
-      context.supabase
+      sb
         .from("agents")
-        .select("inbound_local, status")
+        .select("inbound_local, status, opties")
         .eq("id", data.agentId)
         .maybeSingle(),
       (context.supabase as unknown as Rpc).rpc("support_kerncijfers", {
@@ -98,10 +102,22 @@ export const haalSupport = createServerFn({ method: "GET" })
     // Staat de migratie er nog niet, dan is er ook nog niets om te tonen.
     const beschikbaar = !mails.error;
     const domein = process.env["RESEND_INBOUND_DOMEIN"] ?? null;
-    const local = (agent.data as { inbound_local?: string | null } | null)?.inbound_local ?? null;
+    const rij = agent.data as { inbound_local?: string | null; opties?: Opties | null } | null;
+    const local = rij?.inbound_local ?? null;
+    const opties = rij?.opties ?? {};
 
     return {
       beschikbaar,
+      // De drie instellingen die dit scherm nodig heeft om meer te tonen dan
+      // een lijst: waarover hij zelf mag antwoorden, of hij moet voorstellen
+      // om kennis vast te leggen, en vanaf wanneer een vraag te lang ligt.
+      opties: {
+        directOnderwerpen: Array.isArray(opties["direct_onderwerpen"])
+          ? (opties["direct_onderwerpen"] as unknown[]).map(String)
+          : [],
+        vragenGroeperen: opties["vragen_groeperen"] !== false,
+        reactietijdDoel: Number(opties["reactietijd_doel"] ?? 240),
+      },
       mails: (mails.data ?? []) as SupportMail[],
       instellingen: { ...STANDAARD, ...((inst.data ?? {}) as Partial<SupportInstellingen>) },
       cijfers: (((cijfers.data ?? []) as SupportCijfers[])[0] ?? null) as SupportCijfers | null,
