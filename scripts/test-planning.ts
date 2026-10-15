@@ -9,7 +9,7 @@
  *   node scripts/test-planning.ts
  */
 
-import { opvolgmoment, verdeelOverDagen } from "../src/lib/verzenden.server.ts";
+import { opvolgmoment, verdeelOverDagen } from "../src/lib/verzendvenster.ts";
 
 let gezakt = 0;
 const meld = (goed: boolean, naam: string, detail = "") => {

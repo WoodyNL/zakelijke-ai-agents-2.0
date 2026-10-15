@@ -188,3 +188,51 @@ export function verdeelInVenster(
   }
   return uit;
 }
+
+/**
+ * Verdeelt berichten over dagen volgens het dagmaximum.
+ *
+ * Een vers verzenddomein dat op dag één honderd mails wegstuurt, valt op bij
+ * spamfilters en krijgt dat nauwelijks meer terug. Deze functie is dus geen
+ * netheid maar de rem die dat voorkomt.
+ *
+ * De verzendtijden liggen binnen kantooruren en lopen per bericht een paar
+ * minuten uit elkaar. Honderd mails op precies hetzelfde tijdstip is een
+ * patroon dat een mens nooit maakt.
+ */
+export function verdeelOverDagen(
+  aantal: number,
+  perDag: number,
+  vanaf: Date,
+  venster: Venster = STANDAARD_VENSTER,
+): Date[] {
+  return verdeelInVenster(aantal, perDag, vanaf, venster);
+}
+
+/**
+ * Het moment waarop een opvolging mag vertrekken.
+ *
+ * Niet verdeeld over dagen zoals het eerste bericht, maar per contact geteld
+ * vanaf zijn eigen eerste mail. Dat regelt het tempo vanzelf: zijn de eerste
+ * berichten over veertien werkdagen verdeeld, dan zijn de opvolgingen dat ook.
+ *
+ * Wel naar een werkdag en naar de ochtend. Een herinnering die zaterdagnacht
+ * binnenkomt is maandag ondergesneeuwd, en dat is precies het bericht dat je
+ * niet wilt verspillen.
+ */
+export function opvolgmoment(
+  verzondenOp: Date,
+  naDagen: number,
+  venster: Venster = STANDAARD_VENSTER,
+): Date {
+  // Een half uur na de opening: niet als eerste in een inbox die 's ochtends
+  // toch wordt leeggeveegd, maar wel ruim binnen de ochtend.
+  const doel = new Date(verzondenOp.getTime() + naDagen * 24 * 60 * 60_000);
+  const halfNaOpening = new Date(doel.getTime());
+  const { minuten } = delen(halfNaOpening);
+  halfNaOpening.setTime(halfNaOpening.getTime() + (venster.begin + 30 - minuten) * 60_000);
+  // binnenVenster regelt de rest: weekend, buiten de uren, en nooit in het
+  // verleden — dat laatste zou bij een campagne die al langer loopt betekenen
+  // dat Resend het weigert en de opvolging stilletjes uitvalt.
+  return binnenVenster(halfNaOpening, venster);
+}
