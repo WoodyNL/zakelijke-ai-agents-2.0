@@ -22,7 +22,11 @@ DECLARE
   _agent uuid;
   _aantal int;
 BEGIN
-  SELECT count(*), min(id) INTO _aantal, _agent
+  -- Eerst tellen, dan pas pakken. min(id) zou korter zijn, maar PostgreSQL
+  -- heeft geen min() voor uuid — er is geen ordening waarin de "kleinste" uuid
+  -- iets betekent. Twee opdrachten zeggen bovendien precies wat er bedoeld is:
+  -- controleer dat er één is, neem dan die ene.
+  SELECT count(*) INTO _aantal
   FROM public.agents
   WHERE kind = 'uitgaande_email';
 
@@ -30,6 +34,10 @@ BEGIN
     RAISE NOTICE 'Testadressen overgeslagen: % agents voor uitgaande e-mail gevonden, verwacht precies 1.', _aantal;
     RETURN;
   END IF;
+
+  SELECT id INTO _agent
+  FROM public.agents
+  WHERE kind = 'uitgaande_email';
 
   INSERT INTO public.outbound_contacts (agent_id, email, naam, bedrijf, plaats, herkomst, notitie)
   VALUES
