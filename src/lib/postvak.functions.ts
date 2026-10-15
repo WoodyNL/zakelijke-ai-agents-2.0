@@ -62,14 +62,9 @@ export const verbreekKoppeling = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const agent = await mijnAgent(context as never, data.agentId);
-    const { error } = await (
-      context.supabase as unknown as {
-        rpc: (
-          n: string,
-          a: Record<string, unknown>,
-        ) => Promise<{ error: { message: string } | null }>;
-      }
-    ).rpc("postvak_ontkoppel", { _agent_id: data.agentId });
+    const { error } = await context.supabase.rpc("postvak_ontkoppel", {
+      _agent_id: data.agentId,
+    });
     if (error) throw new Error(error.message);
 
     await legVast(context as never, {
@@ -84,16 +79,7 @@ export const haalKoppeling = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    // De tabel staat nog niet in de gegenereerde types; die komen pas na de
-    // migratie. Vandaar deze smalle ingang in plaats van een losse any.
-    type Leesbaar = {
-      from: (t: string) => {
-        select: (k: string) => {
-          eq: (k: string, w: string) => { maybeSingle: () => Promise<{ data: unknown }> };
-        };
-      };
-    };
-    const { data: rij } = await (context.supabase as unknown as Leesbaar)
+    const { data: rij } = await context.supabase
       .from("postvak_koppelingen")
       .select("provider, email, naam, map, status, laatste_fout, laatste_keer, gekoppeld_op")
       .eq("agent_id", data.agentId)
