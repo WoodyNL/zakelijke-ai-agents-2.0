@@ -6,10 +6,21 @@
  * een hele lijst — en dat is niet terug te draaien: het verzenddomein is dan
  * beschadigd en dat herstelt traag.
  *
+ * Alles wordt hier met de Nederlandse wandklok gemeten, net als in de code
+ * zelf. Dat is geen netheid: deze test stond eerder met getHours() en getDay(),
+ * en die lezen de klok van de machine. Op een laptop in Amsterdam vallen die
+ * samen met Nederlandse tijd en stond alles op groen, terwijl dezelfde test op
+ * een server in UTC zakte. Een test die alleen slaagt waar hij geschreven is,
+ * controleert juist niet waar deze module voor bestaat.
+ *
+ * De ingangen worden om dezelfde reden in UTC opgebouwd: setUTCHours doet
+ * overal hetzelfde, setHours niet.
+ *
  *   node scripts/test-planning.ts
+ *   TZ=UTC node scripts/test-planning.ts
  */
 
-import { opvolgmoment, verdeelOverDagen } from "../src/lib/verzendvenster.ts";
+import { delen, opvolgmoment, verdeelOverDagen } from "../src/lib/verzendvenster.ts";
 
 let gezakt = 0;
 const meld = (goed: boolean, naam: string, detail = "") => {
@@ -19,13 +30,25 @@ const meld = (goed: boolean, naam: string, detail = "") => {
 
 console.log("\nVerzending verdelen over dagen\n" + "=".repeat(52));
 
-// Een maandag ver genoeg in de toekomst, zodat "niet in het verleden" niet meespeelt.
-const maandag = new Date();
-maandag.setDate(maandag.getDate() + 7);
-while (maandag.getDay() !== 1) maandag.setDate(maandag.getDate() + 1);
-maandag.setHours(9, 0, 0, 0);
+/** De Nederlandse weekdag: 0 = zondag, 6 = zaterdag. */
+const weekdag = (d: Date) => delen(d).weekdag;
+/** De Nederlandse kalenderdag, als sleutel om per dag te tellen. */
+const dagVan = (d: Date) => {
+  const w = delen(d);
+  return `${w.jaar}-${w.maand}-${w.dag}`;
+};
+const klok = (d: Date) => {
+  const { minuten } = delen(d);
+  return `${Math.floor(minuten / 60)}:${String(minuten % 60).padStart(2, "0")}`;
+};
 
-const dagVan = (d: Date) => d.toISOString().slice(0, 10);
+// Een maandag ver genoeg in de toekomst, zodat "niet in het verleden" niet
+// meespeelt. 08:00 UTC valt zowel in de winter (09:00) als in de zomer (10:00)
+// binnen het venster van 9 tot 17, dus deze ingang is het hele jaar geldig.
+const maandag = new Date();
+maandag.setUTCDate(maandag.getUTCDate() + 7);
+maandag.setUTCHours(8, 0, 0, 0);
+while (weekdag(maandag) !== 1) maandag.setUTCDate(maandag.getUTCDate() + 1);
 
 const tien = verdeelOverDagen(25, 10, maandag);
 meld(tien.length === 25, "alle berichten krijgen een moment", `${tien.length}`);
@@ -40,13 +63,20 @@ meld(
 meld(perDag.size === 3, "25 stuks bij 10 per dag = drie dagen", `${perDag.size} dagen`);
 
 meld(
-  tien.every((d) => d.getDay() !== 0 && d.getDay() !== 6),
+  tien.every((d) => weekdag(d) !== 0 && weekdag(d) !== 6),
   "er wordt niet in het weekend verstuurd",
 );
 
+// Negen tot vijf in Nederlandse tijd, want dat is wat de klant instelt en wat
+// zijn ontvangers zien. Dit is de controle die op UTC zakte.
+const buitenUren = tien.filter((d) => {
+  const { minuten } = delen(d);
+  return minuten < 9 * 60 || minuten >= 17 * 60;
+});
 meld(
-  tien.every((d) => d.getHours() >= 9 && d.getHours() < 18),
-  "alles valt binnen kantooruren",
+  buitenUren.length === 0,
+  "alles valt binnen kantooruren, Nederlandse tijd",
+  buitenUren.map(klok).join(" "),
 );
 
 // Twee berichten op precies hetzelfde tijdstip is een patroon dat opvalt.
@@ -77,7 +107,7 @@ const drukste = Math.max(...telPerDag.values());
 meld(drukste <= 10, "ook over weekenden heen blijft het maximum staan", `drukste dag: ${drukste}`);
 meld(dagen.size === 14, "137 stuks bij 10 per dag = veertien werkdagen", `${dagen.size} dagen`);
 meld(
-  heleLijst.every((d) => d.getDay() !== 0 && d.getDay() !== 6),
+  heleLijst.every((d) => weekdag(d) !== 0 && weekdag(d) !== 6),
   "ook in de lange lijst geen weekenddagen",
 );
 meld(
@@ -92,22 +122,22 @@ meld(
 console.log("\nOpvolgmoment");
 
 const dinsdag = new Date();
-dinsdag.setDate(dinsdag.getDate() + 3);
-while (dinsdag.getDay() !== 2) dinsdag.setDate(dinsdag.getDate() + 1);
-dinsdag.setHours(11, 0, 0, 0);
+dinsdag.setUTCDate(dinsdag.getUTCDate() + 3);
+dinsdag.setUTCHours(9, 0, 0, 0);
+while (weekdag(dinsdag) !== 2) dinsdag.setUTCDate(dinsdag.getUTCDate() + 1);
 
 const na7 = opvolgmoment(dinsdag, 7);
-meld(na7.getDay() === 2, "zeven dagen na dinsdag is weer een dinsdag", String(na7.getDay()));
-meld(na7.getHours() === 9 && na7.getMinutes() === 30, "in de ochtend", `${na7.getHours()}:${na7.getMinutes()}`);
+meld(weekdag(na7) === 2, "zeven dagen na dinsdag is weer een dinsdag", String(weekdag(na7)));
+meld(delen(na7).minuten === 9 * 60 + 30, "een half uur na de opening", klok(na7));
 
 // Woensdag + 3 dagen is zaterdag; dat moet naar maandag schuiven.
 const woensdag = new Date(dinsdag);
-woensdag.setDate(woensdag.getDate() + 1);
+woensdag.setUTCDate(woensdag.getUTCDate() + 1);
 const naWeekend = opvolgmoment(woensdag, 3);
 meld(
-  naWeekend.getDay() !== 0 && naWeekend.getDay() !== 6,
+  weekdag(naWeekend) !== 0 && weekdag(naWeekend) !== 6,
   "een opvolging in het weekend schuift naar een werkdag",
-  `dag ${naWeekend.getDay()}`,
+  `dag ${weekdag(naWeekend)}`,
 );
 
 // Een campagne die al maanden loopt mag niet in het verleden inplannen.
