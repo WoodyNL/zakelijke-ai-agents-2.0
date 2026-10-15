@@ -1,0 +1,21 @@
+-- Een derde soort contact: testadressen.
+--
+-- Voordat er honderdzevenendertig mails weggaan, gaat er één naar onszelf. Tot
+-- nu toe moest zo'n adres dan op 'koud' of 'oud_klant', en dat heeft twee
+-- gevolgen die je pas merkt als het te laat is.
+--
+-- Een testadres op 'koud' telt mee in de koude campagne. Dan staat er 216 waar
+-- 211 hoort te staan, en gaat de proefmail een tweede keer weg als onderdeel
+-- van de echte lijst. De database laat dat toe: één bericht per stap per
+-- contact betekent niet één bericht per campagne.
+--
+-- En de toon klopt niet. De herkomst bepaalt wat de agent schrijft: bij
+-- 'oud_klant' komt het verhaal over de overname en de overleden eigenaar
+-- erin. Dat verhaal naar Frank zelf sturen zegt niets over hoe het bij een
+-- echte oud-klant leest — je test dan een tekst die je niet gaat versturen.
+--
+-- Een eigen waarde houdt die adressen dus buiten elke echte campagne, en laat
+-- ze tegelijk door exact dezelfde molen gaan: opstellen, verzenden, afmelden,
+-- antwoord terugvangen. Dat is wat een test moet doen.
+
+ALTER TYPE public.contact_herkomst ADD VALUE IF NOT EXISTS 'test';
