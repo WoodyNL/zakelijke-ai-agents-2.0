@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
+import { PAKKETTEN_PER_VRIJDAG, busvracht } from "@/lib/busvracht";
 import {
   herstelAdres,
   vraagBevestiging,
@@ -116,6 +117,19 @@ function BezorgenPagina() {
   }
 
   async function plan(k: Kandidaat) {
+    // Vragen en niet weigeren. Twintig is een schatting van iemand die het nog
+    // nooit heeft gedaan; staat Frank in de bus en weet hij dat er nog een kan,
+    // dan moet het portaal niet in de weg gaan staan.
+    const vracht = busvracht((perDag.get(dag) ?? []).length);
+    if (vracht.vol) {
+      const door = window.confirm(
+        `Op ${dagTekst(dag)} staan er al ${(perDag.get(dag) ?? []).length} pakketten. ` +
+          `De vuistregel is ${PAKKETTEN_PER_VRIJDAG} per vrijdag — niet omdat de bus vol is, ` +
+          `maar omdat ze ook afgegeven moeten worden naast de vaste ronde.\n\n` +
+          `Toch op deze dag zetten?`,
+      );
+      if (!door) return;
+    }
     if (!agentId) return;
     zetBezig(k.contactId);
     zetFout(null);
@@ -280,7 +294,7 @@ function BezorgenPagina() {
               >
                 {vrijdagen().map((v) => (
                   <option key={v} value={v} className="bg-[#12121a]">
-                    {dagTekst(v)} ({(perDag.get(v) ?? []).length})
+                    {dagTekst(v)} — {busvracht((perDag.get(v) ?? []).length).tekst}
                   </option>
                 ))}
               </select>
@@ -334,9 +348,10 @@ function BezorgenPagina() {
                     const mee = lijst.filter(
                       (b) => b.bevestiging === "bevestigd" || b.bevestiging === "ander_adres",
                     ).length;
+                    const vracht = busvracht(lijst.length);
                     return mee === lijst.length
-                      ? `${mee} ${mee === 1 ? "pakket" : "pakketten"}`
-                      : `${mee} van ${lijst.length} ${lijst.length === 1 ? "pakket" : "pakketten"} gaat mee`;
+                      ? `${vracht.tekst}`
+                      : `${mee} van ${lijst.length} gaat mee · ${vracht.tekst}`;
                   })()}
                 </span>
                 {/* De chauffeur staat in een bus, niet achter dit scherm. */}
