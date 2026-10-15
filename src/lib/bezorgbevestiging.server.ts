@@ -145,7 +145,7 @@ export async function verstuurBevestigingen(
           naam: c.naam ?? undefined,
           bedrijf: c.bedrijf ?? undefined,
           plaats: c.plaats ?? undefined,
-          herkomst: c.herkomst as "oud_klant" | "koud",
+          herkomst: c.herkomst as "oud_klant" | "koud" | "test",
         },
         kennis,
         bedrijfsnaam: agent?.name ?? "ons",

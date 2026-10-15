@@ -1540,7 +1540,7 @@ export type Database = {
         | "verzet"
         | "afgezegd"
       campagne_doelgroep: "alles" | "binnen_gebied" | "buiten_gebied"
-      contact_herkomst: "oud_klant" | "koud"
+      contact_herkomst: "oud_klant" | "koud" | "test"
       opvolging_stand:
         | "open"
         | "navraag_uit"
@@ -1703,7 +1703,7 @@ export const Constants = {
         "afgezegd",
       ],
       campagne_doelgroep: ["alles", "binnen_gebied", "buiten_gebied"],
-      contact_herkomst: ["oud_klant", "koud"],
+      contact_herkomst: ["oud_klant", "koud", "test"],
       opvolging_stand: [
         "open",
         "navraag_uit",

@@ -27,13 +27,13 @@ const contactSchema = z.object({
   notitie: z.string().max(600).optional(),
   prioriteit: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   /** Staat er in het bestand zelf of dit een klant of een prospect is, dan wint dat. */
-  herkomst: z.enum(["oud_klant", "koud"]).optional(),
+  herkomst: z.enum(["oud_klant", "koud", "test"]).optional(),
 });
 
 const importSchema = z.object({
   agentId: z.string().uuid(),
   /** De keuze bij de import; geldt voor elke rij die het zelf niet zegt. */
-  herkomst: z.enum(["oud_klant", "koud"]),
+  herkomst: z.enum(["oud_klant", "koud", "test"]),
   contacten: z.array(contactSchema).min(1).max(5000),
 });
 
@@ -322,7 +322,7 @@ export const vulContactenAan = createServerFn({ method: "POST" })
          * hebben gekend. Het bestand zelf is de beste afbakening van wie het
          * betreft: precies de rijen die erin staan.
          */
-        herkomst: z.enum(["oud_klant", "koud"]).optional(),
+        herkomst: z.enum(["oud_klant", "koud", "test"]).optional(),
       })
       .parse(d),
   )

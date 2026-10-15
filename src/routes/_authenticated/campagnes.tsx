@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/campagnes")({
 type Campagne = {
   id: string;
   naam: string;
-  herkomst: "oud_klant" | "koud";
+  herkomst: "oud_klant" | "koud" | "test";
   verzendwijze: "concept" | "direct";
   doelgroep?: "alles" | "binnen_gebied" | "buiten_gebied";
   afzender_naam: string | null;
@@ -51,7 +51,7 @@ const veld =
 
 type Formulier = {
   naam: string;
-  herkomst: "oud_klant" | "koud";
+  herkomst: "oud_klant" | "koud" | "test";
   verzendwijze: "concept" | "direct";
   doelgroep: "alles" | "binnen_gebied" | "buiten_gebied";
   afzenderNaam: string;
@@ -367,6 +367,13 @@ function CampagnesPagina() {
                       <option value="koud" className="bg-[#12121a]">
                         Koud — nog nooit contact gehad
                       </option>
+                      {/* Testadressen staan apart zodat ze in geen enkele echte
+                          campagne meelopen, en tegelijk door precies dezelfde
+                          molen gaan: opstellen, verzenden, afmelden, antwoord
+                          terugvangen. */}
+                      <option value="test" className="bg-[#12121a]">
+                        Testadressen — naar onszelf, om te proberen
+                      </option>
                     </select>
                   </Veld>
                   <Veld
@@ -414,6 +421,12 @@ function CampagnesPagina() {
                     laatste controle vóór het klaarzetten. */}
                 {bereik !== null && (
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
+                    {v.herkomst === "test" && (
+                      <p className="mb-2 rounded-xl border border-violet/25 bg-violet/[0.08] px-3 py-2 text-[12px]/[1.6] text-ink/75">
+                        Dit is een proefronde naar onze eigen adressen. De berichten zijn gelijk aan
+                        die van een koude campagne — zo test je wat er echt verstuurd wordt.
+                      </p>
+                    )}
                     <p className="text-[12.5px]/[1.65] text-ink/70">
                       Deze selectie bevat{" "}
                       <strong className="font-display font-bold text-ink tabular-nums">

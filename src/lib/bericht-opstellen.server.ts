@@ -21,7 +21,7 @@ export type ContactGegevens = {
   naam?: string | undefined;
   bedrijf?: string | undefined;
   plaats?: string | undefined;
-  herkomst: "oud_klant" | "koud";
+  herkomst: "oud_klant" | "koud" | "test";
   /** Wat er over deze zaak bekend is; achtergrond, geen citaat. */
   notitie?: string | undefined;
 };

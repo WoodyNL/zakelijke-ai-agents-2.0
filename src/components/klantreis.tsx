@@ -221,7 +221,11 @@ export function Klantreis({ g }: { g: Reisgegevens }) {
 
           <div className="flex flex-wrap gap-2 lg:mt-3.5">
             <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10.5px] text-ink/60">
-              {c.herkomst === "oud_klant" ? "oud-klant" : "koud"}
+              {c.herkomst === "oud_klant"
+                ? "oud-klant"
+                : c.herkomst === "test"
+                  ? "testadres"
+                  : "koud"}
             </span>
             {c.in_bezorggebied === true && (
               <span className="rounded-full bg-emerald-400/12 px-2.5 py-1 text-[10.5px] text-emerald-300">

@@ -207,7 +207,7 @@ export function heeftKopregel(rijen: string[][]): boolean {
   return !eerste.some((cel) => eersteEmail(cel) !== null);
 }
 
-export type Herkomst = "oud_klant" | "koud";
+export type Herkomst = "oud_klant" | "koud" | "test";
 
 export type GelezenContact = {
   email: string;
@@ -251,6 +251,7 @@ export function leesHerkomst(cel: string): Herkomst | null {
   if (!t) return null;
   if (t.startsWith("klant") || t.startsWith("customer")) return "oud_klant";
   if (t.startsWith("prospect") || t.startsWith("lead")) return "koud";
+  if (t.startsWith("test") || t.startsWith("proef")) return "test";
   return null;
 }
 

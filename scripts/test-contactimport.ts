@@ -15,6 +15,7 @@ import {
   geldigEmail,
   heeftKopregel,
   leesContacten,
+  leesHerkomst,
   raadKolommen,
 } from "../src/lib/contactimport.ts";
 
@@ -219,6 +220,14 @@ meld(
   !("naam" in gelezenLeads.contacten[1]!),
   "geen voornaam betekent geen naam, niet een halve",
 );
+
+console.log("\nTestadressen als eigen soort\n" + "=".repeat(52));
+
+meld(leesHerkomst("test") === "test", "\"test\" wordt een testadres");
+meld(leesHerkomst("Testadres") === "test", "met hoofdletter ook");
+meld(leesHerkomst("proef") === "test", "\"proef\" telt ook als test");
+meld(leesHerkomst("klant") === "oud_klant", "en klant blijft oud-klant");
+meld(leesHerkomst("prospect") === "koud", "en prospect blijft koud");
 
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) console.log("Alles in orde.\n");

@@ -46,7 +46,7 @@ function ContactenPagina() {
   const gebiedFn = useServerFn(bepaalGebiedOpnieuw);
   const aanvulFn = useServerFn(vulContactenAan);
   const [gebiedBezig, zetGebiedBezig] = useState(false);
-  const [filter, zetFilter] = useState<"alles" | "route" | "buiten" | "oud" | "koud" | "uit">(
+  const [filter, zetFilter] = useState<"alles" | "route" | "buiten" | "oud" | "koud" | "test" | "uit">(
     "alles",
   );
   const [gebiedMelding, zetGebiedMelding] = useState<string | null>(null);
@@ -80,12 +80,19 @@ function ContactenPagina() {
    * lijst die bepaalt wie er post krijgt, is dat de verkeerde soort
    * onduidelijkheid.
    */
+  const HERKOMST_LABEL: Record<string, string> = {
+    oud_klant: "oud-klant",
+    koud: "koud",
+    test: "testadres",
+  };
+
   const FILTERS = [
     { sleutel: "alles", label: "alle" },
     { sleutel: "route", label: "op de route" },
     { sleutel: "buiten", label: "buiten het gebied" },
     { sleutel: "oud", label: "oud-klanten" },
     { sleutel: "koud", label: "koud" },
+    { sleutel: "test", label: "testadressen" },
     { sleutel: "uit", label: "afgemeld of onbestelbaar" },
   ] as const;
 
@@ -99,6 +106,8 @@ function ContactenPagina() {
         return c.herkomst === "oud_klant";
       case "koud":
         return c.herkomst === "koud";
+      case "test":
+        return c.herkomst === "test";
       case "uit":
         return c.afgemeld_op !== null || c.bounce_op !== null;
       default:
@@ -126,7 +135,7 @@ function ContactenPagina() {
     }
   }
 
-  async function opslaan(gelezen: GelezenContact[], herkomst: "oud_klant" | "koud") {
+  async function opslaan(gelezen: GelezenContact[], herkomst: "oud_klant" | "koud" | "test") {
     if (!actieveId) throw new Error("Kies eerst een agent.");
     const uitkomst = await importFn({
       data: { agentId: actieveId, herkomst, contacten: gelezen },
@@ -313,7 +322,7 @@ function ContactenPagina() {
                             <td className="py-2 pr-3 text-ink/55">{c.bedrijf ?? "—"}</td>
                             <td className="py-2 pr-3 text-ink/55">{c.plaats ?? "—"}</td>
                             <td className="py-2 pr-3 text-ink/45">
-                              {c.herkomst === "oud_klant" ? "oud-klant" : "koud"}
+                              {HERKOMST_LABEL[c.herkomst] ?? c.herkomst}
                             </td>
                             {/* Of de chauffeur er kan komen. Dit bepaalt of de
                                 agent een bezorging mag toezeggen, dus het hoort

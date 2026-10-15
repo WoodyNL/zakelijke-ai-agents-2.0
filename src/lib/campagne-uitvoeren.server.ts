@@ -66,7 +66,7 @@ export type Campagne = {
   id: string;
   agent_id: string;
   naam: string;
-  herkomst: "oud_klant" | "koud";
+  herkomst: "oud_klant" | "koud" | "test";
   verzendwijze: "concept" | "direct";
   doelgroep?: "alles" | "binnen_gebied" | "buiten_gebied";
   afzender_naam: string | null;
@@ -156,7 +156,7 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
           naam: c.naam ?? undefined,
           bedrijf: c.bedrijf ?? undefined,
           plaats: c.plaats ?? undefined,
-          herkomst: c.herkomst as "oud_klant" | "koud",
+          herkomst: c.herkomst as "oud_klant" | "koud" | "test",
           notitie: c.notitie ?? undefined,
         },
         kennis,
@@ -367,7 +367,7 @@ export async function bereidOpvolgingVoor(campagneId: string, portie = 10): Prom
           naam: c.naam ?? undefined,
           bedrijf: c.bedrijf ?? undefined,
           plaats: c.plaats ?? undefined,
-          herkomst: c.herkomst as "oud_klant" | "koud",
+          herkomst: c.herkomst as "oud_klant" | "koud" | "test",
         },
         kennis,
         bedrijfsnaam:
@@ -570,7 +570,7 @@ export async function bereidNavraagVoor(campagneId: string, portie = 10): Promis
           naam: c.naam ?? undefined,
           bedrijf: c.bedrijf ?? undefined,
           plaats: c.plaats ?? undefined,
-          herkomst: c.herkomst as "oud_klant" | "koud",
+          herkomst: c.herkomst as "oud_klant" | "koud" | "test",
         },
         kennis,
         bedrijfsnaam:

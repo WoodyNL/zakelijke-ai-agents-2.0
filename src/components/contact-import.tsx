@@ -85,18 +85,18 @@ export function ContactImport({
 }: {
   onOpslaan: (
     contacten: GelezenContact[],
-    herkomst: "oud_klant" | "koud",
+    herkomst: "oud_klant" | "koud" | "test",
   ) => Promise<Importuitkomst>;
   /** Bestaande contacten bijwerken met wat er nog ontbreekt. */
   onAanvullen: (
     contacten: GelezenContact[],
-    herkomst?: "oud_klant" | "koud",
+    herkomst?: "oud_klant" | "koud" | "test",
   ) => Promise<Aanvuluitkomst>;
 }) {
   const [rijen, zetRijen] = React.useState<string[][]>([]);
   const [kolommen, zetKolommen] = React.useState<Kolomsoort[]>([]);
   const [kopregel, zetKopregel] = React.useState(true);
-  const [herkomst, zetHerkomst] = React.useState<"oud_klant" | "koud">("oud_klant");
+  const [herkomst, zetHerkomst] = React.useState<"oud_klant" | "koud" | "test">("oud_klant");
   const [bestandsnaam, zetBestandsnaam] = React.useState("");
   const [plakken, zetPlakken] = React.useState("");
   const [fout, zetFout] = React.useState<string | null>(null);
@@ -108,7 +108,7 @@ export function ContactImport({
   // bepaalt wat nieuwe contacten worden; dit bepaalt wat bestaande worden, en
   // dat is niet vanzelfsprekend hetzelfde — je corrigeert juist omdat er eerder
   // iets anders is gekozen.
-  const [herkomstNaar, zetHerkomstNaar] = React.useState<"oud_klant" | "koud">("koud");
+  const [herkomstNaar, zetHerkomstNaar] = React.useState<"oud_klant" | "koud" | "test">("koud");
 
   const invoer = React.useRef<HTMLInputElement>(null);
 
@@ -362,7 +362,7 @@ export function ContactImport({
               </span>
               <select
                 value={herkomst}
-                onChange={(e) => zetHerkomst(e.target.value as "oud_klant" | "koud")}
+                onChange={(e) => zetHerkomst(e.target.value as "oud_klant" | "koud" | "test")}
                 className={`${veldCls} w-full`}
               >
                 <option value="oud_klant" className="bg-[#12121a]">
@@ -370,6 +370,9 @@ export function ContactImport({
                 </option>
                 <option value="koud" className="bg-[#12121a]">
                   Koud — nog nooit contact gehad
+                </option>
+                <option value="test" className="bg-[#12121a]">
+                  Testadressen — naar onszelf, om te proberen
                 </option>
               </select>
               <span className="mt-1 block text-[10.5px] text-ink/40">
@@ -460,7 +463,7 @@ export function ContactImport({
                 bij aanvullen ook de soort relatie zetten op{" "}
                 <select
                   value={herkomstNaar}
-                  onChange={(e) => zetHerkomstNaar(e.target.value as "oud_klant" | "koud")}
+                  onChange={(e) => zetHerkomstNaar(e.target.value as "oud_klant" | "koud" | "test")}
                   onClick={(e) => e.stopPropagation()}
                   className="rounded-lg border border-white/12 bg-white/[0.06] px-1.5 py-0.5 text-[11.5px] font-semibold text-ink/85 outline-none focus:border-violet/55"
                 >
@@ -469,6 +472,9 @@ export function ContactImport({
                   </option>
                   <option value="oud_klant" className="bg-[#12121a]">
                     oud-klant
+                  </option>
+                  <option value="test" className="bg-[#12121a]">
+                    testadres
                   </option>
                 </select>
                 <span className="block text-ink/40">

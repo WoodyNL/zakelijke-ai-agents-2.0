@@ -18,7 +18,7 @@ const campagneSchema = z.object({
   id: z.string().uuid().optional(),
   agentId: z.string().uuid(),
   naam: z.string().min(1).max(120),
-  herkomst: z.enum(["oud_klant", "koud"]),
+  herkomst: z.enum(["oud_klant", "koud", "test"]),
   verzendwijze: z.enum(["concept", "direct"]),
   /** Voor wie deze campagne bedoeld is; zie de kolom in_bezorggebied. */
   doelgroep: z.enum(["alles", "binnen_gebied", "buiten_gebied"]).default("alles"),
@@ -63,7 +63,7 @@ export const telDoelgroep = createServerFn({ method: "GET" })
     z
       .object({
         agentId: z.string().uuid(),
-        herkomst: z.enum(["oud_klant", "koud"]),
+        herkomst: z.enum(["oud_klant", "koud", "test"]),
         doelgroep: z.enum(["alles", "binnen_gebied", "buiten_gebied"]),
       })
       .parse(d),
@@ -157,7 +157,7 @@ export const maakVoorbeeld = createServerFn({ method: "POST" })
     z
       .object({
         agentId: z.string().uuid(),
-        herkomst: z.enum(["oud_klant", "koud"]),
+        herkomst: z.enum(["oud_klant", "koud", "test"]),
         aanbod: z.string().min(1).max(600),
         ondertekening: z.string().min(1).max(200),
         /** Leeg = de eerste passende uit de lijst. */
@@ -203,7 +203,7 @@ export const maakVoorbeeld = createServerFn({ method: "POST" })
         naam: contact.naam ?? undefined,
         bedrijf: contact.bedrijf ?? undefined,
         plaats: contact.plaats ?? undefined,
-        herkomst: contact.herkomst as "oud_klant" | "koud",
+        herkomst: contact.herkomst as "oud_klant" | "koud" | "test",
       },
       kennis: (kennis ?? []) as KennisRegel[],
       bedrijfsnaam: data.ondertekening.split(",").pop()?.trim() || data.ondertekening,
