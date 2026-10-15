@@ -51,7 +51,27 @@ export type Opdracht = {
 
 export type Concept = { onderwerp: string; tekst: string };
 
-function kennisAlsTekst(kennis: KennisRegel[]): string {
+/**
+ * Prijsregels gaan niet mee naar het model.
+ *
+ * Besloten op 15 oktober 2026: de agent noemt geen bedragen meer. Wie naar de
+ * prijs vraagt of belangstelling heeft, wordt doorgegeven aan een mens die
+ * zelf een offerte maakt. Bij horeca hangt een prijs aan afnamehoeveelheid,
+ * bezorgfrequentie en wat iemand nu betaalt; een bedrag uit een lijst is dan
+ * geen informatie maar een onderhandeling die je al verloren hebt.
+ *
+ * Dit is met opzet een filter en niet alleen een instructie. De prijslijst die
+ * Frank uploadt komt in de kennisbank terecht onder de categorie "prijzen", en
+ * de kennisbank is precies wat de agent wél mag navertellen. Een instructie om
+ * iets te negeren dat er wel staat, is een instructie die een keer niet wordt
+ * gevolgd. Wat er niet in de prompt staat, kan niet in de mail komen.
+ */
+export function zonderPrijzen(kennis: KennisRegel[]): KennisRegel[] {
+  return kennis.filter((k) => !/prijs|prijzen|tarief|tarieven/i.test(k.category));
+}
+
+function kennisAlsTekst(ruw: KennisRegel[]): string {
+  const kennis = zonderPrijzen(ruw);
   if (kennis.length === 0) {
     return "(De kennisbank is leeg. Je weet dus niets over het aanbod, de prijzen of de levering.)";
   }
@@ -82,10 +102,42 @@ Wat je hier leest is achtergrond, geen tekst om over te nemen.
 - Zeg nooit dát je informatie over ze hebt. Geen "ik zag dat u...", geen "volgens onze gegevens". Laat het blijken uit waar je het over hebt, niet uit een verwijzing naar een bestand.
 - Staat er iets bij als "niet bevestigd" of "mogelijk", gebruik het dan niet. Een aanname die je als feit opschrijft over iemands eigen zaak, valt onmiddellijk op.
 - Gebruik hooguit één ding uit deze notitie, en alleen als het de zin natuurlijker maakt. Alles erin verwerken maakt van een kort bericht een dossier.
-- Neem nooit een bedrag uit deze notitie over. Wat daar staat is wat iemand ooit betaalde, soms jaren geleden. Prijzen komen uitsluitend uit de kennisbank; een oude prijs die je als huidige noemt, is een belofte waar je aan wordt gehouden.
+- Neem een jaartal of datum uit deze notitie nooit in andere woorden over. "Sinds 1992" is niet "van vóór 1992" en niet "al dertig jaar"; schrijf het precies zoals het er staat, of laat het weg. Dit gaat over de geschiedenis van iemands eigen zaak, en die kent hij beter dan jij.
+- Neem nooit een bedrag uit deze notitie over. Wat daar staat is wat iemand ooit betaalde, soms jaren geleden. En je noemt ook geen huidige prijs: zie de regel over prijzen hieronder.
 
 Staat er iets in wat tegen je pleit — ze maken het zelf, ze hebben al een leverancier — dan is dat geen reden om het te verzwijgen of om ertegenin te gaan. Laat het aanbod gewoon staan; proeven kan altijd.
 `;
+
+/**
+ * Bedragen uit een notitie halen voordat het model hem leest.
+ *
+ * De notities komen uit Franks boekhouding en bevatten wat iemand jaren
+ * geleden betaalde: "kocht in 2019 voor € 1.240 per maand". Er stond al een
+ * instructie om die bedragen niet over te nemen, maar dat is dezelfde zwakte
+ * als bij de prijslijst — een instructie om iets te negeren dat er wel staat,
+ * wordt een keer niet gevolgd. En dan staat er een prijs van 2019 in een mail
+ * van nu.
+ *
+ * De bedragen zijn ook nergens goed voor: de agent mag er niets mee en ze
+ * voegen voor de rest van het verhaal niets toe. Dus gaan ze eruit.
+ *
+ * De patronen zijn met opzet nauw. "Sinds 1992" en "50 gram" zijn geen
+ * bedragen, en een notitie die halverwege onleesbaar wordt gemaakt is erger
+ * dan een notitie met een getal erin.
+ */
+export function zonderBedragen(tekst: string): string {
+  return tekst
+    // € 1.240  /  €0,42  /  EUR 12,50
+    .replace(/(?:€|EUR)\s?\d[\d.,]*/gi, "(bedrag weggelaten)")
+    // 12,50 euro  /  1.240 EUR
+    .replace(/\d[\d.,]*\s?(?:euro|eur)\b/gi, "(bedrag weggelaten)")
+    // 0,76 per stuk  /  2,15 p/st
+    .replace(/\d+[.,]\d{2}\s*(?:per\s+\w+|p\/\w+)/gi, "(bedrag weggelaten)")
+    // een kaal bedrag met twee decimalen
+    .replace(/\b\d+[.,]\d{2}\b/g, "(bedrag weggelaten)")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
 
 function watWeWetenVanDeOntvanger(c: ContactGegevens): string {
   const regels: string[] = [];
@@ -100,7 +152,15 @@ function watWeWetenVanDeOntvanger(c: ContactGegevens): string {
   return regels.join("\n");
 }
 
-function systeemprompt(o: Opdracht): string {
+/**
+ * Geëxporteerd om te kunnen testen, niet om elders te gebruiken.
+ *
+ * De regel dat er geen bedrag in een mail komt, is niet te zien door naar de
+ * code te kijken: hij hangt aan wat er wél en niet in deze tekst terechtkomt.
+ * Dus hoort hij gemeten te worden, met een kennisbank vol prijzen erin en een
+ * controle dat er aan de andere kant geen euro uitkomt.
+ */
+export function systeemprompt(o: Opdracht): string {
   const oud = o.contact.herkomst === "oud_klant";
 
   /**
@@ -176,7 +236,15 @@ De toon is die van een bevestiging, niet van een verzoek. Zoals een leverancier 
 
 # De belangrijkste regel
 
-Je mag niets beweren over ${o.bedrijfsnaam} dat niet letterlijk in de kennisbank hieronder staat. Geen product, geen prijs, geen levertijd, geen kwaliteitsclaim, geen geschiedenis.
+Je mag niets beweren over ${o.bedrijfsnaam} dat niet letterlijk in de kennisbank hieronder staat. Geen product, geen levertijd, geen kwaliteitsclaim, geen geschiedenis.
+
+# Over prijzen: nooit
+
+Je noemt geen enkel bedrag. Geen prijs, geen prijsindicatie, geen "vanaf", geen staffel, geen korting, geen kiloprijs, geen vergelijking met wat iemand nu betaalt. Ook niet als de lezer er expliciet naar vraagt, en ook niet als je denkt dat je het weet.
+
+Wat een proefpakket of een levering kost, hangt af van hoeveel iemand afneemt, hoe vaak er bezorgd wordt en wat hij nu heeft. Dat is een gesprek tussen twee mensen, geen regel in een mail. Een bedrag dat hier staat is bovendien een toezegging waaraan ${o.bedrijfsnaam} wordt gehouden.
+
+Komt de prijs ter sprake, dan is dat juist een goed teken: dan is er belangstelling. Zeg dan dat je er even over wilt bellen, zodat er een voorstel komt dat bij zijn zaak past. Niet "ik stuur u een prijslijst", niet "daar kom ik per mail op terug" — een telefonisch gesprek met een mens.
 
 Weet je iets niet, dan laat je het weg. Je omschrijft het niet vaag, je maakt er geen slag om de arm van, en je verzint geen voorbeeld. Een korte mail die klopt is oneindig veel beter dan een vlotte mail met één verzonnen zin erin — die ene zin kost het vertrouwen van iemand die je jaren kende.
 
@@ -189,7 +257,7 @@ ${watWeWetenVanDeOntvanger(o.contact)}${
 
 ## Wat we over deze zaak weten
 
-${o.contact.notitie}
+${zonderBedragen(o.contact.notitie)}
 ${NOTITIEREGELS}` : ""
   }
 
