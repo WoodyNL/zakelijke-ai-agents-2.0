@@ -10,10 +10,55 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
+      agent_gebeurtenissen: {
+        Row: {
+          agent_id: string
+          door: string | null
+          id: number
+          naar: string | null
+          op: string
+          soort: string
+          van: string | null
+        }
+        Insert: {
+          agent_id: string
+          door?: string | null
+          id?: never
+          naar?: string | null
+          op?: string
+          soort: string
+          van?: string | null
+        }
+        Update: {
+          agent_id?: string
+          door?: string | null
+          id?: never
+          naar?: string | null
+          op?: string
+          soort?: string
+          van?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_gebeurtenissen_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_gebeurtenissen_door_fkey"
+            columns: ["door"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_stats: {
         Row: {
           agent_id: string
@@ -108,8 +153,10 @@ export type Database = {
           minutes_saved_basis: string | null
           minutes_saved_per_action: number | null
           model: string
+          modules: string[] | null
           name: string
           notify_email: string | null
+          opties: Json
           overage_price: number
           rate_limit_per_hour: number
           score_label: string
@@ -135,8 +182,10 @@ export type Database = {
           minutes_saved_basis?: string | null
           minutes_saved_per_action?: number | null
           model?: string
+          modules?: string[] | null
           name: string
           notify_email?: string | null
+          opties?: Json
           overage_price?: number
           rate_limit_per_hour?: number
           score_label?: string
@@ -162,8 +211,10 @@ export type Database = {
           minutes_saved_basis?: string | null
           minutes_saved_per_action?: number | null
           model?: string
+          modules?: string[] | null
           name?: string
           notify_email?: string | null
+          opties?: Json
           overage_price?: number
           rate_limit_per_hour?: number
           score_label?: string
@@ -177,6 +228,215 @@ export type Database = {
             foreignKeyName: "agents_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beheerlog: {
+        Row: {
+          actie: string
+          agent_id: string | null
+          client_id: string | null
+          details: Json
+          door: string | null
+          door_naam: string
+          door_rol: string
+          id: number
+          moment: string
+          omschrijving: string
+        }
+        Insert: {
+          actie: string
+          agent_id?: string | null
+          client_id?: string | null
+          details?: Json
+          door?: string | null
+          door_naam?: string
+          door_rol?: string
+          id?: never
+          moment?: string
+          omschrijving?: string
+        }
+        Update: {
+          actie?: string
+          agent_id?: string | null
+          client_id?: string | null
+          details?: Json
+          door?: string | null
+          door_naam?: string
+          door_rol?: string
+          id?: never
+          moment?: string
+          omschrijving?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beheerlog_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beheerlog_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beheerlog_door_fkey"
+            columns: ["door"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatberichten: {
+        Row: {
+          gesprek_id: string
+          id: number
+          op: string
+          rol: string
+          tekst: string
+        }
+        Insert: {
+          gesprek_id: string
+          id?: never
+          op?: string
+          rol: string
+          tekst: string
+        }
+        Update: {
+          gesprek_id?: string
+          id?: never
+          op?: string
+          rol?: string
+          tekst?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatberichten_gesprek_id_fkey"
+            columns: ["gesprek_id"]
+            isOneToOne: false
+            referencedRelation: "chatgesprekken"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatgesprekken: {
+        Row: {
+          agent_id: string
+          begonnen_op: string
+          beurten: number
+          id: string
+          laatste_op: string
+          lead_vastgelegd: boolean
+          pagina: string | null
+        }
+        Insert: {
+          agent_id: string
+          begonnen_op?: string
+          beurten?: number
+          id?: string
+          laatste_op?: string
+          lead_vastgelegd?: boolean
+          pagina?: string | null
+        }
+        Update: {
+          agent_id?: string
+          begonnen_op?: string
+          beurten?: number
+          id?: string
+          laatste_op?: string
+          lead_vastgelegd?: boolean
+          pagina?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatgesprekken_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fair_use_meldingen: {
+        Row: {
+          agent_id: string
+          drempel: number
+          gebruikt: number
+          gemeld_op: string
+          grens: number
+          maand: string
+        }
+        Insert: {
+          agent_id: string
+          drempel: number
+          gebruikt: number
+          gemeld_op?: string
+          grens: number
+          maand: string
+        }
+        Update: {
+          agent_id?: string
+          drempel?: number
+          gebruikt?: number
+          gemeld_op?: string
+          grens?: number
+          maand?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fair_use_meldingen_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      klantleden: {
+        Row: {
+          client_id: string
+          toegevoegd_door: string | null
+          toegevoegd_op: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          toegevoegd_door?: string | null
+          toegevoegd_op?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          toegevoegd_door?: string | null
+          toegevoegd_op?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klantleden_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klantleden_toegevoegd_door_fkey"
+            columns: ["toegevoegd_door"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klantleden_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -272,6 +532,80 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meekijkpaginas: {
+        Row: {
+          bekeken_op: string
+          id: number
+          pad: string
+          sessie_id: string
+        }
+        Insert: {
+          bekeken_op?: string
+          id?: never
+          pad: string
+          sessie_id: string
+        }
+        Update: {
+          bekeken_op?: string
+          id?: never
+          pad?: string
+          sessie_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meekijkpaginas_sessie_id_fkey"
+            columns: ["sessie_id"]
+            isOneToOne: false
+            referencedRelation: "meekijksessies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meekijksessies: {
+        Row: {
+          beheerder_id: string
+          client_id: string
+          gestart_op: string
+          gestopt_op: string | null
+          id: string
+          reden: string
+          verloopt_op: string
+        }
+        Insert: {
+          beheerder_id: string
+          client_id: string
+          gestart_op?: string
+          gestopt_op?: string | null
+          id?: string
+          reden: string
+          verloopt_op?: string
+        }
+        Update: {
+          beheerder_id?: string
+          client_id?: string
+          gestart_op?: string
+          gestopt_op?: string | null
+          id?: string
+          reden?: string
+          verloopt_op?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meekijksessies_beheerder_id_fkey"
+            columns: ["beheerder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meekijksessies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -414,13 +748,13 @@ export type Database = {
       }
       outbound_deliveries: {
         Row: {
-          adres_bron: string | null
-          adres_eerder: string | null
-          bevestiging: Database["public"]["Enums"]["bevestiging_stand"]
-          bevestiging_op: string | null
           aangemaakt_op: string
           adres: string | null
+          adres_bron: string | null
+          adres_eerder: string | null
           agent_id: string
+          bevestiging: Database["public"]["Enums"]["bevestiging_stand"]
+          bevestiging_op: string | null
           bezorgdag: string
           contact_id: string
           id: string
@@ -431,13 +765,13 @@ export type Database = {
           status: string
         }
         Insert: {
-          adres_bron?: string | null
-          adres_eerder?: string | null
-          bevestiging?: Database["public"]["Enums"]["bevestiging_stand"]
-          bevestiging_op?: string | null
           aangemaakt_op?: string
           adres?: string | null
+          adres_bron?: string | null
+          adres_eerder?: string | null
           agent_id: string
+          bevestiging?: Database["public"]["Enums"]["bevestiging_stand"]
+          bevestiging_op?: string | null
           bezorgdag: string
           contact_id: string
           id?: string
@@ -448,13 +782,13 @@ export type Database = {
           status?: string
         }
         Update: {
-          adres_bron?: string | null
-          adres_eerder?: string | null
-          bevestiging?: Database["public"]["Enums"]["bevestiging_stand"]
-          bevestiging_op?: string | null
           aangemaakt_op?: string
           adres?: string | null
+          adres_bron?: string | null
+          adres_eerder?: string | null
           agent_id?: string
+          bevestiging?: Database["public"]["Enums"]["bevestiging_stand"]
+          bevestiging_op?: string | null
           bezorgdag?: string
           contact_id?: string
           id?: string
@@ -615,6 +949,66 @@ export type Database = {
           },
         ]
       }
+      postvak_koppelingen: {
+        Row: {
+          agent_id: string
+          cursor: string | null
+          email: string
+          gekoppeld_door: string | null
+          gekoppeld_op: string
+          id: string
+          laatste_fout: string | null
+          laatste_keer: string | null
+          map: string
+          naam: string | null
+          provider: string
+          status: string
+        }
+        Insert: {
+          agent_id: string
+          cursor?: string | null
+          email: string
+          gekoppeld_door?: string | null
+          gekoppeld_op?: string
+          id?: string
+          laatste_fout?: string | null
+          laatste_keer?: string | null
+          map?: string
+          naam?: string | null
+          provider: string
+          status?: string
+        }
+        Update: {
+          agent_id?: string
+          cursor?: string | null
+          email?: string
+          gekoppeld_door?: string | null
+          gekoppeld_op?: string
+          id?: string
+          laatste_fout?: string | null
+          laatste_keer?: string | null
+          map?: string
+          naam?: string | null
+          provider?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "postvak_koppelingen_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "postvak_koppelingen_gekoppeld_door_fkey"
+            columns: ["gekoppeld_door"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -633,6 +1027,155 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      support_instellingen: {
+        Row: {
+          afzender_email: string | null
+          afzender_naam: string | null
+          agent_id: string
+          bijgewerkt_op: string
+          kanaal: string
+          modus: string
+          ondertekening: string | null
+        }
+        Insert: {
+          afzender_email?: string | null
+          afzender_naam?: string | null
+          agent_id: string
+          bijgewerkt_op?: string
+          kanaal?: string
+          modus?: string
+          ondertekening?: string | null
+        }
+        Update: {
+          afzender_email?: string | null
+          afzender_naam?: string | null
+          agent_id?: string
+          bijgewerkt_op?: string
+          kanaal?: string
+          modus?: string
+          ondertekening?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_instellingen_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_mails: {
+        Row: {
+          agent_id: string
+          bijgewerkt_op: string
+          bronnen: string[]
+          categorie: string | null
+          concept_onderwerp: string | null
+          concept_tekst: string | null
+          fout: string | null
+          gesprek_id: string | null
+          id: string
+          message_id: string | null
+          onderwerp: string | null
+          ontvangen_op: string
+          provider_id: string
+          status: string
+          toelichting: string | null
+          van_email: string
+          van_naam: string | null
+          verzonden_door: string | null
+          verzonden_onderwerp: string | null
+          verzonden_op: string | null
+          verzonden_tekst: string | null
+          vraag: string
+          zekerheid: string | null
+        }
+        Insert: {
+          agent_id: string
+          bijgewerkt_op?: string
+          bronnen?: string[]
+          categorie?: string | null
+          concept_onderwerp?: string | null
+          concept_tekst?: string | null
+          fout?: string | null
+          gesprek_id?: string | null
+          id?: string
+          message_id?: string | null
+          onderwerp?: string | null
+          ontvangen_op?: string
+          provider_id: string
+          status?: string
+          toelichting?: string | null
+          van_email: string
+          van_naam?: string | null
+          verzonden_door?: string | null
+          verzonden_onderwerp?: string | null
+          verzonden_op?: string | null
+          verzonden_tekst?: string | null
+          vraag?: string
+          zekerheid?: string | null
+        }
+        Update: {
+          agent_id?: string
+          bijgewerkt_op?: string
+          bronnen?: string[]
+          categorie?: string | null
+          concept_onderwerp?: string | null
+          concept_tekst?: string | null
+          fout?: string | null
+          gesprek_id?: string | null
+          id?: string
+          message_id?: string | null
+          onderwerp?: string | null
+          ontvangen_op?: string
+          provider_id?: string
+          status?: string
+          toelichting?: string | null
+          van_email?: string
+          van_naam?: string | null
+          verzonden_door?: string | null
+          verzonden_onderwerp?: string | null
+          verzonden_op?: string | null
+          verzonden_tekst?: string | null
+          vraag?: string
+          zekerheid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_mails_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_mails_verzonden_door_fkey"
+            columns: ["verzonden_door"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      systeemtaken: {
+        Row: {
+          laatste_run: string
+          naam: string
+          uitkomst: Json
+        }
+        Insert: {
+          laatste_run?: string
+          naam: string
+          uitkomst?: Json
+        }
+        Update: {
+          laatste_run?: string
+          naam?: string
+          uitkomst?: Json
         }
         Relationships: []
       }
@@ -659,15 +1202,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agent_gebeurtenissen_van: {
+        Args: { _agent_id: string }
+        Returns: {
+          door: string
+          id: number
+          naar: string
+          op: string
+          soort: string
+          van: string
+        }[]
+      }
+      agent_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          gesprekken: number
+          laatste_activiteit: string
+          leads: number
+        }[]
+      }
       agent_knowledge: {
         Args: { _slug: string }
         Returns: {
           category: string
           content: string
-          id: string
           question: string
-          sort_order: number
-          tags: string[]
           title: string
         }[]
       }
@@ -710,7 +1269,83 @@ export type Database = {
           requests: number
         }[]
       }
+      ben_eigenaar: { Args: never; Returns: boolean }
       claim_agent_request: { Args: { _agent_id: string }; Returns: boolean }
+      fair_use_melding: {
+        Args: { _agent_id: string }
+        Returns: {
+          agent: string
+          drempel: number
+          gebruikt: number
+          grens: number
+          klant: string
+          klant_email: string
+          meld_email: string
+        }[]
+      }
+      heeft_tweestaps: { Args: never; Returns: boolean }
+      leg_vast: {
+        Args: {
+          _actie: string
+          _agent_id?: string
+          _client_id?: string
+          _details?: Json
+          _omschrijving?: string
+        }
+        Returns: undefined
+      }
+      log_meekijkpagina: { Args: { _pad: string }; Returns: undefined }
+      mijn_klant: { Args: never; Returns: string }
+      mijn_logboek: {
+        Args: { _aantal?: number }
+        Returns: {
+          actie: string
+          door: string
+          door_rol: string
+          id: number
+          moment: string
+          omschrijving: string
+        }[]
+      }
+      mijn_meekijksessie: {
+        Args: never
+        Returns: {
+          client_id: string
+          id: string
+          klant: string
+          reden: string
+          verloopt_op: string
+        }[]
+      }
+      mijn_team: {
+        Args: never
+        Returns: {
+          eigenaar: boolean
+          email: string
+          naam: string
+          sinds: string
+          user_id: string
+        }[]
+      }
+      mijn_toegangslog: {
+        Args: never
+        Returns: {
+          beheerder: string
+          geeindigd_op: string
+          gestart_op: string
+          id: string
+          paginas: string[]
+          reden: string
+        }[]
+      }
+      mijn_toegangsniveau: { Args: never; Returns: string }
+      mijn_tweestaps: {
+        Args: never
+        Returns: {
+          ingesteld: boolean
+          niveau: string
+        }[]
+      }
       my_agent_settings: {
         Args: { _agent_id: string }
         Returns: {
@@ -728,10 +1363,36 @@ export type Database = {
           welcome_text: string
         }[]
       }
+      noteer_chatbeurt: {
+        Args: {
+          _agent_id: string
+          _antwoord: string
+          _gesprek: string
+          _lead?: boolean
+          _pagina?: string
+          _vraag: string
+        }
+        Returns: string
+      }
       outbound_afmelden: { Args: { _sleutel: string }; Returns: undefined }
       outbound_meld_bounce: {
         Args: { _provider_id: string; _reden: string }
-        Returns: undefined
+        Returns: {
+          agent: string
+          agent_gepauzeerd: boolean
+          agent_id: string
+          campagne: string
+          campagne_gestopt: boolean
+          campagne_id: string
+          drempel: number
+          klant: string
+          klant_email: string
+          meld_email: string
+          onbezorgbaar: number
+          percentage: number
+          soort: string
+          verzonden: number
+        }[]
       }
       outbound_trechter: {
         Args: { _agent_id: string }
@@ -756,6 +1417,42 @@ export type Database = {
           bezorgdag: string
         }[]
       }
+      postvak_koppel: {
+        Args: {
+          _agent_id: string
+          _door?: string
+          _email: string
+          _map: string
+          _naam: string
+          _provider: string
+          _toegang: string
+          _verloopt_op: string
+          _vernieuwen: string
+        }
+        Returns: string
+      }
+      postvak_ontkoppel: { Args: { _agent_id: string }; Returns: boolean }
+      postvak_sleutels: {
+        Args: { _agent_id: string }
+        Returns: {
+          cursor: string
+          email: string
+          koppeling_id: string
+          map: string
+          provider: string
+          toegang: string
+          verloopt_op: string
+          vernieuwen: string
+        }[]
+      }
+      postvak_stand: {
+        Args: { _agent_id: string; _cursor: string; _fout?: string }
+        Returns: undefined
+      }
+      postvak_vernieuwd: {
+        Args: { _agent_id: string; _toegang: string; _verloopt_op: string }
+        Returns: undefined
+      }
       record_agent_tokens: {
         Args: {
           _agent_id: string
@@ -766,9 +1463,57 @@ export type Database = {
         Returns: undefined
       }
       resolve_live_agent: { Args: { _slug: string }; Returns: string }
+      ruim_op: {
+        Args: never
+        Returns: {
+          soort: string
+          verwijderd: number
+        }[]
+      }
+      ruim_op_indien_nodig: { Args: never; Returns: Json }
+      start_meekijken: {
+        Args: { _client_id: string; _reden: string }
+        Returns: {
+          client_id: string
+          id: string
+          verloopt_op: string
+        }[]
+      }
+      stop_meekijken: { Args: never; Returns: undefined }
+      support_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          automatisch: number
+          binnen: number
+          mens_nodig: number
+          ongewijzigd: number
+          open: number
+          reactie_minuten: number
+          via_concept: number
+        }[]
+      }
       update_my_agent: {
         Args: { _agent_id: string; _tone: string; _welcome_text: string }
         Returns: boolean
+      }
+      werk_klant: { Args: never; Returns: string }
+      zet_agent_pauze: {
+        Args: { _agent_id: string; _pauze: boolean }
+        Returns: string
+      }
+      zet_mijn_agent_opties: {
+        Args: { _agent_id: string; _opties: Json }
+        Returns: Json
+      }
+      zet_mijn_agent_velden: {
+        Args: {
+          _agent_id: string
+          _capture_leads?: boolean
+          _notify_email?: string
+          _tone?: string
+          _welcome_text?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
@@ -780,15 +1525,13 @@ export type Database = {
         | "overig"
         | "uitgaande_email"
       agent_status: "live" | "paused" | "setup"
-      app_role: "admin" | "client"
+      app_role: "admin" | "client" | "support"
       bericht_status:
         | "concept"
         | "gepland"
         | "verzonden"
         | "mislukt"
         | "beantwoord"
-      campagne_doelgroep: "alles" | "binnen_gebied" | "buiten_gebied"
-      contact_herkomst: "oud_klant" | "koud"
       bevestiging_stand:
         | "niet_gevraagd"
         | "gevraagd"
@@ -796,6 +1539,8 @@ export type Database = {
         | "ander_adres"
         | "verzet"
         | "afgezegd"
+      campagne_doelgroep: "alles" | "binnen_gebied" | "buiten_gebied"
+      contact_herkomst: "oud_klant" | "koud"
       opvolging_stand:
         | "open"
         | "navraag_uit"
@@ -941,13 +1686,21 @@ export const Constants = {
         "uitgaande_email",
       ],
       agent_status: ["live", "paused", "setup"],
-      app_role: ["admin", "client"],
+      app_role: ["admin", "client", "support"],
       bericht_status: [
         "concept",
         "gepland",
         "verzonden",
         "mislukt",
         "beantwoord",
+      ],
+      bevestiging_stand: [
+        "niet_gevraagd",
+        "gevraagd",
+        "bevestigd",
+        "ander_adres",
+        "verzet",
+        "afgezegd",
       ],
       campagne_doelgroep: ["alles", "binnen_gebied", "buiten_gebied"],
       contact_herkomst: ["oud_klant", "koud"],
