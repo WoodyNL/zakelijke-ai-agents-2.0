@@ -222,7 +222,8 @@ function Mailbox({ agentId, alleenLezen }: { agentId: string; alleenLezen: boole
   const [bezig, setBezig] = useState<string | null>(null);
   const [fout, setFout] = useState<string | null>(null);
 
-  // De terugkomst uit Google of Microsoft zet het resultaat in de link.
+  // De terugkomst uit Google of Microsoft zet alleen of het gelukt is in de
+  // link, niet welk adres. Welk adres het werd, komt uit de koppeling zelf.
   const [melding, setMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -231,7 +232,7 @@ function Mailbox({ agentId, alleenLezen }: { agentId: string; alleenLezen: boole
     if (!gelukt && !mis) return;
     setMelding(
       gelukt
-        ? { ok: true, tekst: `${gelukt} is gekoppeld. Nieuwe vragen komen hier binnen.` }
+        ? { ok: true, tekst: "De mailbox is gekoppeld. Nieuwe vragen komen hier binnen." }
         : {
             ok: false,
             tekst:

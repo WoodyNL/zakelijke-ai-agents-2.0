@@ -63,7 +63,19 @@ export async function verwerkTerugkomst(request: Request): Promise<Response> {
       }),
     });
     if (!res.ok) {
-      console.error("postvak: koppeling opslaan mislukt", res.status, await res.text());
+      // Alleen de foutmelding, niet het hele antwoord. PostgREST echoot bij een
+      // schending van een voorwaarde de rij terug, en die rij bevat hier het
+      // e-mailadres van de klant en de versleutelde tokens. Een log is geen
+      // plek om die neer te zetten, ook niet versleuteld.
+      const ruw = await res.text();
+      let melding = `status ${res.status}`;
+      try {
+        const j = JSON.parse(ruw) as { code?: string; message?: string };
+        if (j.message) melding = `${j.code ?? res.status}: ${j.message.slice(0, 200)}`;
+      } catch {
+        /* geen JSON; dan alleen de status, en niet de kale tekst */
+      }
+      console.error("postvak: koppeling opslaan mislukt", melding);
       return terug("opslaan", false);
     }
 
@@ -80,7 +92,12 @@ export async function verwerkTerugkomst(request: Request): Promise<Response> {
       body: JSON.stringify({ kanaal: aanbieder === "google" ? "gmail" : "outlook" }),
     }).catch(() => {});
 
-    return terug(tokens.email, true);
+    // Met opzet niet het e-mailadres in de link. Dat is een persoonsgegeven,
+    // en een queryparameter is de slechtste plek om er een te zetten: hij
+    // belandt in de browsergeschiedenis en in de logs van elke partij die
+    // dit verzoek ziet langskomen. Het scherm haalt het adres uit de
+    // database, waar het sowieso al staat.
+    return terug("gelukt", true);
   } catch (err) {
     console.error("postvak: koppelen mislukt", err);
     return terug("mislukt", false);
