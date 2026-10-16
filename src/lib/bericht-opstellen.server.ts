@@ -384,8 +384,23 @@ export async function stelBerichtOp(o: Opdracht): Promise<Concept> {
     throw new Error(`Opstellen mislukt [${res.status}]: ${(await res.text()).slice(0, 300)}`);
   }
 
-  const antwoord = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
+  const antwoord = (await res.json()) as {
+    content?: Array<{ type: string; text?: string }>;
+    stop_reason?: string;
+  };
   const tekst = antwoord.content?.find((b) => b.type === "text")?.text ?? "";
+
+  // Een enkele keer komt er helemaal geen tekst terug. Dat liep hieronder uit
+  // op "Onleesbaar antwoord van het model:" met niets erachter, en zo'n regel
+  // komt in de lijst overgeslagen contacten te staan waar een mens naar kijkt.
+  // Dan weet hij niet of het aan zijn kennisbank ligt, aan het adres, of aan
+  // niets. Opnieuw proberen helpt meestal: het gebeurde hier één keer op twee
+  // pogingen met dezelfde invoer.
+  if (!tekst.trim()) {
+    throw new Error(
+      `Het model gaf geen tekst terug${antwoord.stop_reason ? ` (${antwoord.stop_reason})` : ""}. Probeer deze portie opnieuw.`,
+    );
+  }
 
   // Het model hoort kale JSON te geven, maar een enkele keer komt er een
   // codeblok omheen. Dat opvangen is goedkoper dan een mislukt bericht.
