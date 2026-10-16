@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { mijnAgent, mijnCampagne } from "@/lib/agent-toegang";
+import { bevatBedrag } from "@/lib/bedragen";
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import type { TablesInsert } from "@/integrations/supabase/types";
 
@@ -120,6 +121,21 @@ export const bewaarCampagne = createServerFn({ method: "POST" })
   .validator((d: unknown) => campagneSchema.parse(d))
   .handler(async ({ context, data }) => {
     await mijnAgent(context as never, data.agentId);
+
+    // Weigeren bij het opslaan en niet pas bij het opstellen. Een campagne met
+    // een prijs erin mag niet bestaan: dan staat hij klaar, denkt iedereen dat
+    // het goed is, en komt de fout pas boven op het moment dat er honderd
+    // berichten klaargezet worden.
+    for (const [veld, tekst] of [
+      ["Wat bied je aan?", data.aanbod],
+      ["de ondertekening", data.ondertekening],
+    ] as const) {
+      if (tekst && bevatBedrag(tekst)) {
+        throw new Error(
+          `Er staat een bedrag in "${veld}". Deze agent noemt geen prijzen: wie ernaar vraagt, wordt gebeld. Haal het bedrag eruit.`,
+        );
+      }
+    }
 
     const rij: TablesInsert<"outbound_campaigns"> = {
       agent_id: data.agentId,

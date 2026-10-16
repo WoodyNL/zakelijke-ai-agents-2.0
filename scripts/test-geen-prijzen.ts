@@ -19,10 +19,11 @@
  */
 
 import {
+  stelBerichtOp,
   systeemprompt,
-  zonderBedragen,
   zonderPrijzen,
 } from "../src/lib/bericht-opstellen.server.ts";
+import { bevatBedrag, zonderBedragen } from "../src/lib/bedragen.ts";
 
 let gezakt = 0;
 const meld = (goed: boolean, naam: string, detail = "") => {
@@ -143,6 +144,69 @@ console.log("\nBedragen uit de notitie\n" + "=".repeat(52));
     g("Bestelt 120 kratten per week").includes("120 kratten"),
     "een aantal zonder decimalen blijft staan",
     g("Bestelt 120 kratten per week"),
+  );
+}
+
+console.log("\nWat een bedrag is, en wat een maat\n" + "=".repeat(52));
+
+{
+  // Gevonden bij de laatste controle vóór de eerste echte verzending: de
+  // eerste versie keek alleen naar een euroteken, en liet dit er dus door.
+  for (const t of [
+    "Een doos kost 36,45.",
+    "Prijs per kilo is 7,50.",
+    "Vanaf 89 ct per stuk.",
+    "€ 0,89 per stuk",
+    "12,50 euro",
+    "0,42 p/st",
+    "negentig cent",
+    "$ 12",
+  ]) {
+    meld(bevatBedrag(t), `bedrag herkend: ${t}`);
+  }
+
+  // En wat géén bedrag is. "4,05 kg" is een doosinhoud en die hoort de agent
+  // juist te weten; op precies die verwarring ging het filter eerst de fout in.
+  for (const t of [
+    "Een doos bevat 4,05 kg.",
+    "De rondstok is 18 cm en weegt 50 gram.",
+    "Een doos van 3,60 kg met 45 stuks.",
+    "Familiebedrijf sinds 1992.",
+    "Bestelt 120 kratten per week.",
+    "Vier spiesen van 50 gram.",
+  ]) {
+    meld(!bevatBedrag(t), `geen bedrag: ${t}`);
+  }
+}
+
+console.log("\nHet aanbod van de campagne wordt geweigerd\n" + "=".repeat(52));
+
+{
+  // Dit veld typt de klant zelf en het gaat letterlijk de prompt in. Het
+  // filter op de kennisbank doet er niets, dus was dit de enige weg waarlangs
+  // een prijs alsnog in een mail kon belanden.
+  const basisOpdracht = {
+    contact: { naam: "Jan", herkomst: "koud" as const },
+    kennis: [],
+    bedrijfsnaam: "FJ Snacks",
+    ondertekening: "Frank Ransijn",
+    soort: "eerste" as const,
+  };
+
+  const weigert = async (aanbod: string, ondertekening = "Frank Ransijn") => {
+    try {
+      await stelBerichtOp({ ...basisOpdracht, aanbod, ondertekening });
+      return false;
+    } catch (e) {
+      return e instanceof Error && /bedrag in/.test(e.message);
+    }
+  };
+
+  meld(await weigert("Een proefpakket, daarna 0,89 per stuk."), "een bedrag in het aanbod");
+  meld(await weigert("Vanaf 89 ct per stuk."), "ook zonder euroteken");
+  meld(
+    await weigert("Een gratis proefpakket.", "Frank Ransijn — vanaf € 0,89"),
+    "en een bedrag in de ondertekening",
   );
 }
 

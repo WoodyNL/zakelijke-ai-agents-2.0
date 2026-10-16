@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Eye, AlertTriangle, Check, Megaphone } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { bevatBedrag } from "@/lib/bedragen";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
   bewaarCampagne,
@@ -234,7 +235,13 @@ function CampagnesPagina() {
     }
   }
 
-  const kanVoorbeeld = v.aanbod.trim().length > 5 && v.ondertekening.trim().length > 1;
+  // Dezelfde regel als op de server, uit hetzelfde bestand. Twee keer
+  // opschrijven zou betekenen dat het formulier iets goedkeurt wat het opslaan
+  // weigert.
+  const bedragInAanbod = bevatBedrag(v.aanbod) || bevatBedrag(v.ondertekening);
+
+  const kanVoorbeeld =
+    v.aanbod.trim().length > 5 && v.ondertekening.trim().length > 1 && !bedragInAanbod;
 
 
   // Een leeg of onmogelijk dagmaximum werd stilzwijgend 10. Dat is precies het
@@ -493,15 +500,34 @@ function CampagnesPagina() {
 
                 <Veld
                   label="Wat bied je aan?"
-                  hint="Eén zin, in je eigen woorden. Hier draait het hele bericht om."
+                  hint={
+                    bedragInAanbod
+                      ? "Hier staat een bedrag. Dat gaat er niet door."
+                      : "Eén zin, in je eigen woorden. Hier draait het hele bericht om."
+                  }
                 >
                   <textarea
-                    className={`${veld} min-h-[68px]`}
+                    className={`${veld} min-h-[68px] ${bedragInAanbod ? "border-amber-400/60" : ""}`}
                     placeholder="bijv. Een proefpakket kip, dat onze eigen chauffeur op een vrijdag langsbrengt."
                     value={v.aanbod}
                     onChange={(e) => zet("aanbod")(e.target.value)}
                   />
                 </Veld>
+
+                {/* Dit veld gaat letterlijk de opdracht van de agent in, dus is
+                    het de enige weg waarlangs een prijs alsnog in een mail kon
+                    belanden. Het opslaan weigert hem ook, maar dat merk je pas
+                    na het klikken — en dan heb je je zin al getypt. */}
+                {bedragInAanbod && (
+                  <p className="flex items-start gap-2 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3 text-[12.5px]/[1.65] text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+                    <span>
+                      Er staat een bedrag in je aanbod. Deze agent noemt geen prijzen — wie ernaar
+                      vraagt, wordt gebeld en krijgt een voorstel op maat. Haal het bedrag eruit,
+                      anders kun je deze campagne niet opslaan.
+                    </span>
+                  </p>
+                )}
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Veld label="Ondertekening" hint="Zoals het onder de mail komt te staan">
@@ -577,7 +603,7 @@ function CampagnesPagina() {
                 <button
                   type="button"
                   onClick={opslaan}
-                  disabled={bezig || v.naam.trim() === "" || dagmaximumFout}
+                  disabled={bezig || v.naam.trim() === "" || dagmaximumFout || bedragInAanbod}
                   className="rounded-xl bg-violet px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-violet/90 disabled:opacity-40"
                 >
                   {bezig ? "Bezig…" : bewerktId ? "Wijzigingen opslaan" : "Campagne aanmaken"}
@@ -610,7 +636,7 @@ function CampagnesPagina() {
                 )}
               </div>
 
-              {!kanVoorbeeld && (
+              {!kanVoorbeeld && !bedragInAanbod && (
                 <p className="mt-2.5 text-[11.5px] text-ink/40">
                   Vul eerst het aanbod en de ondertekening in; daar wordt het voorbeeld mee
                   opgesteld.

@@ -1,3 +1,8 @@
+// Relatief en niet via @/, met opzet. De tests draaien dit bestand met node,
+// en node lost die alias niet op; een alias hier zou test-geen-prijzen stil
+// laten crashen in plaats van een uitslag geven. Zie scripts/test-alles.sh.
+import { bevatBedrag, zonderBedragen } from "./bedragen.ts";
+
 /**
  * Het eerste bericht en de opvolging opstellen.
  *
@@ -77,10 +82,8 @@ export type Concept = { onderwerp: string; tekst: string };
  * Dus: een bedrag is een bedrag, waar het ook onder staat. "4,05 kg" is er
  * geen — daarom staat er geen regel op kale decimalen.
  */
-const BEDRAG = /€|\bEUR\b|\beuro'?s?\b|\bcent(en)?\b/i;
-
 export function zonderPrijzen(kennis: KennisRegel[]): KennisRegel[] {
-  return kennis.filter((k) => !BEDRAG.test(`${k.title} ${k.content}`));
+  return kennis.filter((k) => !bevatBedrag(`${k.title} ${k.content}`));
 }
 
 function kennisAlsTekst(ruw: KennisRegel[]): string {
@@ -121,36 +124,6 @@ Wat je hier leest is achtergrond, geen tekst om over te nemen.
 Staat er iets in wat tegen je pleit — ze maken het zelf, ze hebben al een leverancier — dan is dat geen reden om het te verzwijgen of om ertegenin te gaan. Laat het aanbod gewoon staan; proeven kan altijd.
 `;
 
-/**
- * Bedragen uit een notitie halen voordat het model hem leest.
- *
- * De notities komen uit Franks boekhouding en bevatten wat iemand jaren
- * geleden betaalde: "kocht in 2019 voor € 1.240 per maand". Er stond al een
- * instructie om die bedragen niet over te nemen, maar dat is dezelfde zwakte
- * als bij de prijslijst — een instructie om iets te negeren dat er wel staat,
- * wordt een keer niet gevolgd. En dan staat er een prijs van 2019 in een mail
- * van nu.
- *
- * De bedragen zijn ook nergens goed voor: de agent mag er niets mee en ze
- * voegen voor de rest van het verhaal niets toe. Dus gaan ze eruit.
- *
- * De patronen zijn met opzet nauw. "Sinds 1992" en "50 gram" zijn geen
- * bedragen, en een notitie die halverwege onleesbaar wordt gemaakt is erger
- * dan een notitie met een getal erin.
- */
-export function zonderBedragen(tekst: string): string {
-  return tekst
-    // € 1.240  /  €0,42  /  EUR 12,50
-    .replace(/(?:€|EUR)\s?\d[\d.,]*/gi, "(bedrag weggelaten)")
-    // 12,50 euro  /  1.240 EUR
-    .replace(/\d[\d.,]*\s?(?:euro|eur)\b/gi, "(bedrag weggelaten)")
-    // 0,76 per stuk  /  2,15 p/st
-    .replace(/\d+[.,]\d{2}\s*(?:per\s+\w+|p\/\w+)/gi, "(bedrag weggelaten)")
-    // een kaal bedrag met twee decimalen
-    .replace(/\b\d+[.,]\d{2}\b/g, "(bedrag weggelaten)")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
 
 function watWeWetenVanDeOntvanger(c: ContactGegevens): string {
   const regels: string[] = [];
@@ -367,6 +340,25 @@ Geef uitsluitend JSON terug, zonder omhulsel of toelichting:
 }
 
 export async function stelBerichtOp(o: Opdracht): Promise<Concept> {
+  // Het aanbod en de ondertekening typt de klant zelf in het campagneformulier,
+  // en die gaan letterlijk de prompt in. Het filter op de kennisbank doet daar
+  // niets, dus kon er langs deze weg alsnog een prijs in een mail belanden —
+  // gevonden bij de laatste controle vóór de eerste echte verzending.
+  //
+  // Hier wordt geweigerd en niet weggefilterd. Een halve zin van Frank
+  // ("daarna (bedrag weggelaten) per stuk") is erger dan een foutmelding: dan
+  // gaat er een kromme mail weg en weet hij niet waarom.
+  for (const [veld, tekst] of [
+    ["het aanbod", o.aanbod],
+    ["de ondertekening", o.ondertekening],
+  ] as const) {
+    if (bevatBedrag(tekst)) {
+      throw new Error(
+        `Er staat een bedrag in ${veld}. Deze agent noemt geen prijzen: wie ernaar vraagt wordt gebeld. Haal het bedrag eruit en probeer het opnieuw.`,
+      );
+    }
+  }
+
   const sleutel = process.env["ANTHROPIC_API_KEY"];
   if (!sleutel) throw new Error("ANTHROPIC_API_KEY ontbreekt op de server.");
 
