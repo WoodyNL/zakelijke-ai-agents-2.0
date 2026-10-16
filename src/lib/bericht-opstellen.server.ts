@@ -52,7 +52,7 @@ export type Opdracht = {
 export type Concept = { onderwerp: string; tekst: string };
 
 /**
- * Prijsregels gaan niet mee naar het model.
+ * Regels met een bedrag erin gaan niet mee naar het model.
  *
  * Besloten op 15 oktober 2026: de agent noemt geen bedragen meer. Wie naar de
  * prijs vraagt of belangstelling heeft, wordt doorgegeven aan een mens die
@@ -60,14 +60,27 @@ export type Concept = { onderwerp: string; tekst: string };
  * bezorgfrequentie en wat iemand nu betaalt; een bedrag uit een lijst is dan
  * geen informatie maar een onderhandeling die je al verloren hebt.
  *
- * Dit is met opzet een filter en niet alleen een instructie. De prijslijst die
- * Frank uploadt komt in de kennisbank terecht onder de categorie "prijzen", en
- * de kennisbank is precies wat de agent wél mag navertellen. Een instructie om
- * iets te negeren dat er wel staat, is een instructie die een keer niet wordt
- * gevolgd. Wat er niet in de prompt staat, kan niet in de mail komen.
+ * Dit is met opzet een filter en niet alleen een instructie. Een instructie om
+ * iets te negeren dat wel in de kennisbank staat, wordt een keer niet gevolgd.
+ * Wat er niet in de prompt staat, kan niet in de mail komen.
+ *
+ * Er wordt naar de inhoud gekeken en niet naar de categorie, en dat is op 16
+ * oktober gewijzigd nadat het de verkeerde kant op uitpakte. Een pdf met het
+ * spiesenassortiment leverde via de kennisupload vier items op die het model
+ * onder "prijzen" zette, terwijl er geen bedrag in stond: alleen gewichten,
+ * lengtes en doosinhoud. Het oude filter keek naar het etiket en gooide die
+ * weg, en dan weet de agent juist niet wat hij verkoopt.
+ *
+ * Omgekeerd ving het etiket niet alles: "bezorging kost € 12,50" onder
+ * categorie Levering kwam er zo wél door.
+ *
+ * Dus: een bedrag is een bedrag, waar het ook onder staat. "4,05 kg" is er
+ * geen — daarom staat er geen regel op kale decimalen.
  */
+const BEDRAG = /€|\bEUR\b|\beuro'?s?\b|\bcent(en)?\b/i;
+
 export function zonderPrijzen(kennis: KennisRegel[]): KennisRegel[] {
-  return kennis.filter((k) => !/prijs|prijzen|tarief|tarieven/i.test(k.category));
+  return kennis.filter((k) => !BEDRAG.test(`${k.title} ${k.content}`));
 }
 
 function kennisAlsTekst(ruw: KennisRegel[]): string {

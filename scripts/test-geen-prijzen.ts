@@ -34,22 +34,54 @@ const PRIJSKENNIS = [
   { category: "prijzen", title: "Kipsaté 50gr", content: "Kipsaté 50gr kost € 0,89 per stuk." },
   { category: "Prijzen", title: "Frikandel", content: "Frikandel kost €0,42 per stuk." },
   { category: "tarieven", title: "Bezorging", content: "Bezorging kost 12,50 euro onder 150 euro." },
+  // Een bedrag onder een onschuldige categorie. Het oude filter keek naar het
+  // etiket en liet deze er dus doorheen.
+  { category: "Levering", title: "Rittoeslag", content: "Buiten de route rekenen we 25 euro." },
   { category: "Levering", title: "Bezorgdag", content: "De chauffeur rijdt op vrijdag." },
   { category: "Proefpakket", title: "Inhoud", content: "Vier stokjes kipsaté van 50 gram." },
+  // En het omgekeerde: specificaties die de kennisupload onder "prijzen" zette
+  // terwijl er geen bedrag in staat. Die horen de agent juist te bereiken,
+  // anders weet hij niet wat hij verkoopt.
+  {
+    category: "prijzen",
+    title: "Specificaties rondstok 18 cm",
+    content: "De rondstok van 18 cm weegt 50 gram per spies, bevat 81 stuks per doos en heeft een inhoud per doos van 4,05 kg.",
+  },
 ];
 
 console.log("\nPrijsregels gaan niet naar het model\n" + "=".repeat(52));
 
 {
   const over = zonderPrijzen(PRIJSKENNIS);
-  meld(over.length === 2, "alleen de niet-prijsregels blijven over", `${over.length} van 5`);
+  const titels = over.map((k) => k.title);
+
+  meld(over.length === 3, "drie van de zeven blijven over", titels.join(" · "));
   meld(
-    over.every((k) => !/prijs|tarief/i.test(k.category)),
-    "geen categorie met prijs of tarief erin",
+    !titels.includes("Kipsaté 50gr") && !titels.includes("Frikandel"),
+    "regels met een euroteken gaan eruit",
+  );
+  meld(!titels.includes("Bezorging"), "en met het woord euro ook");
+
+  // Dit is wat het etiket-filter niet ving.
+  meld(
+    !titels.includes("Rittoeslag"),
+    "een bedrag onder categorie Levering gaat ook eruit",
+    titels.join(" · "),
+  );
+
+  // En dit is wat het etiket-filter ten onrechte weggooide.
+  meld(
+    titels.includes("Specificaties rondstok 18 cm"),
+    "specificaties zonder bedrag blijven, ook onder categorie prijzen",
+    titels.join(" · "),
   );
   meld(
-    over.some((k) => k.category === "Levering") && over.some((k) => k.category === "Proefpakket"),
+    titels.includes("Bezorgdag") && titels.includes("Inhoud"),
     "de gewone kennis blijft wel staan",
+  );
+  meld(
+    zonderPrijzen([{ category: "Aanbod", title: "Doos", content: "Een doos bevat 4,05 kg." }]).length === 1,
+    "een kale decimaal als 4,05 kg is geen bedrag",
   );
 }
 
@@ -79,12 +111,13 @@ for (const soort of modi) {
       : {}),
   });
 
-  // Elk patroon dat op geld lijkt. De prompt mag het woord "prijs" bevatten —
-  // de regel erover staat er juist in — maar geen enkel bedrag.
+  // Alleen wat geld is. De prompt mag het woord "prijs" bevatten — de regel
+  // erover staat er juist in — en een kale decimaal is geen bedrag: "4,05 kg"
+  // is een doosinhoud. Op die verwarring ging het filter zelf eerst mis.
   const bedragen = [
     ...prompt.matchAll(/€\s?\d/g),
-    ...prompt.matchAll(/\d+[.,]\d{2}\s*(euro|per stuk)/gi),
-    ...prompt.matchAll(/\d+[.,]\d{2}\b/g),
+    ...prompt.matchAll(/\d[\d.,]*\s*(?:euro|eur\b|cent)/gi),
+    ...prompt.matchAll(/\d+[.,]\d{2}\s*per\s+stuk/gi),
   ].map((m) => m[0]);
 
   meld(bedragen.length === 0, `${soort}: geen bedrag in de prompt`, bedragen.join(" "));
