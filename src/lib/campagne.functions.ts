@@ -270,9 +270,70 @@ export const bereidCampagneVoor = createServerFn({ method: "POST" })
     // Eigendom, niet leesbaarheid: hierna gaat het door met de service-role.
     await mijnCampagne(context as never, data.campagneId);
 
-    const { bereidVoor } = await import("@/lib/campagne-uitvoeren.server");
-    return bereidVoor(data.campagneId, data.portie);
+    const { bereidVoor, verstuurKlaarstaande } = await import("@/lib/campagne-uitvoeren.server");
+    const voorbereiding = await bereidVoor(data.campagneId, data.portie);
+
+    /**
+     * Staat de campagne op "zelf versturen", dan gaat de post er in dezelfde
+     * handeling uit.
+     *
+     * Dit is de enige plek in het platform waar één druk op de knop post de
+     * deur uit doet zonder dat er een mens tussen heeft gelezen. Dat is een
+     * bewuste keuze van de klant, instelbaar per campagne, en hij staat niet
+     * standaard aan.
+     *
+     * Drie dingen houden hem in toom. De campagne moet op actief staan, en dat
+     * is een tweede handeling. Er gaat hoogstens één portie tegelijk weg, dus
+     * tien berichten en niet honderdzevenendertig. En het verzendvenster en
+     * het dagmaximum gelden onverkort, want die zitten in het inplannen zelf.
+     *
+     * Staat de campagne uit, dan wordt er wél klaargezet en niets verstuurd.
+     * Dat is geen storing maar precies de rem: de concepten staan er, en ze
+     * gaan weg zodra je de campagne aanzet en op verzenden drukt.
+     */
+    // Eén vaste vorm, ook als er niets is verstuurd. Een veld dat soms wel en
+    // soms niet bestaat, dwingt elke aanroeper tot raden.
+    const uit: Klaarzetuitkomst = { ...voorbereiding, verstuurd: null, nietVerstuurd: null };
+
+    const [campagne] = (await haalCampagneRij(context as never, data.campagneId)) ?? [];
+    if (campagne?.verzendwijze !== "direct") return uit;
+
+    if (!campagne.actief) {
+      return { ...uit, nietVerstuurd: "de campagne staat uit, dus er ging niets weg" };
+    }
+    if (voorbereiding.klaargezet === 0) return uit;
+
+    return { ...uit, verstuurd: await verstuurKlaarstaande(data.campagneId) };
   });
+
+export type Klaarzetuitkomst = {
+  klaargezet: number;
+  overgeslagen: Array<{ email: string; reden: string }>;
+  resterend: number;
+  /** Alleen gevuld bij "zelf versturen", en alleen als er echt iets wegging. */
+  verstuurd: { ingepland: number; mislukt: Array<{ email: string; reden: string }> } | null;
+  /** Waarom er bij "zelf versturen" tóch niets wegging. */
+  nietVerstuurd: string | null;
+};
+
+/** De twee velden die bepalen of er direct verstuurd mag worden. */
+async function haalCampagneRij(
+  context: { supabase: unknown },
+  campagneId: string,
+): Promise<Array<{ verzendwijze: string; actief: boolean }> | null> {
+  const sb = context.supabase as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (k: string, w: string) => Promise<{ data: unknown }>;
+      };
+    };
+  };
+  const { data } = await sb
+    .from("outbound_campaigns")
+    .select("verzendwijze, actief")
+    .eq("id", campagneId);
+  return (data as Array<{ verzendwijze: string; actief: boolean }> | null) ?? null;
+}
 
 /** De klaarstaande berichten inplannen bij Resend. */
 export const verstuurCampagne = createServerFn({ method: "POST" })

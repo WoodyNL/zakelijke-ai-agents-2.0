@@ -91,6 +91,15 @@ function BerichtenPagina() {
   const campagneId = gekozen ?? campagnes[0]?.id ?? null;
   const campagne = campagnes.find((c) => c.id === campagneId) ?? null;
 
+  /**
+   * Staat deze campagne op "zelf versturen"?
+   *
+   * Dan doet één knop twee dingen, en dat hoort op die knop te staan. Een
+   * scherm dat "klaarzetten stuurt niets" belooft terwijl er post wegging, is
+   * erger dan geen uitleg.
+   */
+  const stuurtZelf = campagne?.verzendwijze === "direct";
+
   const [bezig, zetBezig] = useState<
     null | "bereid" | "verstuur" | "opvolg" | "opvolgVerstuur" | "navraag" | "navraagVerstuur"
   >(null);
@@ -106,6 +115,19 @@ function BerichtenPagina() {
 
   async function bereid() {
     if (!campagneId) return;
+
+    // Bij "zelf versturen" gaat de post in dezelfde handeling weg. Dan hoort
+    // er een vraag tussen: dit is de enige knop in het platform die post
+    // verstuurt zonder dat iemand heeft gelezen wat er staat.
+    if (stuurtZelf) {
+      const door = window.confirm(
+        "Deze campagne staat op 'zelf versturen'. Klaarzetten stelt tien berichten op " +
+          "én plant ze meteen in bij Resend — je leest ze dus niet eerst.\n\n" +
+          "Doorgaan?",
+      );
+      if (!door) return;
+    }
+
     zetBezig("bereid");
     zetMelding(null);
     try {
@@ -113,6 +135,9 @@ function BerichtenPagina() {
       const delen = [`${r.klaargezet} berichten klaargezet`];
       if (r.resterend > 0) delen.push(`nog ${r.resterend} te gaan`);
       if (r.overgeslagen.length > 0) delen.push(`${r.overgeslagen.length} overgeslagen`);
+      if (r.verstuurd) delen.push(`${r.verstuurd.ingepland} meteen ingepland`);
+      if (r.verstuurd?.mislukt.length) delen.push(`${r.verstuurd.mislukt.length} mislukt`);
+      if (r.nietVerstuurd) delen.push(r.nietVerstuurd);
       zetMelding({ ok: true, tekst: delen.join(", ") + "." });
       await qc.invalidateQueries({ queryKey: ["berichten", agentId] });
     } catch (e) {
@@ -270,7 +295,13 @@ function BerichtenPagina() {
                 className="inline-flex items-center gap-2 rounded-xl border border-violet/35 bg-violet/[0.10] px-4 py-2 text-[13px] font-semibold text-violet transition hover:bg-violet/20 disabled:opacity-40"
               >
                 <Mail className="h-4 w-4" aria-hidden="true" />
-                {bezig === "bereid" ? "Bezig met opstellen…" : "Tien berichten klaarzetten"}
+                {bezig === "bereid"
+                  ? stuurtZelf
+                    ? "Bezig met opstellen en versturen…"
+                    : "Bezig met opstellen…"
+                  : stuurtZelf
+                    ? "Tien berichten klaarzetten en versturen"
+                    : "Tien berichten klaarzetten"}
               </button>
 
               <button
@@ -299,10 +330,21 @@ function BerichtenPagina() {
               )}
             </div>
 
-            <p className="mt-3 text-[11.5px]/[1.6] text-ink/45">
-              Klaarzetten stuurt niets. Het stelt tien berichten op die je hieronder kunt lezen —
-              na de eerste tien weet je of de toon klopt.
-            </p>
+            {stuurtZelf ? (
+              <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3 text-[12px]/[1.6] text-amber-100">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+                <span>
+                  Deze campagne staat op <strong>zelf versturen</strong>. Klaarzetten stelt tien
+                  berichten op én plant ze meteen in — je leest ze dus niet eerst. Wil je wel eerst
+                  lezen, zet de campagne dan op &ldquo;concepten klaarzetten&rdquo;.
+                </span>
+              </p>
+            ) : (
+              <p className="mt-3 text-[11.5px]/[1.6] text-ink/45">
+                Klaarzetten stuurt niets. Het stelt tien berichten op die je hieronder kunt lezen —
+                na de eerste tien weet je of de toon klopt.
+              </p>
+            )}
 
             {/* De opvolging staat apart, want hij werkt anders: hij geldt alleen
                 voor wie al post heeft gehad en niet heeft geantwoord. Wie wél

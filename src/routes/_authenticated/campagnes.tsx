@@ -569,7 +569,7 @@ function CampagnesPagina() {
                   label="Verzendwijze"
                   hint={
                     v.verzendwijze === "direct"
-                      ? "Doet op dit moment hetzelfde als klaarzetten: jij drukt op verzenden"
+                      ? "Eén knop stelt op én plant in. Je leest de berichten dus niet eerst."
                       : "Je zet de berichten klaar en leest ze, daarna druk jij op verzenden"
                   }
                 >
@@ -587,7 +587,7 @@ function CampagnesPagina() {
                         erger dan een knop die ontbreekt — zeker in een scherm
                         waar je op beslist of er honderd mails weggaan. */}
                     <option value="direct" className="bg-[#12121a]">
-                      Zelf versturen — nog niet gebouwd
+                      Zelf versturen — klaarzetten verstuurt meteen
                     </option>
                   </select>
                 </Veld>
