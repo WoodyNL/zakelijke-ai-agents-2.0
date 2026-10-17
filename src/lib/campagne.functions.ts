@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { mijnAgent, mijnCampagne } from "@/lib/agent-toegang";
 import { bevatBedrag } from "@/lib/bedragen";
-import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
+import { stelBerichtOp, zonderPrijzen, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import type { TablesInsert } from "@/integrations/supabase/types";
 
 /**
@@ -235,7 +235,14 @@ export const maakVoorbeeld = createServerFn({ method: "POST" })
         plaats: contact.plaats,
         herkomst: contact.herkomst,
       },
-      kennisItems: kennis?.length ?? 0,
+      // Wat de agent werkelijk heeft gezien, en wat is weggelaten. De ruwe
+      // telling zou hier misleiden: de regel eronder nodigt je uit om te
+      // controleren of alles uit de kennisbank komt, en dan moet het getal
+      // slaan op wat er in de opdracht stond en niet op wat er in de database
+      // staat.
+      kennisItems: zonderPrijzen((kennis ?? []) as KennisRegel[]).length,
+      kennisWeggelaten:
+        (kennis?.length ?? 0) - zonderPrijzen((kennis ?? []) as KennisRegel[]).length,
     };
   });
 
