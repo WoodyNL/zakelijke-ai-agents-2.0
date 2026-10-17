@@ -705,7 +705,11 @@ function CampagnesPagina() {
                       ? "De kennisbank is nog leeg, dus dit bericht kan niets concreets zeggen over je aanbod, prijzen of levering. Vul de kennisbank en bekijk het opnieuw."
                       : `Opgesteld met ${voorbeeld.kennisItems} items uit de kennisbank${
                           voorbeeld.kennisWeggelaten > 0
-                            ? `; ${voorbeeld.kennisWeggelaten} met een bedrag erin zijn weggelaten`
+                            ? `; ${voorbeeld.kennisWeggelaten} ${
+                                voorbeeld.kennisWeggelaten === 1
+                                  ? "met een bedrag erin is weggelaten"
+                                  : "met een bedrag erin zijn weggelaten"
+                              }`
                             : ""
                         }. Staat er iets in dit bericht wat daar niet in stond, laat het dan weten — dan klopt er iets niet.`}
                   </p>
