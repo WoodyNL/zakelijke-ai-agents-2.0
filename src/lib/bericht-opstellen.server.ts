@@ -308,6 +308,7 @@ ${
     ? `- Noem de dag die hierboven staat, voluit. Dat is de hele reden dat je schrijft: die vrijdag is gereserveerd en er staat een doos voor klaar. "Op een vrijdag" is hier fout — dan weet de lezer nog steeds niet wanneer hij thuis moet zijn.`
     : `- Noem geen specifieke datum of "komende vrijdag". Welke vrijdag het wordt, wordt later ingepland en hangt af van hoeveel er die dag mee kan. Zeg "op een vrijdag" en niets preciezers; een datum die niet gereserveerd is, is een toezegging die je niet kunt nakomen.`
 }
+- Zeg niet of iemand binnen of buiten het bezorggebied valt. De route bepaalt wél wat je mag toezeggen — staat er in de kennisbank dat de chauffeur door zijn plaats rijdt, dan mag je aanbieden dat hij langskomt — maar je benoemt het niet. "U zit in ons bezorggebied" is geen zin die een mens schrijft; die weet gewoon dat het om de hoek is. Het verraadt dat er een lijst achter zit waarin mensen in vakjes staan, en dat is precies wat deze mail niet moet uitstralen. Noem de plaats gerust ("onze chauffeur rijdt op vrijdag door Katwijk"), maar nooit de indeling.
 - Spreek de lezer aan met "u", en hou dat de hele mail vol. Dit zijn horecaondernemers en slagers die het bedrijf van vroeger kenden.
 
 # Nederlands
@@ -371,7 +372,15 @@ export async function stelBerichtOp(o: Opdracht): Promise<Concept> {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1200,
+      // Ruim, want een te krappe limiet kapt het antwoord af en dan is het
+      // bericht weg. Gemeten op 17 oktober 2026: een geslaagde mail kost 475
+      // tot 872 tokens, maar één op de drie pogingen liep tegen de oude grens
+      // van 1200 aan en leverde halve JSON op. Bij honderdzevenendertig
+      // berichten zijn dat tientallen contacten die worden overgeslagen.
+      //
+      // Hoger kost niets: er wordt afgerekend per token die er werkelijk
+      // uitkomt, niet per token die je toestaat.
+      max_tokens: 4000,
       system: [
         {
           type: "text",
@@ -415,6 +424,13 @@ export async function stelBerichtOp(o: Opdracht): Promise<Concept> {
   try {
     concept = JSON.parse(schoon) as Concept;
   } catch {
+    // Afgekapt is iets anders dan onleesbaar, en vraagt iets anders van de
+    // lezer: niet nakijken wat er staat, maar het gewoon opnieuw proberen.
+    if (antwoord.stop_reason === "max_tokens") {
+      throw new Error(
+        "Het bericht werd halverwege afgekapt. Probeer deze portie opnieuw; dit gaat vanzelf goed.",
+      );
+    }
     throw new Error(`Onleesbaar antwoord van het model: ${schoon.slice(0, 200)}`);
   }
   if (!concept.onderwerp?.trim() || !concept.tekst?.trim()) {
