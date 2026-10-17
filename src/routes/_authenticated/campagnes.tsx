@@ -636,7 +636,11 @@ function CampagnesPagina() {
                 )}
               </div>
 
-              {!kanVoorbeeld && !bedragInAanbod && (
+              {/* Niet terwijl er een geslaagde melding staat. Na het aanmaken
+                  wist het formulier zichzelf, en dan kwam deze regel pal onder
+                  "Campagne aangemaakt" te staan — alsof er iets mis was gegaan
+                  met wat je net had opgeslagen. */}
+              {!kanVoorbeeld && !bedragInAanbod && !melding?.ok && (
                 <p className="mt-2.5 text-[11.5px] text-ink/40">
                   Vul eerst het aanbod en de ondertekening in; daar wordt het voorbeeld mee
                   opgesteld.
