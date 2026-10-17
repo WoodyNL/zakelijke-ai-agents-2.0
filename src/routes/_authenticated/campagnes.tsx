@@ -490,8 +490,11 @@ function CampagnesPagina() {
                           <p className="mt-2 text-[12.5px]/[1.65] text-ink/45">
                             Bij {dagmaximumFout ? "?" : perDag} per dag zijn die {bereik.nieuw}{" "}
                             berichten in{" "}
-                            {dagmaximumFout ? "?" : Math.ceil(bereik.nieuw / perDag)} werkdagen de
-                            deur uit.
+                            {dagmaximumFout ? "?" : Math.ceil(bereik.nieuw / perDag)}{" "}
+                            {!dagmaximumFout && Math.ceil(bereik.nieuw / perDag) === 1
+                              ? "werkdag"
+                              : "werkdagen"}{" "}
+                            de deur uit.
                           </p>
                         )}
                       </>
@@ -562,7 +565,14 @@ function CampagnesPagina() {
                   />
                 </Veld>
 
-                <Veld label="Verzendwijze" hint="Je kunt dit later omzetten">
+                <Veld
+                  label="Verzendwijze"
+                  hint={
+                    v.verzendwijze === "direct"
+                      ? "Doet op dit moment hetzelfde als klaarzetten: jij drukt op verzenden"
+                      : "Je zet de berichten klaar en leest ze, daarna druk jij op verzenden"
+                  }
+                >
                   <select
                     className={veld}
                     value={v.verzendwijze}
@@ -571,8 +581,13 @@ function CampagnesPagina() {
                     <option value="concept" className="bg-[#12121a]">
                       Concepten klaarzetten — jij drukt op verzenden
                     </option>
+                    {/* Deze stand is opgeslagen maar doet nog niets: beide
+                        werken hetzelfde. Een knop die belooft dat de agent uit
+                        zichzelf post verstuurt terwijl dat niet bestaat, is
+                        erger dan een knop die ontbreekt — zeker in een scherm
+                        waar je op beslist of er honderd mails weggaan. */}
                     <option value="direct" className="bg-[#12121a]">
-                      Zelf versturen — de agent stuurt door zonder tussenkomst
+                      Zelf versturen — nog niet gebouwd
                     </option>
                   </select>
                 </Veld>
