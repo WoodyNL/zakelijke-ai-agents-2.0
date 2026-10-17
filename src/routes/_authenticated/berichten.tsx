@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/berichten")({
 
 type Bericht = {
   id: string;
+  campaign_id: string | null;
   stap: number;
   status: string;
   onderwerp: string;
@@ -106,12 +107,33 @@ function BerichtenPagina() {
   const [melding, zetMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
 
   const berichten = berichtenQuery.data ?? [];
-  const concepten = berichten.filter((b) => b.status === "concept" && b.stap === 1);
-  const opvolgConcepten = berichten.filter((b) => b.status === "concept" && b.stap === 2);
+
+  /**
+   * Alleen de berichten van de gekozen campagne tellen mee op de knoppen.
+   *
+   * Dit haalt de berichten van de hele agent op, want de lijst eronder toont
+   * alles. Maar versturen gaat per campagne, en zolang de knop over de hele
+   * agent telde zei hij "5 klaarstaande inplannen" terwijl er voor déze
+   * campagne nul klaarstonden. Dan drukt iemand, gebeurt er niets, en lijkt
+   * het alsof het versturen stuk is.
+   *
+   * Berichten zonder campagne tellen niet mee: die horen bij een campagne die
+   * is verwijderd en er is niets om ze mee te versturen.
+   */
+  const vanDezeCampagne = (b: Bericht) => b.campaign_id !== null && b.campaign_id === campagneId;
+
+  const concepten = berichten.filter(
+    (b) => b.status === "concept" && b.stap === 1 && vanDezeCampagne(b),
+  );
+  const opvolgConcepten = berichten.filter(
+    (b) => b.status === "concept" && b.stap === 2 && vanDezeCampagne(b),
+  );
   // Wie een verstuurd eerste bericht heeft en niet heeft geantwoord, komt in
   // aanmerking voor opvolging. 'beantwoord' valt er dus vanzelf buiten.
   const opTeVolgen = berichten.filter((b) => b.stap === 1 && b.status === "verzonden").length;
-  const navraagConcepten = berichten.filter((b) => b.status === "concept" && b.stap === 3);
+  const navraagConcepten = berichten.filter(
+    (b) => b.status === "concept" && b.stap === 3 && vanDezeCampagne(b),
+  );
 
   async function bereid() {
     if (!campagneId) return;

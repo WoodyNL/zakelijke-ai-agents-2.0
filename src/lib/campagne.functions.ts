@@ -355,7 +355,7 @@ export const haalBerichten = createServerFn({ method: "GET" })
     const { data: rijen, error } = await context.supabase
       .from("outbound_messages")
       .select(
-        "id, stap, status, onderwerp, tekst, gepland_voor, verzonden_op, fout, aangemaakt_op, outbound_contacts(naam, bedrijf, email)",
+        "id, campaign_id, stap, status, onderwerp, tekst, gepland_voor, verzonden_op, fout, aangemaakt_op, outbound_contacts(naam, bedrijf, email)",
       )
       .eq("agent_id", data.agentId)
       .order("aangemaakt_op", { ascending: false })
