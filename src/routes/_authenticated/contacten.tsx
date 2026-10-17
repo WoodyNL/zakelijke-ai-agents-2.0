@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Users } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { herkomstNaam } from "@/lib/herkomst";
 import { ContactImport } from "@/components/contact-import";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
@@ -80,12 +81,6 @@ function ContactenPagina() {
    * lijst die bepaalt wie er post krijgt, is dat de verkeerde soort
    * onduidelijkheid.
    */
-  const HERKOMST_LABEL: Record<string, string> = {
-    oud_klant: "oud-klant",
-    koud: "koud",
-    test: "testadres",
-  };
-
   const FILTERS = [
     { sleutel: "alles", label: "alle" },
     { sleutel: "route", label: "op de route" },
@@ -322,7 +317,7 @@ function ContactenPagina() {
                             <td className="py-2 pr-3 text-ink/55">{c.bedrijf ?? "—"}</td>
                             <td className="py-2 pr-3 text-ink/55">{c.plaats ?? "—"}</td>
                             <td className="py-2 pr-3 text-ink/45">
-                              {HERKOMST_LABEL[c.herkomst] ?? c.herkomst}
+                              {herkomstNaam(c.herkomst, true)}
                             </td>
                             {/* Of de chauffeur er kan komen. Dit bepaalt of de
                                 agent een bezorging mag toezeggen, dus het hoort

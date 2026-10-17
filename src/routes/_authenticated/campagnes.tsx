@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Eye, AlertTriangle, Check, Megaphone } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { bevatBedrag } from "@/lib/bedragen";
+import { herkomstNaam } from "@/lib/herkomst";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
   bewaarCampagne,
@@ -292,7 +293,7 @@ function CampagnesPagina() {
                         <span>
                           <span className="text-[13px] font-semibold text-brand">{c.naam}</span>
                           <span className="ml-2 text-[11.5px] text-ink/45">
-                            {c.herkomst === "oud_klant" ? "oud-klanten" : "koud"} ·{" "}
+                            {herkomstNaam(c.herkomst)} ·{" "}
                             {c.doelgroep === "binnen_gebied"
                               ? "binnen gebied"
                               : c.doelgroep === "buiten_gebied"
