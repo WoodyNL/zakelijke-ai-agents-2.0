@@ -41,6 +41,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFacturenRouteImport } from './routes/_authenticated/facturen'
 import { Route as AuthenticatedGesprekkenRouteImport } from './routes/_authenticated/gesprekken'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as AuthenticatedReviewsRouteImport } from './routes/_authenticated/reviews'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogWaaromAiPilotsMislukkenRouteImport } from './routes/blog/waarom-ai-pilots-mislukken'
@@ -210,6 +211,11 @@ const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReviewsRoute = AuthenticatedReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -276,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/facturen': typeof AuthenticatedFacturenRoute
   '/gesprekken': typeof AuthenticatedGesprekkenRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
   '/support': typeof AuthenticatedSupportRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
@@ -315,6 +322,7 @@ export interface FileRoutesByTo {
   '/facturen': typeof AuthenticatedFacturenRoute
   '/gesprekken': typeof AuthenticatedGesprekkenRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
   '/support': typeof AuthenticatedSupportRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/_authenticated/facturen': typeof AuthenticatedFacturenRoute
   '/_authenticated/gesprekken': typeof AuthenticatedGesprekkenRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/reviews': typeof AuthenticatedReviewsRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/facturen'
     | '/gesprekken'
     | '/knowledge'
+    | '/reviews'
     | '/support'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/facturen'
     | '/gesprekken'
     | '/knowledge'
+    | '/reviews'
     | '/support'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/_authenticated/facturen'
     | '/_authenticated/gesprekken'
     | '/_authenticated/knowledge'
+    | '/_authenticated/reviews'
     | '/_authenticated/support'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
@@ -735,6 +747,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reviews': {
+      id: '/_authenticated/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AuthenticatedReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/support': {
       id: '/_authenticated/support'
       path: '/support'
@@ -794,6 +813,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFacturenRoute: typeof AuthenticatedFacturenRoute
   AuthenticatedGesprekkenRoute: typeof AuthenticatedGesprekkenRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedReviewsRoute: typeof AuthenticatedReviewsRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedAgentsAgentIdRoute: typeof AuthenticatedAgentsAgentIdRoute
   AuthenticatedContactContactIdRoute: typeof AuthenticatedContactContactIdRoute
@@ -813,6 +833,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFacturenRoute: AuthenticatedFacturenRoute,
   AuthenticatedGesprekkenRoute: AuthenticatedGesprekkenRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedReviewsRoute: AuthenticatedReviewsRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedAgentsAgentIdRoute: AuthenticatedAgentsAgentIdRoute,
   AuthenticatedContactContactIdRoute: AuthenticatedContactContactIdRoute,

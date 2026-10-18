@@ -157,6 +157,10 @@ export default {
         // En de betaalherinneringen, hoogstens eens per tien minuten.
         const { rondeHerinneringen } = await import("./lib/herinneringen.server");
         wachtOpruimen.call(ctx, rondeHerinneringen());
+
+        // En de reviewverzoeken, hoogstens eens per kwartier.
+        const { rondeReviews } = await import("./lib/reviews.server");
+        wachtOpruimen.call(ctx, rondeReviews());
       }
 
       const handler = await getServerEntry();

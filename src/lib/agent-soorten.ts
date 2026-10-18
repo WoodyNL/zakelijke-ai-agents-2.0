@@ -28,6 +28,7 @@ export type Scherm =
   | "gesprekken"
   | "aanvragen"
   | "facturen"
+  | "reviews"
   | "contacten"
   | "campagnes"
   | "berichten"
@@ -46,6 +47,7 @@ export type Scherm =
  *   heractivatie  slapende klanten: aangeschreven, gereageerd, teruggekomen
  *   offertes    aanvragen, reactietijd, verstuurd, geaccepteerd
  *   facturen    openstaand, over de termijn, betaald na een herinnering
+ *   reviews     verzoeken, reviews en gemiddelde (90 dagen), onbeantwoord
  */
 export type Bron =
   | "gesprekken"
@@ -55,7 +57,8 @@ export type Bron =
   | "support"
   | "heractivatie"
   | "offertes"
-  | "facturen";
+  | "facturen"
+  | "reviews";
 
 type Beschrijving = {
   label: string;
@@ -201,10 +204,12 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Vraagt na een klus of levering om een review en zet een antwoord klaar op elke review die binnenkomt, in jouw toon.",
     labels: { metric: "reviewverzoeken", score: "reviews ontvangen" },
-    schermen: [],
+    schermen: ["reviews"],
     optioneel: [],
-    bronnen: ["metingen"],
-    binnenkort: ["Reviews en gemiddelde score van de laatste 90 dagen", "Onbeantwoorde reviews"],
+    bronnen: ["reviews"],
+    binnenkort: [
+      "Reviews automatisch ophalen en antwoorden plaatsen via je Google Bedrijfsprofiel",
+    ],
   },
   afspraken: {
     label: "Afsprakenagent",
@@ -246,6 +251,7 @@ export const ALLE_SCHERMEN: Scherm[] = [
   "gesprekken",
   "aanvragen",
   "facturen",
+  "reviews",
   "support",
   "contacten",
   "campagnes",

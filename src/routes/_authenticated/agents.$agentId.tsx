@@ -18,6 +18,7 @@ import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
 import { haalHeractivatie } from "@/lib/heractivatie.functions";
 import { haalOfferteCijfers } from "@/lib/offerte.functions";
 import { haalFactuurCijfers } from "@/lib/facturen.functions";
+import { haalReviewCijfers } from "@/lib/reviews.functions";
 import { euroTekst } from "@/lib/prijsimport";
 import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
@@ -101,6 +102,12 @@ function AgentDetail() {
     queryKey: ["factuur-kerncijfers", agentId, days],
     queryFn: () => factuurFn({ data: { agentId, dagen: days || 3650 } }),
     enabled: soort.bronnen.includes("facturen"),
+  });
+  const reviewFn = useServerFn(haalReviewCijfers);
+  const reviewQuery = useQuery({
+    queryKey: ["review-kerncijfers", agentId, days],
+    queryFn: () => reviewFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("reviews"),
   });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
@@ -294,6 +301,30 @@ function AgentDetail() {
                       : "—"
                   }
                   label="betaald binnen 7 dagen na een herinnering"
+                />
+              </>
+            )}
+            {soort.bronnen.includes("reviews") && (
+              <>
+                <Stat
+                  value={
+                    reviewQuery.data?.gemiddelde != null
+                      ? `${reviewQuery.data.gemiddelde.toFixed(1)} ★`
+                      : "—"
+                  }
+                  label="gemiddeld"
+                />
+                <Stat
+                  value={reviewQuery.data ? String(reviewQuery.data.reviews) : "—"}
+                  label="reviews"
+                />
+                <Stat
+                  value={reviewQuery.data ? String(reviewQuery.data.verzoeken) : "—"}
+                  label="verzoeken verstuurd"
+                />
+                <Stat
+                  value={reviewQuery.data ? String(reviewQuery.data.onbeantwoord) : "—"}
+                  label="nog onbeantwoord"
                 />
               </>
             )}
