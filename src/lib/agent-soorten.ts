@@ -14,17 +14,18 @@ export type AgentSoort =
   | "sales_assistent"
   | "inbox_draft"
   | "whatsapp_followup"
+  // De vijf van 18 oktober 2026, in bouwvolgorde. Zie
+  // documenten/voorstel-nieuwe-agents.md voor het waarom.
+  | "heractivatie"
+  | "offerte"
+  | "betaalherinnering"
+  | "reviews"
+  | "afspraken"
   | "overig";
 
 /** Schermen in het klantportaal die alleen bij bepaalde soorten horen. */
 export type Scherm =
-  | "gesprekken"
-  | "contacten"
-  | "campagnes"
-  | "berichten"
-  | "antwoorden"
-  | "bezorgen"
-  | "support";
+  "gesprekken" | "contacten" | "campagnes" | "berichten" | "antwoorden" | "bezorgen" | "support";
 
 /**
  * Een kerncijfer op het dashboard van een agent, en waar het vandaan komt.
@@ -130,6 +131,76 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     optioneel: [],
     bronnen: ["metingen"],
     binnenkort: ["Berichten verstuurd", "Reacties ontvangen", "Overdrachten naar een mens"],
+  },
+  // -------------------------------------------------------------------------
+  // De vijf van 18 oktober 2026. Nog geen van alle gebouwd: ze staan hier
+  // zodat een beheerder ze kan kiezen en de klant in zijn portaal ziet wat
+  // eraan komt, in plaats van een leeg vak. Zodra er gemeten wordt, verhuist
+  // een regel van `binnenkort` naar `bronnen`.
+  // -------------------------------------------------------------------------
+  heractivatie: {
+    label: "Heractivatie-agent",
+    kennisbank: true,
+    // Technisch de uitgaande e-mailagent met een andere lijst en een ander
+    // doel: wie al klant was en stil is geworden. Daarom dezelfde schermen.
+    uitleg:
+      "Schrijft klanten aan die stil zijn geworden, met een reden om terug te komen, en volgt op. Stopt zodra iemand reageert of zich afmeldt.",
+    labels: { metric: "klanten aangeschreven", score: "teruggewonnen" },
+    schermen: ["contacten", "campagnes", "berichten", "antwoorden"],
+    optioneel: ["bezorgen"],
+    bronnen: ["trechter", "gesprekken"],
+    binnenkort: [
+      "Teruggewonnen klanten en wat dat waard was",
+      "Slapend sinds, als filter op de lijst",
+    ],
+  },
+  offerte: {
+    label: "Offerte-agent",
+    kennisbank: true,
+    uitleg:
+      "Zet van een aanvraag binnen minuten een concept-offerte klaar, opgebouwd uit je prijslijst. Jij kijkt na en verstuurt; hij volgt op.",
+    labels: { metric: "offertes opgesteld", score: "geaccepteerd" },
+    schermen: [],
+    optioneel: [],
+    bronnen: ["metingen"],
+    binnenkort: ["Aanvragen en concepten", "Reactietijd per aanvraag", "Acceptatiegraad"],
+  },
+  betaalherinnering: {
+    label: "Betaalherinnering-agent",
+    kennisbank: true,
+    uitleg:
+      "Houdt openstaande facturen bij en herinnert op het juiste moment in de juiste toon. Stopt zodra er betaald is; dreigt nooit zelf.",
+    labels: { metric: "herinneringen verstuurd", score: "betaald na herinnering" },
+    schermen: [],
+    optioneel: [],
+    bronnen: ["metingen"],
+    binnenkort: [
+      "Openstaand, en hoeveel daarvan over de termijn is",
+      "Betaald binnen 7 dagen na een herinnering",
+      "Gemiddelde betaaltermijn van je klanten",
+    ],
+  },
+  reviews: {
+    label: "Review-agent",
+    kennisbank: true,
+    uitleg:
+      "Vraagt na een klus of levering om een review en zet een antwoord klaar op elke review die binnenkomt, in jouw toon.",
+    labels: { metric: "reviewverzoeken", score: "reviews ontvangen" },
+    schermen: [],
+    optioneel: [],
+    bronnen: ["metingen"],
+    binnenkort: ["Reviews en gemiddelde score van de laatste 90 dagen", "Onbeantwoorde reviews"],
+  },
+  afspraken: {
+    label: "Afsprakenagent",
+    kennisbank: true,
+    uitleg:
+      "Bevestigt afspraken, herinnert op tijd, laat verzetten met één antwoord en vult vrijgekomen plekken vanuit een wachtlijst.",
+    labels: { metric: "afspraken bevestigd", score: "no-shows voorkomen" },
+    schermen: [],
+    optioneel: [],
+    bronnen: ["metingen"],
+    binnenkort: ["Afspraken, verzet en no-shows", "Opgevulde gaten in de agenda"],
   },
   overig: {
     label: "Maatwerk",
