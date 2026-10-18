@@ -1524,6 +1524,11 @@ export type Database = {
         | "whatsapp_followup"
         | "overig"
         | "uitgaande_email"
+        | "heractivatie"
+        | "offerte"
+        | "betaalherinnering"
+        | "reviews"
+        | "afspraken"
       agent_status: "live" | "paused" | "setup"
       app_role: "admin" | "client" | "support"
       bericht_status:
@@ -1684,6 +1689,11 @@ export const Constants = {
         "whatsapp_followup",
         "overig",
         "uitgaande_email",
+        "heractivatie",
+        "offerte",
+        "betaalherinnering",
+        "reviews",
+        "afspraken",
       ],
       agent_status: ["live", "paused", "setup"],
       app_role: ["admin", "client", "support"],

@@ -71,6 +71,13 @@
       "when": 1792078617588,
       "tag": "0009_testadressen",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792331427192,
+      "tag": "0010_vijf_nieuwe_agentsoorten",
+      "breakpoints": true
     }
   ]
 }
