@@ -14,6 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      afspraak_wachtlijst: {
+        Row: {
+          aangeboden_op: string | null
+          aangemaakt_op: string
+          agent_id: string
+          email: string
+          id: string
+          naam: string | null
+          status: string
+          telefoon: string | null
+          voorkeur: string | null
+        }
+        Insert: {
+          aangeboden_op?: string | null
+          aangemaakt_op?: string
+          agent_id: string
+          email: string
+          id?: string
+          naam?: string | null
+          status?: string
+          telefoon?: string | null
+          voorkeur?: string | null
+        }
+        Update: {
+          aangeboden_op?: string | null
+          aangemaakt_op?: string
+          agent_id?: string
+          email?: string
+          id?: string
+          naam?: string | null
+          status?: string
+          telefoon?: string | null
+          voorkeur?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afspraak_wachtlijst_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      afspraken: {
+        Row: {
+          aangemaakt_op: string
+          agent_id: string
+          begint_op: string
+          bevestigd_op: string | null
+          bijgewerkt_op: string
+          bron: string
+          eindigt_op: string | null
+          extern_id: string
+          herinnerd: Json
+          id: string
+          klant_email: string
+          klant_naam: string | null
+          laatste_reactie: string | null
+          locatie: string | null
+          no_show_opgevolgd_op: string | null
+          omschrijving: string | null
+          reactie_op: string | null
+          status: string
+          telefoon: string | null
+        }
+        Insert: {
+          aangemaakt_op?: string
+          agent_id: string
+          begint_op: string
+          bevestigd_op?: string | null
+          bijgewerkt_op?: string
+          bron?: string
+          eindigt_op?: string | null
+          extern_id?: string
+          herinnerd?: Json
+          id?: string
+          klant_email: string
+          klant_naam?: string | null
+          laatste_reactie?: string | null
+          locatie?: string | null
+          no_show_opgevolgd_op?: string | null
+          omschrijving?: string | null
+          reactie_op?: string | null
+          status?: string
+          telefoon?: string | null
+        }
+        Update: {
+          aangemaakt_op?: string
+          agent_id?: string
+          begint_op?: string
+          bevestigd_op?: string | null
+          bijgewerkt_op?: string
+          bron?: string
+          eindigt_op?: string | null
+          extern_id?: string
+          herinnerd?: Json
+          id?: string
+          klant_email?: string
+          klant_naam?: string | null
+          laatste_reactie?: string | null
+          locatie?: string | null
+          no_show_opgevolgd_op?: string | null
+          omschrijving?: string | null
+          reactie_op?: string | null
+          status?: string
+          telefoon?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afspraken_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_gebeurtenissen: {
         Row: {
           agent_id: string
@@ -364,6 +482,131 @@ export type Database = {
           },
         ]
       }
+      facturen: {
+        Row: {
+          aangemaakt_op: string
+          agent_id: string
+          bedrag: number
+          betaald_op: string | null
+          bijgewerkt_op: string
+          bron: string
+          factuurdatum: string
+          id: string
+          klant_email: string
+          klant_naam: string | null
+          laatste_herinnering_op: string | null
+          laatste_reactie: string | null
+          laatste_stap: number
+          notitie: string | null
+          nummer: string
+          pauze_tot: string | null
+          reactie_op: string | null
+          status: string
+          vervaldatum: string
+        }
+        Insert: {
+          aangemaakt_op?: string
+          agent_id: string
+          bedrag: number
+          betaald_op?: string | null
+          bijgewerkt_op?: string
+          bron?: string
+          factuurdatum: string
+          id?: string
+          klant_email: string
+          klant_naam?: string | null
+          laatste_herinnering_op?: string | null
+          laatste_reactie?: string | null
+          laatste_stap?: number
+          notitie?: string | null
+          nummer: string
+          pauze_tot?: string | null
+          reactie_op?: string | null
+          status?: string
+          vervaldatum: string
+        }
+        Update: {
+          aangemaakt_op?: string
+          agent_id?: string
+          bedrag?: number
+          betaald_op?: string | null
+          bijgewerkt_op?: string
+          bron?: string
+          factuurdatum?: string
+          id?: string
+          klant_email?: string
+          klant_naam?: string | null
+          laatste_herinnering_op?: string | null
+          laatste_reactie?: string | null
+          laatste_stap?: number
+          notitie?: string | null
+          nummer?: string
+          pauze_tot?: string | null
+          reactie_op?: string | null
+          status?: string
+          vervaldatum?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facturen_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factuur_herinneringen: {
+        Row: {
+          agent_id: string
+          factuur_id: string
+          id: number
+          moment: number
+          onderwerp: string | null
+          provider_id: string | null
+          stap: number
+          tekst: string | null
+          verstuurd_op: string
+        }
+        Insert: {
+          agent_id: string
+          factuur_id: string
+          id?: never
+          moment: number
+          onderwerp?: string | null
+          provider_id?: string | null
+          stap: number
+          tekst?: string | null
+          verstuurd_op?: string
+        }
+        Update: {
+          agent_id?: string
+          factuur_id?: string
+          id?: never
+          moment?: number
+          onderwerp?: string | null
+          provider_id?: string | null
+          stap?: number
+          tekst?: string | null
+          verstuurd_op?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factuur_herinneringen_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factuur_herinneringen_factuur_id_fkey"
+            columns: ["factuur_id"]
+            isOneToOne: false
+            referencedRelation: "facturen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fair_use_meldingen: {
         Row: {
           agent_id: string
@@ -610,6 +853,111 @@ export type Database = {
           },
         ]
       }
+      offerte_aanvragen: {
+        Row: {
+          agent_id: string
+          bedrijf: string | null
+          besloten_op: string | null
+          bijgewerkt_op: string
+          concept_onderwerp: string | null
+          concept_op: string | null
+          concept_tekst: string | null
+          fout: string | null
+          geldig_tot: string | null
+          id: string
+          message_id: string | null
+          onderwerp: string | null
+          ontbreekt: Json
+          ontvangen_op: string
+          opvolging_provider_id: string | null
+          provider_id: string
+          regels: Json
+          status: string
+          toelichting: string | null
+          totaal: number | null
+          van_email: string
+          van_naam: string | null
+          verzonden_door: string | null
+          verzonden_onderwerp: string | null
+          verzonden_op: string | null
+          verzonden_tekst: string | null
+          vraag: string
+        }
+        Insert: {
+          agent_id: string
+          bedrijf?: string | null
+          besloten_op?: string | null
+          bijgewerkt_op?: string
+          concept_onderwerp?: string | null
+          concept_op?: string | null
+          concept_tekst?: string | null
+          fout?: string | null
+          geldig_tot?: string | null
+          id?: string
+          message_id?: string | null
+          onderwerp?: string | null
+          ontbreekt?: Json
+          ontvangen_op?: string
+          opvolging_provider_id?: string | null
+          provider_id: string
+          regels?: Json
+          status?: string
+          toelichting?: string | null
+          totaal?: number | null
+          van_email: string
+          van_naam?: string | null
+          verzonden_door?: string | null
+          verzonden_onderwerp?: string | null
+          verzonden_op?: string | null
+          verzonden_tekst?: string | null
+          vraag?: string
+        }
+        Update: {
+          agent_id?: string
+          bedrijf?: string | null
+          besloten_op?: string | null
+          bijgewerkt_op?: string
+          concept_onderwerp?: string | null
+          concept_op?: string | null
+          concept_tekst?: string | null
+          fout?: string | null
+          geldig_tot?: string | null
+          id?: string
+          message_id?: string | null
+          onderwerp?: string | null
+          ontbreekt?: Json
+          ontvangen_op?: string
+          opvolging_provider_id?: string | null
+          provider_id?: string
+          regels?: Json
+          status?: string
+          toelichting?: string | null
+          totaal?: number | null
+          van_email?: string
+          van_naam?: string | null
+          verzonden_door?: string | null
+          verzonden_onderwerp?: string | null
+          verzonden_op?: string | null
+          verzonden_tekst?: string | null
+          vraag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offerte_aanvragen_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offerte_aanvragen_verzonden_door_fkey"
+            columns: ["verzonden_door"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_campaigns: {
         Row: {
           aanbod: string | null
@@ -695,6 +1043,7 @@ export type Database = {
           postcode: string | null
           prioriteit: number | null
           telefoon: string | null
+          teruggekomen_op: string | null
         }
         Insert: {
           aangemaakt_op?: string
@@ -715,6 +1064,7 @@ export type Database = {
           postcode?: string | null
           prioriteit?: number | null
           telefoon?: string | null
+          teruggekomen_op?: string | null
         }
         Update: {
           aangemaakt_op?: string
@@ -735,6 +1085,7 @@ export type Database = {
           postcode?: string | null
           prioriteit?: number | null
           telefoon?: string | null
+          teruggekomen_op?: string | null
         }
         Relationships: [
           {
@@ -1030,6 +1381,112 @@ export type Database = {
         }
         Relationships: []
       }
+      review_verzoeken: {
+        Row: {
+          aangemaakt_op: string
+          agent_id: string
+          email: string
+          id: string
+          klaar_op: string
+          klacht: boolean
+          naam: string | null
+          notitie: string | null
+          provider_id: string | null
+          status: string
+          verstuurd_op: string | null
+        }
+        Insert: {
+          aangemaakt_op?: string
+          agent_id: string
+          email: string
+          id?: string
+          klaar_op?: string
+          klacht?: boolean
+          naam?: string | null
+          notitie?: string | null
+          provider_id?: string | null
+          status?: string
+          verstuurd_op?: string | null
+        }
+        Update: {
+          aangemaakt_op?: string
+          agent_id?: string
+          email?: string
+          id?: string
+          klaar_op?: string
+          klacht?: boolean
+          naam?: string | null
+          notitie?: string | null
+          provider_id?: string | null
+          status?: string
+          verstuurd_op?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_verzoeken_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          aangemaakt_op: string
+          agent_id: string
+          antwoord: string | null
+          beantwoord_op: string | null
+          bron: string
+          concept_antwoord: string | null
+          concept_op: string | null
+          extern_id: string | null
+          geplaatst_op: string
+          id: string
+          naam: string | null
+          sterren: number
+          tekst: string
+        }
+        Insert: {
+          aangemaakt_op?: string
+          agent_id: string
+          antwoord?: string | null
+          beantwoord_op?: string | null
+          bron?: string
+          concept_antwoord?: string | null
+          concept_op?: string | null
+          extern_id?: string | null
+          geplaatst_op?: string
+          id?: string
+          naam?: string | null
+          sterren: number
+          tekst?: string
+        }
+        Update: {
+          aangemaakt_op?: string
+          agent_id?: string
+          antwoord?: string | null
+          beantwoord_op?: string | null
+          bron?: string
+          concept_antwoord?: string | null
+          concept_op?: string | null
+          extern_id?: string | null
+          geplaatst_op?: string
+          id?: string
+          naam?: string | null
+          sterren?: number
+          tekst?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_instellingen: {
         Row: {
           afzender_email: string | null
@@ -1202,6 +1659,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      afspraken_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          afgerond: number
+          afspraken: number
+          bevestigd: number
+          komende_week: number
+          no_show_percentage: number
+          no_shows: number
+          verzet: number
+          wachtlijst: number
+        }[]
+      }
       agent_gebeurtenissen_van: {
         Args: { _agent_id: string }
         Returns: {
@@ -1271,6 +1741,19 @@ export type Database = {
       }
       ben_eigenaar: { Args: never; Returns: boolean }
       claim_agent_request: { Args: { _agent_id: string }; Returns: boolean }
+      facturen_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          betaald: number
+          betaald_na_herinnering: number
+          betaaltermijn_dagen: number
+          herinnerd: number
+          open_aantal: number
+          open_bedrag: number
+          over_termijn_aantal: number
+          over_termijn_bedrag: number
+        }[]
+      }
       fair_use_melding: {
         Args: { _agent_id: string }
         Returns: {
@@ -1284,6 +1767,16 @@ export type Database = {
         }[]
       }
       heeft_tweestaps: { Args: never; Returns: boolean }
+      heractivatie_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          aangeschreven: number
+          afgemeld: number
+          gereageerd: number
+          in_lijst: number
+          teruggekomen: number
+        }[]
+      }
       leg_vast: {
         Args: {
           _actie: string
@@ -1295,6 +1788,10 @@ export type Database = {
         Returns: undefined
       }
       log_meekijkpagina: { Args: { _pad: string }; Returns: undefined }
+      markeer_teruggekomen: {
+        Args: { _contact_id: string; _terug: boolean }
+        Returns: string
+      }
       mijn_klant: { Args: never; Returns: string }
       mijn_logboek: {
         Args: { _aantal?: number }
@@ -1373,6 +1870,20 @@ export type Database = {
           _vraag: string
         }
         Returns: string
+      }
+      offerte_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          aanvragen: number
+          afgewezen: number
+          concepten: number
+          geaccepteerd: number
+          mens_nodig: number
+          omzet: number
+          open: number
+          reactie_minuten: number
+          verstuurd: number
+        }[]
       }
       outbound_afmelden: { Args: { _sleutel: string }; Returns: undefined }
       outbound_meld_bounce: {
@@ -1463,6 +1974,16 @@ export type Database = {
         Returns: undefined
       }
       resolve_live_agent: { Args: { _slug: string }; Returns: string }
+      review_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          gemiddelde: number
+          onbeantwoord: number
+          reviews: number
+          reviews_per_verzoek: number
+          verzoeken: number
+        }[]
+      }
       ruim_op: {
         Args: never
         Returns: {
