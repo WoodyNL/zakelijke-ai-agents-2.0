@@ -1779,6 +1779,123 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_berichten: {
+        Row: {
+          agent_id: string
+          door: string
+          fout: string | null
+          gesprek_id: string
+          id: number
+          op: string
+          richting: string
+          status: string
+          tekst: string
+          wa_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          door?: string
+          fout?: string | null
+          gesprek_id: string
+          id?: never
+          op?: string
+          richting: string
+          status?: string
+          tekst?: string
+          wa_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          door?: string
+          fout?: string | null
+          gesprek_id?: string
+          id?: never
+          op?: string
+          richting?: string
+          status?: string
+          tekst?: string
+          wa_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_berichten_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_berichten_gesprek_id_fkey"
+            columns: ["gesprek_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_gesprekken"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_gesprekken: {
+        Row: {
+          aangemaakt_op: string
+          agent_id: string
+          gestart_op: string | null
+          id: string
+          laatste_bericht: string | null
+          laatste_inkomend_op: string | null
+          laatste_op: string
+          lead_id: string | null
+          naam: string | null
+          overdracht_reden: string | null
+          overgedragen_op: string | null
+          status: string
+          telefoon: string
+        }
+        Insert: {
+          aangemaakt_op?: string
+          agent_id: string
+          gestart_op?: string | null
+          id?: string
+          laatste_bericht?: string | null
+          laatste_inkomend_op?: string | null
+          laatste_op?: string
+          lead_id?: string | null
+          naam?: string | null
+          overdracht_reden?: string | null
+          overgedragen_op?: string | null
+          status?: string
+          telefoon: string
+        }
+        Update: {
+          aangemaakt_op?: string
+          agent_id?: string
+          gestart_op?: string | null
+          id?: string
+          laatste_bericht?: string | null
+          laatste_inkomend_op?: string | null
+          laatste_op?: string
+          lead_id?: string | null
+          naam?: string | null
+          overdracht_reden?: string | null
+          overgedragen_op?: string | null
+          status?: string
+          telefoon?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_gesprekken_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_gesprekken_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2166,6 +2283,18 @@ export type Database = {
         Returns: boolean
       }
       werk_klant: { Args: never; Returns: string }
+      whatsapp_kerncijfers: {
+        Args: { _agent_id: string; _dagen?: number }
+        Returns: {
+          berichten_in: number
+          berichten_uit: number
+          door_agent: number
+          gesprekken: number
+          open_overgedragen: number
+          overdrachten: number
+          reactie_seconden: number
+        }[]
+      }
       zet_agent_pauze: {
         Args: { _agent_id: string; _pauze: boolean }
         Returns: string

@@ -127,6 +127,13 @@
       "when": 1792338796394,
       "tag": "0017_chat_onbeantwoord_en_dagrapport",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792341703338,
+      "tag": "0018_20261019120000_whatsapp",
+      "breakpoints": true
     }
   ]
 }
