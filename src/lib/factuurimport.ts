@@ -173,7 +173,8 @@ export function leesFacturen(
  * overschrijft niet wat een mens heeft besloten.
  */
 export function importRijen(
-  facturen: GelezenFactuur[],
+  // De betaaldatum mag ontbreken: het formulier levert hem alleen als hij er is.
+  facturen: Array<Omit<GelezenFactuur, "betaald_op"> & { betaald_op?: string | null | undefined }>,
   agentId: string,
   nu = new Date().toISOString(),
 ): Array<{
