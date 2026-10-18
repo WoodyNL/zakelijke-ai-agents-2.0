@@ -19,6 +19,7 @@ import { haalHeractivatie } from "@/lib/heractivatie.functions";
 import { haalOfferteCijfers } from "@/lib/offerte.functions";
 import { haalFactuurCijfers } from "@/lib/facturen.functions";
 import { haalReviewCijfers } from "@/lib/reviews.functions";
+import { haalAfspraakCijfers } from "@/lib/afspraken.functions";
 import { euroTekst } from "@/lib/prijsimport";
 import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
@@ -108,6 +109,12 @@ function AgentDetail() {
     queryKey: ["review-kerncijfers", agentId, days],
     queryFn: () => reviewFn({ data: { agentId, dagen: days || 3650 } }),
     enabled: soort.bronnen.includes("reviews"),
+  });
+  const afspraakFn = useServerFn(haalAfspraakCijfers);
+  const afspraakQuery = useQuery({
+    queryKey: ["afspraak-kerncijfers", agentId, days],
+    queryFn: () => afspraakFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("afspraken"),
   });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
@@ -325,6 +332,34 @@ function AgentDetail() {
                 <Stat
                   value={reviewQuery.data ? String(reviewQuery.data.onbeantwoord) : "—"}
                   label="nog onbeantwoord"
+                />
+              </>
+            )}
+            {soort.bronnen.includes("afspraken") && (
+              <>
+                <Stat
+                  value={afspraakQuery.data ? String(afspraakQuery.data.komende_week) : "—"}
+                  label="komende 7 dagen"
+                />
+                <Stat
+                  value={
+                    afspraakQuery.data && afspraakQuery.data.afspraken > 0
+                      ? `${Math.round((afspraakQuery.data.bevestigd / afspraakQuery.data.afspraken) * 100)}%`
+                      : "—"
+                  }
+                  label="vooraf bevestigd"
+                />
+                <Stat
+                  value={
+                    afspraakQuery.data?.no_show_percentage != null
+                      ? `${afspraakQuery.data.no_show_percentage}%`
+                      : "—"
+                  }
+                  label={`no-shows (${afspraakQuery.data?.no_shows ?? 0})`}
+                />
+                <Stat
+                  value={afspraakQuery.data ? String(afspraakQuery.data.wachtlijst) : "—"}
+                  label="op de wachtlijst"
                 />
               </>
             )}

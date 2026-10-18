@@ -29,6 +29,7 @@ export type Scherm =
   | "aanvragen"
   | "facturen"
   | "reviews"
+  | "afspraken"
   | "contacten"
   | "campagnes"
   | "berichten"
@@ -48,6 +49,7 @@ export type Scherm =
  *   offertes    aanvragen, reactietijd, verstuurd, geaccepteerd
  *   facturen    openstaand, over de termijn, betaald na een herinnering
  *   reviews     verzoeken, reviews en gemiddelde (90 dagen), onbeantwoord
+ *   afspraken   komende week, bevestigd, no-shows, wachtlijst
  */
 export type Bron =
   | "gesprekken"
@@ -58,7 +60,8 @@ export type Bron =
   | "heractivatie"
   | "offertes"
   | "facturen"
-  | "reviews";
+  | "reviews"
+  | "afspraken";
 
 type Beschrijving = {
   label: string;
@@ -217,10 +220,10 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Bevestigt afspraken, herinnert op tijd, laat verzetten met één antwoord en vult vrijgekomen plekken vanuit een wachtlijst.",
     labels: { metric: "afspraken bevestigd", score: "no-shows voorkomen" },
-    schermen: [],
+    schermen: ["afspraken"],
     optioneel: [],
-    bronnen: ["metingen"],
-    binnenkort: ["Afspraken, verzet en no-shows", "Opgevulde gaten in de agenda"],
+    bronnen: ["afspraken"],
+    binnenkort: ["Koppeling met Google Agenda en Microsoft 365", "Herinneringen via WhatsApp"],
   },
   overig: {
     label: "Maatwerk",
@@ -252,6 +255,7 @@ export const ALLE_SCHERMEN: Scherm[] = [
   "aanvragen",
   "facturen",
   "reviews",
+  "afspraken",
   "support",
   "contacten",
   "campagnes",

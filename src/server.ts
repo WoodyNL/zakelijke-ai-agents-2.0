@@ -161,6 +161,10 @@ export default {
         // En de reviewverzoeken, hoogstens eens per kwartier.
         const { rondeReviews } = await import("./lib/reviews.server");
         wachtOpruimen.call(ctx, rondeReviews());
+
+        // En de afspraakherinneringen, hoogstens eens per vijf minuten.
+        const { rondeAfspraken } = await import("./lib/afspraken.server");
+        wachtOpruimen.call(ctx, rondeAfspraken());
       }
 
       const handler = await getServerEntry();

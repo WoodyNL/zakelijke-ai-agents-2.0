@@ -15,6 +15,7 @@ const SCHERMLINKS: Record<Scherm, { to: string; label: string }> = {
   aanvragen: { to: "/aanvragen", label: "Aanvragen" },
   facturen: { to: "/facturen", label: "Facturen" },
   reviews: { to: "/reviews", label: "Reviews" },
+  afspraken: { to: "/afspraken", label: "Afspraken" },
   support: { to: "/support", label: "Supportmail" },
   contacten: { to: "/contacten", label: "Contacten" },
   campagnes: { to: "/campagnes", label: "Campagnes" },

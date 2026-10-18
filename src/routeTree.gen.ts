@@ -31,6 +31,7 @@ import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/what
 import { Route as AuthenticatedAanvragenRouteImport } from './routes/_authenticated/aanvragen'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAfsprakenRouteImport } from './routes/_authenticated/afspraken'
 import { Route as AuthenticatedAntwoordenRouteImport } from './routes/_authenticated/antwoorden'
 import { Route as AuthenticatedBerichtenRouteImport } from './routes/_authenticated/berichten'
 import { Route as AuthenticatedBezorgenRouteImport } from './routes/_authenticated/bezorgen'
@@ -160,6 +161,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAfsprakenRoute = AuthenticatedAfsprakenRouteImport.update({
+  id: '/afspraken',
+  path: '/afspraken',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAntwoordenRoute = AuthenticatedAntwoordenRouteImport.update({
   id: '/antwoorden',
   path: '/antwoorden',
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/aanvragen': typeof AuthenticatedAanvragenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/afspraken': typeof AuthenticatedAfsprakenRoute
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/berichten': typeof AuthenticatedBerichtenRoute
   '/bezorgen': typeof AuthenticatedBezorgenRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/aanvragen': typeof AuthenticatedAanvragenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/afspraken': typeof AuthenticatedAfsprakenRoute
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/berichten': typeof AuthenticatedBerichtenRoute
   '/bezorgen': typeof AuthenticatedBezorgenRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/_authenticated/aanvragen': typeof AuthenticatedAanvragenRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/afspraken': typeof AuthenticatedAfsprakenRoute
   '/_authenticated/antwoorden': typeof AuthenticatedAntwoordenRoute
   '/_authenticated/berichten': typeof AuthenticatedBerichtenRoute
   '/_authenticated/bezorgen': typeof AuthenticatedBezorgenRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/aanvragen'
     | '/account'
     | '/admin'
+    | '/afspraken'
     | '/antwoorden'
     | '/berichten'
     | '/bezorgen'
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/aanvragen'
     | '/account'
     | '/admin'
+    | '/afspraken'
     | '/antwoorden'
     | '/berichten'
     | '/bezorgen'
@@ -477,6 +488,7 @@ export interface FileRouteTypes {
     | '/_authenticated/aanvragen'
     | '/_authenticated/account'
     | '/_authenticated/admin'
+    | '/_authenticated/afspraken'
     | '/_authenticated/antwoorden'
     | '/_authenticated/berichten'
     | '/_authenticated/bezorgen'
@@ -677,6 +689,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/afspraken': {
+      id: '/_authenticated/afspraken'
+      path: '/afspraken'
+      fullPath: '/afspraken'
+      preLoaderRoute: typeof AuthenticatedAfsprakenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/antwoorden': {
       id: '/_authenticated/antwoorden'
       path: '/antwoorden'
@@ -803,6 +822,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAanvragenRoute: typeof AuthenticatedAanvragenRoute
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAfsprakenRoute: typeof AuthenticatedAfsprakenRoute
   AuthenticatedAntwoordenRoute: typeof AuthenticatedAntwoordenRoute
   AuthenticatedBerichtenRoute: typeof AuthenticatedBerichtenRoute
   AuthenticatedBezorgenRoute: typeof AuthenticatedBezorgenRoute
@@ -823,6 +843,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAanvragenRoute: AuthenticatedAanvragenRoute,
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAfsprakenRoute: AuthenticatedAfsprakenRoute,
   AuthenticatedAntwoordenRoute: AuthenticatedAntwoordenRoute,
   AuthenticatedBerichtenRoute: AuthenticatedBerichtenRoute,
   AuthenticatedBezorgenRoute: AuthenticatedBezorgenRoute,

@@ -28,6 +28,7 @@ const SCHERMNAMEN: Record<Scherm, string> = {
   aanvragen: "Aanvragen",
   facturen: "Facturen",
   reviews: "Reviews",
+  afspraken: "Afspraken",
   support: "Supportmail",
   contacten: "Contacten",
   campagnes: "Campagnes",
