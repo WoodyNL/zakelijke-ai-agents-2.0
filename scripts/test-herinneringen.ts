@@ -17,7 +17,7 @@ import {
   nietHerinneren,
   volgendeStap,
 } from "../src/lib/herinneringen.ts";
-import { leesFacturen, raadFactuurkolommen } from "../src/lib/factuurimport.ts";
+import { importRijen, leesFacturen, raadFactuurkolommen } from "../src/lib/factuurimport.ts";
 
 let gezakt = 0;
 const meld = (goed: boolean, naam: string, detail = "") => {
@@ -204,6 +204,28 @@ meld(
   "zonder vervaldatum: dertig dagen, en 1.250,50 klopt",
 );
 meld(gelezen.facturen[2]?.betaald_op === "2026-10-05", "een betaaldatum komt mee");
+
+console.log("\nDe rijen voor de import\n" + "=".repeat(52));
+// Een export met betaalde én open facturen door elkaar — de meeste exports.
+const rijenImport = importRijen(
+  gelezen.facturen,
+  "10000000-0000-0000-0000-000000000001",
+  "2026-10-19T08:00:00Z",
+);
+const sleutelsets = new Set(rijenImport.map((r) => Object.keys(r).sort().join(",")));
+meld(
+  sleutelsets.size === 1,
+  "alle rijen hebben precies dezelfde velden (anders weigert de API het hele blok)",
+  [...sleutelsets].join(" | "),
+);
+meld(
+  !Object.keys(rijenImport[0]!).includes("status"),
+  "status zit er niet in: wat een mens op pauze zette, blijft op pauze",
+);
+meld(
+  rijenImport.some((r) => r.betaald_op) && rijenImport.some((r) => !r.betaald_op),
+  "en de set bevat werkelijk betaald én open",
+);
 
 console.log(gezakt ? `\n${gezakt} controle(s) gezakt.` : "\nAlles in orde.");
 process.exit(gezakt ? 1 : 0);

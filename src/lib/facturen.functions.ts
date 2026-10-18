@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { mijnAgent } from "@/lib/agent-toegang";
 import { legVast } from "@/lib/beheerlog";
+import { importRijen } from "@/lib/factuurimport";
 
 /**
  * Het scherm Facturen van de betaalherinnering-agent.
@@ -185,24 +186,10 @@ export const importeerFacturen = createServerFn({ method: "POST" })
     await mijnAgent(context as never, data.agentId);
     const sb = context.supabase as unknown as Ongetypt;
     const nu = new Date().toISOString();
-    const rijen = data.facturen.map((f) => ({
-      agent_id: data.agentId,
-      nummer: f.nummer,
-      klant_naam: f.klant_naam,
-      klant_email: f.klant_email,
-      bedrag: f.bedrag,
-      factuurdatum: f.factuurdatum,
-      vervaldatum: f.vervaldatum,
-      betaald_op: f.betaald_op ?? null,
-      status: f.betaald_op ? "betaald" : undefined,
-      bron: "bestand",
-      bijgewerkt_op: nu,
-    }));
+    const rijen = importRijen(data.facturen, data.agentId, nu);
     let verwerkt = 0;
     for (let i = 0; i < rijen.length; i += 200) {
-      const blok = rijen
-        .slice(i, i + 200)
-        .map((r) => (r.status === undefined ? (({ status: _s, ...rest }) => rest)(r) : r));
+      const blok = rijen.slice(i, i + 200);
       const { error } = await sb.from("facturen").upsert(blok, { onConflict: "agent_id,nummer" });
       if (error) throw new Error(`Opslaan onderbroken na ${verwerkt} facturen: ${error.message}`);
       verwerkt += blok.length;

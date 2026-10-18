@@ -157,3 +157,47 @@ export function leesFacturen(
   });
   return { facturen, overgeslagen };
 }
+
+/**
+ * De rijen zoals ze in één keer worden opgeslagen.
+ *
+ * Eén regel die niet in het schema staat maar wel geldt: alle rijen in één
+ * opslagactie moeten precies dezelfde velden hebben, anders weigert de
+ * database-API het hele blok. Dat ging mis toen betaalde facturen een extra
+ * veld `status` kregen en open facturen niet: een export met allebei erin
+ * (de meeste exports) werd dan in zijn geheel geweigerd, "na 0 facturen".
+ *
+ * Daarom staat `status` hier niet in. Wat betaald is, wordt daarna apart op
+ * betaald gezet. Een bestaande factuur die iemand met de hand op gepauzeerd
+ * of uit handen had gezet, houdt zo ook zijn status: de import vult bij, hij
+ * overschrijft niet wat een mens heeft besloten.
+ */
+export function importRijen(
+  facturen: GelezenFactuur[],
+  agentId: string,
+  nu = new Date().toISOString(),
+): Array<{
+  agent_id: string;
+  nummer: string;
+  klant_naam: string | null;
+  klant_email: string;
+  bedrag: number;
+  factuurdatum: string;
+  vervaldatum: string;
+  betaald_op: string | null;
+  bron: "bestand";
+  bijgewerkt_op: string;
+}> {
+  return facturen.map((f) => ({
+    agent_id: agentId,
+    nummer: f.nummer,
+    klant_naam: f.klant_naam,
+    klant_email: f.klant_email,
+    bedrag: f.bedrag,
+    factuurdatum: f.factuurdatum,
+    vervaldatum: f.vervaldatum,
+    betaald_op: f.betaald_op ?? null,
+    bron: "bestand",
+    bijgewerkt_op: nu,
+  }));
+}
