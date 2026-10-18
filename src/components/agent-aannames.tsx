@@ -25,6 +25,7 @@ import { berekenFairUse, berekenOpbrengst, euro, urenNotatie } from "@/lib/opbre
 
 const SCHERMNAMEN: Record<Scherm, string> = {
   gesprekken: "Gesprekken",
+  aanvragen: "Aanvragen",
   support: "Supportmail",
   contacten: "Contacten",
   campagnes: "Campagnes",

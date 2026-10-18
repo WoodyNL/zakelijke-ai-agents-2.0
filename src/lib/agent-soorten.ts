@@ -25,7 +25,14 @@ export type AgentSoort =
 
 /** Schermen in het klantportaal die alleen bij bepaalde soorten horen. */
 export type Scherm =
-  "gesprekken" | "contacten" | "campagnes" | "berichten" | "antwoorden" | "bezorgen" | "support";
+  | "gesprekken"
+  | "aanvragen"
+  | "contacten"
+  | "campagnes"
+  | "berichten"
+  | "antwoorden"
+  | "bezorgen"
+  | "support";
 
 /**
  * Een kerncijfer op het dashboard van een agent, en waar het vandaan komt.
@@ -36,8 +43,10 @@ export type Scherm =
  *   metingen    de dagcijfers die per agent worden bijgehouden (agent_stats)
  *   support     supportmail: binnen, automatisch, via concept, naar een mens
  *   heractivatie  slapende klanten: aangeschreven, gereageerd, teruggekomen
+ *   offertes    aanvragen, reactietijd, verstuurd, geaccepteerd
  */
-export type Bron = "gesprekken" | "leads" | "trechter" | "metingen" | "support" | "heractivatie";
+export type Bron =
+  "gesprekken" | "leads" | "trechter" | "metingen" | "support" | "heractivatie" | "offertes";
 
 type Beschrijving = {
   label: string;
@@ -161,10 +170,10 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Zet van een aanvraag binnen minuten een concept-offerte klaar, opgebouwd uit je prijslijst. Jij kijkt na en verstuurt; hij volgt op.",
     labels: { metric: "offertes opgesteld", score: "geaccepteerd" },
-    schermen: [],
+    schermen: ["aanvragen"],
     optioneel: [],
-    bronnen: ["metingen"],
-    binnenkort: ["Aanvragen en concepten", "Reactietijd per aanvraag", "Acceptatiegraad"],
+    bronnen: ["offertes"],
+    binnenkort: [],
   },
   betaalherinnering: {
     label: "Betaalherinnering-agent",
@@ -230,6 +239,7 @@ export function heeftKennisbank(kind: string | null | undefined): boolean {
 
 export const ALLE_SCHERMEN: Scherm[] = [
   "gesprekken",
+  "aanvragen",
   "support",
   "contacten",
   "campagnes",

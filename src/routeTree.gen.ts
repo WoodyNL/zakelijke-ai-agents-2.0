@@ -28,6 +28,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TarievenRouteImport } from './routes/tarieven'
 import { Route as VeiligheidRouteImport } from './routes/veiligheid'
 import { Route as WhatsappFollowUpAutomatiserenRouteImport } from './routes/whatsapp-follow-up-automatiseren'
+import { Route as AuthenticatedAanvragenRouteImport } from './routes/_authenticated/aanvragen'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAntwoordenRouteImport } from './routes/_authenticated/antwoorden'
@@ -142,6 +143,11 @@ const WhatsappFollowUpAutomatiserenRoute =
     path: '/whatsapp-follow-up-automatiseren',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAanvragenRoute = AuthenticatedAanvragenRouteImport.update({
+  id: '/aanvragen',
+  path: '/aanvragen',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/tarieven': typeof TarievenRoute
   '/veiligheid': typeof VeiligheidRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
+  '/aanvragen': typeof AuthenticatedAanvragenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/tarieven': typeof TarievenRoute
   '/veiligheid': typeof VeiligheidRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
+  '/aanvragen': typeof AuthenticatedAanvragenRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/antwoorden': typeof AuthenticatedAntwoordenRoute
@@ -327,6 +335,7 @@ export interface FileRoutesById {
   '/tarieven': typeof TarievenRoute
   '/veiligheid': typeof VeiligheidRoute
   '/whatsapp-follow-up-automatiseren': typeof WhatsappFollowUpAutomatiserenRoute
+  '/_authenticated/aanvragen': typeof AuthenticatedAanvragenRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/antwoorden': typeof AuthenticatedAntwoordenRoute
@@ -366,6 +375,7 @@ export interface FileRouteTypes {
     | '/tarieven'
     | '/veiligheid'
     | '/whatsapp-follow-up-automatiseren'
+    | '/aanvragen'
     | '/account'
     | '/admin'
     | '/antwoorden'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/tarieven'
     | '/veiligheid'
     | '/whatsapp-follow-up-automatiseren'
+    | '/aanvragen'
     | '/account'
     | '/admin'
     | '/antwoorden'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/tarieven'
     | '/veiligheid'
     | '/whatsapp-follow-up-automatiseren'
+    | '/_authenticated/aanvragen'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/antwoorden'
@@ -620,6 +632,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WhatsappFollowUpAutomatiserenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/aanvragen': {
+      id: '/_authenticated/aanvragen'
+      path: '/aanvragen'
+      fullPath: '/aanvragen'
+      preLoaderRoute: typeof AuthenticatedAanvragenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
@@ -743,6 +762,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAanvragenRoute: typeof AuthenticatedAanvragenRoute
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAntwoordenRoute: typeof AuthenticatedAntwoordenRoute
@@ -760,6 +780,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAanvragenRoute: AuthenticatedAanvragenRoute,
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAntwoordenRoute: AuthenticatedAntwoordenRoute,

@@ -267,6 +267,41 @@ export async function verwerkInboundWebhook(
     return new Response("ok", { status: 200 });
   }
 
+  // Een offerte-agent krijgt aanvragen. Zelfde patroon als supportmail: eerst
+  // vastleggen (lukt dat niet, dan 5xx zodat Resend het opnieuw biedt), dan
+  // opstellen na het antwoord aan Resend.
+  if (agentSoort === "offerte") {
+    const inhoud = await haalTekst(emailId);
+    const offerte = await import("@/lib/offerte.server");
+    let aanvraagId: string | null;
+    try {
+      aanvraagId = await offerte.ontvangAanvraag({
+        agentId,
+        providerId: emailId,
+        messageId: inhoud.messageId ?? null,
+        vanEmail: van,
+        vanNaam:
+          (d.from ?? "")
+            .replace(/<[^>]*>/, "")
+            .replace(/"/g, "")
+            .trim() || null,
+        onderwerp: inhoud.onderwerp ?? d.subject ?? null,
+        vraag: inhoud.tekst,
+      });
+    } catch (e) {
+      console.error("Offerteaanvraag opslaan mislukt:", e);
+      return new Response("Storage failed", { status: 503 });
+    }
+    if (aanvraagId) {
+      const werk = offerte.verwerkAanvraag(aanvraagId).catch((e) => {
+        console.error("Offerteaanvraag verwerken mislukt:", e);
+      });
+      if (naAfloop) naAfloop(werk);
+      else await werk;
+    }
+    return new Response("ok", { status: 200 });
+  }
+
   // Het contact erbij zoeken. Vinden we niets, dan slaan we het antwoord
   // alsnog op zonder koppeling: dan kijkt er een mens naar.
   let contactId: string | null = null;

@@ -55,6 +55,7 @@ const STIL_NA_UREN = 72;
 
 const SCHERMNAMEN: Record<Scherm, string> = {
   gesprekken: "Gesprekken",
+  aanvragen: "Aanvragen",
   support: "Supportmail",
   contacten: "Contacten",
   campagnes: "Campagnes",

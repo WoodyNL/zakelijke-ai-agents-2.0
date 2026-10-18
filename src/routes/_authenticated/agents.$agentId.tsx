@@ -16,6 +16,7 @@ import {
 } from "@/lib/agent.functions";
 import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
 import { haalHeractivatie } from "@/lib/heractivatie.functions";
+import { haalOfferteCijfers } from "@/lib/offerte.functions";
 import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
 import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
@@ -86,6 +87,12 @@ function AgentDetail() {
     queryKey: ["heractivatie", agentId, days],
     queryFn: () => heractivatieFn({ data: { agentId, dagen: days || 3650 } }),
     enabled: soort.bronnen.includes("heractivatie"),
+  });
+  const offerteFn = useServerFn(haalOfferteCijfers);
+  const offerteQuery = useQuery({
+    queryKey: ["offerte-kerncijfers", agentId, days],
+    queryFn: () => offerteFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("offertes"),
   });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
@@ -227,6 +234,34 @@ function AgentDetail() {
                       ? `waarde (× € ${heractivatieQuery.data.orderwaarde} per klant, jouw schatting)`
                       : "waarde (vul je orderwaarde in bij de instellingen)"
                   }
+                />
+              </>
+            )}
+            {soort.bronnen.includes("offertes") && (
+              <>
+                <Stat
+                  value={offerteQuery.data ? String(offerteQuery.data.aanvragen) : "—"}
+                  label="aanvragen"
+                />
+                <Stat
+                  value={
+                    offerteQuery.data?.reactie_minuten != null
+                      ? `${offerteQuery.data.reactie_minuten} min`
+                      : "—"
+                  }
+                  label="tot er een concept stond"
+                />
+                <Stat
+                  value={offerteQuery.data ? String(offerteQuery.data.verstuurd) : "—"}
+                  label="offertes verstuurd"
+                />
+                <Stat
+                  value={
+                    offerteQuery.data && offerteQuery.data.verstuurd > 0
+                      ? `${Math.round((offerteQuery.data.geaccepteerd / offerteQuery.data.verstuurd) * 100)}%`
+                      : "—"
+                  }
+                  label="geaccepteerd"
                 />
               </>
             )}
