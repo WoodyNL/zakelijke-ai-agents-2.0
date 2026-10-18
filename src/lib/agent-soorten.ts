@@ -26,6 +26,7 @@ export type AgentSoort =
 /** Schermen in het klantportaal die alleen bij bepaalde soorten horen. */
 export type Scherm =
   | "gesprekken"
+  | "leads"
   | "aanvragen"
   | "facturen"
   | "reviews"
@@ -50,6 +51,7 @@ export type Scherm =
  *   facturen    openstaand, over de termijn, betaald na een herinnering
  *   reviews     verzoeken, reviews en gemiddelde (90 dagen), onbeantwoord
  *   afspraken   komende week, bevestigd, no-shows, wachtlijst
+ *   sales       leads, oordeel, eerste antwoord in minuten, afspraken
  */
 export type Bron =
   | "gesprekken"
@@ -61,7 +63,8 @@ export type Bron =
   | "offertes"
   | "facturen"
   | "reviews"
-  | "afspraken";
+  | "afspraken"
+  | "sales";
 
 type Beschrijving = {
   label: string;
@@ -107,7 +110,7 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     schermen: ["gesprekken"],
     optioneel: [],
     bronnen: ["gesprekken", "leads"],
-    binnenkort: ["Vragen die hij niet kon beantwoorden"],
+    binnenkort: [],
   },
   uitgaande_email: {
     label: "Uitgaande e-mailagent",
@@ -127,11 +130,11 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Kwalificeert binnenkomende leads en volgt ze op. Wie je ideale klant is en hoe je bezwaren beantwoordt, staat in zijn kennisbank.",
-    labels: { metric: "leads gekwalificeerd", score: "nauwkeurigheid" },
-    schermen: [],
+    labels: { metric: "leads beoordeeld", score: "eerste antwoord op tijd" },
+    schermen: ["leads"],
     optioneel: [],
-    bronnen: ["leads", "metingen"],
-    binnenkort: ["Gekwalificeerd tegenover afgewezen", "Geboekte afspraken", "Responstijd"],
+    bronnen: ["sales"],
+    binnenkort: ["Agenda koppelen (vrije momenten voorstellen)", "CRM koppelen"],
   },
   inbox_draft: {
     label: "Inbox-assistent",
@@ -252,6 +255,7 @@ export function heeftKennisbank(kind: string | null | undefined): boolean {
 
 export const ALLE_SCHERMEN: Scherm[] = [
   "gesprekken",
+  "leads",
   "aanvragen",
   "facturen",
   "reviews",

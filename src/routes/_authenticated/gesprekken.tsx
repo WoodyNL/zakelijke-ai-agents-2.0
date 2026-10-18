@@ -9,8 +9,11 @@ import { getMe, listAgents } from "@/lib/dashboard.functions";
 import {
   haalGesprek,
   haalGesprekken,
+  haalOnbeantwoord,
   verwijderGesprek,
+  zetInKennisbank,
   type GesprekRegel,
+  type OnbeantwoordeVraag,
 } from "@/lib/gesprekken.functions";
 
 export const Route = createFileRoute("/_authenticated/gesprekken")({
@@ -120,8 +123,8 @@ function GesprekkenPagina() {
 
         {meekijkt && (
           <div className="card-glass-lg rounded-3xl p-6 text-[13px]/[1.7] text-ink/60">
-            Tijdens meekijken laten we geen gesprekken zien. De inhoud is van de klant; wij komen
-            er niet bij, ook niet vanaf hier.
+            Tijdens meekijken laten we geen gesprekken zien. De inhoud is van de klant; wij komen er
+            niet bij, ook niet vanaf hier.
           </div>
         )}
 
@@ -137,6 +140,8 @@ function GesprekkenPagina() {
             het aanzetten bij de instellingen van de agent.
           </div>
         )}
+
+        {!meekijkt && agentId && lijst.data?.bewaren && <Onbeantwoord agentId={agentId} />}
 
         {!meekijkt && lijst.data?.bewaren && (
           <section className="card-glass-lg rounded-3xl p-5">
@@ -254,5 +259,89 @@ function Regel({
         </p>
       </button>
     </li>
+  );
+}
+
+/**
+ * Wat de assistent niet wist. Elke regel is een gat in de kennisbank; de
+ * klant vult het antwoord in en het staat er. De volgende bezoeker met
+ * dezelfde vraag krijgt dan wél antwoord — dat is hoe een assistent beter
+ * wordt zonder dat wij ertussen zitten.
+ */
+function Onbeantwoord({ agentId }: { agentId: string }) {
+  const qc = useQueryClient();
+  const fn = useServerFn(haalOnbeantwoord);
+  const zetFn = useServerFn(zetInKennisbank);
+  const query = useQuery({
+    queryKey: ["onbeantwoord", agentId],
+    queryFn: () => fn({ data: { agentId } }),
+  });
+  const [antwoorden, setAntwoorden] = useState<Record<string, string>>({});
+  const [bezig, setBezig] = useState<string | null>(null);
+  const [klaar, setKlaar] = useState<Set<string>>(new Set());
+  const vragen = (query.data ?? []) as OnbeantwoordeVraag[];
+  // Dezelfde vraag kan vaker gesteld zijn; één keer tonen, met het aantal.
+  const uniek = new Map<string, { v: OnbeantwoordeVraag; n: number }>();
+  for (const v of vragen) {
+    const sleutel = v.vraag.trim().toLowerCase();
+    const h = uniek.get(sleutel);
+    if (h) h.n++;
+    else uniek.set(sleutel, { v, n: 1 });
+  }
+  const lijst = [...uniek.values()].filter((x) => !klaar.has(x.v.vraag));
+  if (lijst.length === 0) return null;
+
+  async function bewaar(v: OnbeantwoordeVraag) {
+    const antwoord = (antwoorden[v.vraag] ?? "").trim();
+    if (antwoord.length < 3) return;
+    setBezig(v.vraag);
+    try {
+      await zetFn({ data: { agentId, vraag: v.vraag, antwoord } });
+      setKlaar((k) => new Set([...k, v.vraag]));
+      await qc.invalidateQueries({ queryKey: ["knowledge", agentId] });
+    } finally {
+      setBezig(null);
+    }
+  }
+
+  return (
+    <section className="card-glass-lg rounded-3xl p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-display text-[15px] font-semibold text-brand">
+          Vragen die hij niet kon beantwoorden ({lijst.length})
+        </p>
+        <p className="text-[12px] text-ink/50">
+          Vul het antwoord in, en de volgende bezoeker krijgt het wél.
+        </p>
+      </div>
+      <div className="mt-3 grid gap-3">
+        {lijst.slice(0, 10).map(({ v, n }) => (
+          <div key={v.vraag} className="rounded-2xl border border-white/10 bg-white/[0.02] p-3.5">
+            <p className="text-[13px]/[1.5] text-ink/85">
+              {v.vraag}
+              {n > 1 && (
+                <span className="ml-2 rounded-full bg-white/8 px-2 py-0.5 text-[11px] text-ink/55">
+                  {n}×
+                </span>
+              )}
+            </p>
+            <textarea
+              value={antwoorden[v.vraag] ?? ""}
+              onChange={(e) => setAntwoorden({ ...antwoorden, [v.vraag]: e.target.value })}
+              placeholder="Het antwoord, in jouw woorden. Dit komt in de kennisbank."
+              className="mt-2 min-h-[64px] w-full rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-[13px] text-ink outline-none placeholder:text-ink/35 focus:border-violet/55"
+            />
+            <button
+              type="button"
+              disabled={bezig !== null || (antwoorden[v.vraag] ?? "").trim().length < 3}
+              onClick={() => bewaar(v)}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-violet px-3.5 py-1.5 text-[12px] font-semibold text-white transition hover:bg-violet/85 disabled:opacity-50"
+            >
+              {bezig === v.vraag ? "Bezig…" : "In de kennisbank zetten"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

@@ -15,9 +15,9 @@ import { mijnAgent } from "@/lib/agent-toegang";
  * scherm te kunnen uitleggen, niet om mee te lezen.
  */
 
-type Ongetypt = {
-  from: (t: string) => any;
-};
+// De tabellen staan pas in de gegenereerde types na de migratie.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Ongetypt = { from: (t: string) => any };
 
 export type GesprekRegel = {
   id: string;
@@ -128,6 +128,61 @@ export const verwijderGesprek = createServerFn({ method: "POST" })
     await mijnAgent(context as { supabase: unknown; userId: string }, data.agentId);
     const sb = context.supabase as unknown as Ongetypt;
     const { error } = await sb.from("chatgesprekken").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/**
+ * De vragen die de assistent niet kon beantwoorden, met de knop om ze in de
+ * kennisbank te zetten. Dit is de goedkoopste manier om een assistent beter
+ * te maken: elke vraag hier is er één die de volgende bezoeker wél
+ * beantwoord krijgt.
+ */
+export type OnbeantwoordeVraag = {
+  gesprek_id: string;
+  vraag: string;
+  antwoord: string;
+  op: string;
+};
+
+export const haalOnbeantwoord = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }): Promise<OnbeantwoordeVraag[]> => {
+    const { data: rijen, error } = await (
+      context.supabase as unknown as {
+        rpc: (
+          n: string,
+          a: Record<string, unknown>,
+        ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("onbeantwoorde_vragen", { _agent_id: data.agentId, _limiet: 50 });
+    if (error) return [];
+    return (rijen ?? []) as OnbeantwoordeVraag[];
+  });
+
+export const zetInKennisbank = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        agentId: z.string().uuid(),
+        vraag: z.string().trim().min(3).max(500),
+        antwoord: z.string().trim().min(3).max(5000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await mijnAgent(context as { supabase: unknown; userId: string }, data.agentId);
+    const sb = context.supabase as unknown as Ongetypt;
+    const { error } = await sb.from("knowledge_items").insert({
+      agent_id: data.agentId,
+      category: "veelgestelde vragen",
+      title: data.vraag.slice(0, 200),
+      question: data.vraag,
+      content: data.antwoord,
+      is_active: true,
+    });
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

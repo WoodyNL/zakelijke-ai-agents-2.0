@@ -90,20 +90,27 @@ export async function haalAgent(slug: string): Promise<AgentConfig> {
  * standaarden, wat prima is: ze doen er pas toe zodra er echte klanten zijn.
  */
 export async function haalPrivateConfig(agentId: string) {
+  const leeg = {
+    notify_email: null,
+    extra_instructions: null,
+    opties: {} as Record<string, unknown>,
+  };
   const rest = supabaseRest(true);
-  if (!rest) return { notify_email: null, extra_instructions: null };
+  if (!rest) return leeg;
 
   const res = await fetch(
-    `${rest.url}/rest/v1/agents?select=notify_email,extra_instructions&id=eq.${encodeURIComponent(agentId)}`,
+    `${rest.url}/rest/v1/agents?select=notify_email,extra_instructions,opties&id=eq.${encodeURIComponent(agentId)}`,
     { headers: rest.headers },
   );
-  if (!res.ok) return { notify_email: null, extra_instructions: null };
+  if (!res.ok) return leeg;
 
   const rijen = (await res.json()) as Array<{
     notify_email: string | null;
     extra_instructions: string | null;
+    opties: Record<string, unknown> | null;
   }>;
-  return rijen[0] ?? { notify_email: null, extra_instructions: null };
+  const rij = rijen[0];
+  return rij ? { ...rij, opties: rij.opties ?? {} } : leeg;
 }
 
 /**
@@ -186,6 +193,7 @@ async function noteerGesprek(
   antwoord: string,
   pagina: string | null,
   lead: boolean,
+  onbeantwoord = false,
 ) {
   const rest = supabaseRest(true);
   if (!rest) return;
@@ -200,6 +208,7 @@ async function noteerGesprek(
         _antwoord: antwoord,
         _pagina: pagina,
         _lead: lead,
+        _onbeantwoord: onbeantwoord,
       }),
     });
   } catch (err) {
@@ -309,9 +318,17 @@ export function bouwSysteemprompt(
   items: KennisItem[],
   config?: AgentConfig,
   extraInstructies?: string | null,
+  opties: Record<string, unknown> = {},
 ) {
   const toon = config?.tone ? `\n\nExtra over de toon voor deze agent: ${config.tone}` : "";
   const extra = extraInstructies ? `\n\n## Aanvullende instructies\n${extraInstructies}` : "";
+  // Doorverwijzen naar een mens staat standaard aan. Alleen zinvol als het
+  // gereedschap voor contactgegevens er ook is; anders blijft het bij de
+  // verwijzing naar het contactformulier.
+  const overdracht =
+    opties["overdracht_aanbieden"] !== false && config?.capture_leads
+      ? `\n\n## Als je het niet weet\nMoet je zeggen dat je iets niet weet, bied dan in dezelfde zin aan om de vraag door te geven, zodat iemand van het team er persoonlijk op terugkomt. Zegt de bezoeker ja, vraag dan naam, bedrijf en e-mailadres in één bericht en gebruik leg_contact_vast. Eén keer aanbieden is genoeg.`
+      : "";
   return `Je bent de website-assistent van ${SITE.name}, een AI-agency uit Amsterdam voor het Nederlandse mkb. Je praat met bezoekers van zakelijkeaiagents.nl.
 
 ## Hoe je praat
@@ -355,7 +372,7 @@ Dring niet aan. Vraagt iemand alleen iets op, laat hem dan gewoon iets opvragen.
 ${kennisAlsTekst(items)}
 
 ## Als laatste
-Kom je er samen niet uit, verwijs dan naar het contactformulier op de pagina of naar ${SITE.email}. De gratis AI-verkenning van 30 minuten is altijd een goede volgende stap: vrijblijvend, en ze zeggen eerlijk of AI iets oplevert.${toon}${extra}`;
+Kom je er samen niet uit, verwijs dan naar het contactformulier op de pagina of naar ${SITE.email}. De gratis AI-verkenning van 30 minuten is altijd een goede volgende stap: vrijblijvend, en ze zeggen eerlijk of AI iets oplevert.${overdracht}${toon}${extra}`;
 }
 
 export const LEAD_TOOL = {
@@ -517,7 +534,7 @@ export async function beantwoord(
   }
 
   const [kennis, prive] = await Promise.all([haalKennis(slug), haalPrivateConfig(config.id)]);
-  const systeem = bouwSysteemprompt(kennis, config, prive.extra_instructions);
+  const systeem = bouwSysteemprompt(kennis, config, prive.extra_instructions, prive.opties);
 
   const verloop: unknown[] = berichten.map((b) => ({ role: b.role, content: b.content }));
   const verbruikt = { input: 0, output: 0, cache: 0 };
@@ -579,7 +596,20 @@ export async function beantwoord(
   // Wat de bezoeker vroeg is de laatste beurt die binnenkwam; het antwoord is
   // wat we nu teruggeven. Samen zijn dat de twee regels in het archief.
   const laatsteVraag = [...berichten].reverse().find((b) => b.role === "user")?.content ?? "";
-  await noteerGesprek(config.id, gesprek.id, laatsteVraag, uit, gesprek.pagina, leadVastgelegd);
+  // "Dat weet ik niet" is de zin die de prompt voorschrijft als iets niet in de
+  // kennisbank staat. Zo'n beurt markeren we, zodat de klant ziet welke
+  // vragen in zijn kennisbank ontbreken.
+  const onbeantwoord =
+    prive.opties["onbeantwoord_verzamelen"] !== false && /weet ik (het )?niet/i.test(uit);
+  await noteerGesprek(
+    config.id,
+    gesprek.id,
+    laatsteVraag,
+    uit,
+    gesprek.pagina,
+    leadVastgelegd,
+    onbeantwoord,
+  );
 
   return {
     tekst: uit,

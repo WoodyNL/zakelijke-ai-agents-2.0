@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase-browser";
 
 const SCHERMLINKS: Record<Scherm, { to: string; label: string }> = {
   gesprekken: { to: "/gesprekken", label: "Gesprekken" },
+  leads: { to: "/leads", label: "Leads" },
   aanvragen: { to: "/aanvragen", label: "Aanvragen" },
   facturen: { to: "/facturen", label: "Facturen" },
   reviews: { to: "/reviews", label: "Reviews" },

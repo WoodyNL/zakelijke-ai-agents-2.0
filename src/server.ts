@@ -165,6 +165,10 @@ export default {
         // En de afspraakherinneringen, hoogstens eens per vijf minuten.
         const { rondeAfspraken } = await import("./lib/afspraken.server");
         wachtOpruimen.call(ctx, rondeAfspraken());
+
+        // En de dagoverzichten, elke werkdag na achten, één per agent per dag.
+        const { rondeDagrapporten } = await import("./lib/dagrapport.server");
+        wachtOpruimen.call(ctx, rondeDagrapporten());
       }
 
       const handler = await getServerEntry();

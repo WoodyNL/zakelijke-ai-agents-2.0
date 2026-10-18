@@ -20,6 +20,7 @@ import { haalOfferteCijfers } from "@/lib/offerte.functions";
 import { haalFactuurCijfers } from "@/lib/facturen.functions";
 import { haalReviewCijfers } from "@/lib/reviews.functions";
 import { haalAfspraakCijfers } from "@/lib/afspraken.functions";
+import { haalSalesCijfers } from "@/lib/sales.functions";
 import { euroTekst } from "@/lib/prijsimport";
 import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
@@ -115,6 +116,12 @@ function AgentDetail() {
     queryKey: ["afspraak-kerncijfers", agentId, days],
     queryFn: () => afspraakFn({ data: { agentId, dagen: days || 3650 } }),
     enabled: soort.bronnen.includes("afspraken"),
+  });
+  const salesFn = useServerFn(haalSalesCijfers);
+  const salesQuery = useQuery({
+    queryKey: ["sales-kerncijfers", agentId, days],
+    queryFn: () => salesFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("sales"),
   });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
@@ -360,6 +367,27 @@ function AgentDetail() {
                 <Stat
                   value={afspraakQuery.data ? String(afspraakQuery.data.wachtlijst) : "—"}
                   label="op de wachtlijst"
+                />
+              </>
+            )}
+            {soort.bronnen.includes("sales") && (
+              <>
+                <Stat value={salesQuery.data ? String(salesQuery.data.leads) : "—"} label="leads" />
+                <Stat
+                  value={
+                    salesQuery.data?.reactie_minuten != null
+                      ? `${salesQuery.data.reactie_minuten} min`
+                      : "—"
+                  }
+                  label="tot het eerste antwoord"
+                />
+                <Stat
+                  value={salesQuery.data ? String(salesQuery.data.gekwalificeerd) : "—"}
+                  label={`passen (${salesQuery.data?.twijfel ?? 0} twijfel)`}
+                />
+                <Stat
+                  value={salesQuery.data ? String(salesQuery.data.afspraken) : "—"}
+                  label="afspraken"
                 />
               </>
             )}

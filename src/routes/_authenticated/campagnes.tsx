@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { controleerVerzenddomein } from "@/lib/domein.functions";
+import { domeinVan, type Gezondheid } from "@/lib/domeingezondheid";
 import { useState } from "react";
 import { Eye, AlertTriangle, Check, Megaphone } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -245,7 +247,6 @@ function CampagnesPagina() {
   const kanVoorbeeld =
     v.aanbod.trim().length > 5 && v.ondertekening.trim().length > 1 && !bedragInAanbod;
 
-
   // Een leeg of onmogelijk dagmaximum werd stilzwijgend 10. Dat is precies het
   // soort stille correctie waardoor je denkt dat je iets hebt ingesteld terwijl
   // er iets anders staat — en hier bepaalt dat getal hoeveel post er per dag
@@ -299,8 +300,8 @@ function CampagnesPagina() {
                               ? "binnen gebied"
                               : c.doelgroep === "buiten_gebied"
                                 ? "buiten gebied"
-                                : "iedereen"} ·{" "}
-                            {c.dagmaximum} per dag ·{" "}
+                                : "iedereen"}{" "}
+                            · {c.dagmaximum} per dag ·{" "}
                             {c.verzendwijze === "direct" ? "verstuurt zelf" : "zet concepten klaar"}
                           </span>
                         </span>
@@ -489,8 +490,7 @@ function CampagnesPagina() {
                         ) : (
                           <p className="mt-2 text-[12.5px]/[1.65] text-ink/45">
                             Bij {dagmaximumFout ? "?" : perDag} per dag zijn die {bereik.nieuw}{" "}
-                            berichten in{" "}
-                            {dagmaximumFout ? "?" : Math.ceil(bereik.nieuw / perDag)}{" "}
+                            berichten in {dagmaximumFout ? "?" : Math.ceil(bereik.nieuw / perDag)}{" "}
                             {!dagmaximumFout && Math.ceil(bereik.nieuw / perDag) === 1
                               ? "werkdag"
                               : "werkdagen"}{" "}
@@ -501,7 +501,6 @@ function CampagnesPagina() {
                     )}
                   </div>
                 )}
-
 
                 <Veld
                   label="Wat bied je aan?"
@@ -525,7 +524,10 @@ function CampagnesPagina() {
                     na het klikken — en dan heb je je zin al getypt. */}
                 {bedragInAanbod && (
                   <p className="flex items-start gap-2 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3 text-[12.5px]/[1.65] text-amber-100">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+                    <AlertTriangle
+                      className="mt-0.5 h-4 w-4 shrink-0 text-amber-300"
+                      aria-hidden="true"
+                    />
                     <span>
                       Er staat een bedrag in je aanbod. Deze agent noemt geen prijzen — wie ernaar
                       vraagt, wordt gebeld en krijgt een voorstel op maat. Haal het bedrag eruit,
@@ -552,6 +554,11 @@ function CampagnesPagina() {
                     />
                   </Veld>
                 </div>
+
+                {/* Of dit domein werkelijk mag versturen. Hier en niet in het
+                    beheer: dit is de reden dat post wel of niet aankomt, en de
+                    klant hoort het te zien vóór hij op versturen drukt. */}
+                <Domeingezondheid email={v.afzenderEmail} />
 
                 <Veld
                   label="Antwoorden komen binnen op"
@@ -644,7 +651,10 @@ function CampagnesPagina() {
                     }`}
                   >
                     {melding.ok ? (
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                      <Check
+                        className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"
+                        aria-hidden="true"
+                      />
                     ) : (
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                     )}
@@ -666,7 +676,10 @@ function CampagnesPagina() {
 
               {voorbeeldFout && (
                 <p className="mt-4 flex items-start gap-2 rounded-2xl border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-[12.5px]/[1.65] text-ink/85">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-300" aria-hidden="true" />
+                  <AlertTriangle
+                    className="mt-0.5 h-4 w-4 shrink-0 text-rose-300"
+                    aria-hidden="true"
+                  />
                   {voorbeeldFout}
                 </p>
               )}
@@ -684,9 +697,7 @@ function CampagnesPagina() {
                     </p>
                   </div>
 
-                  <p className="mt-3 text-[13px] font-semibold text-brand">
-                    {voorbeeld.onderwerp}
-                  </p>
+                  <p className="mt-3 text-[13px] font-semibold text-brand">{voorbeeld.onderwerp}</p>
                   <p className="mt-2 max-w-[74ch] text-[13px]/[1.75] whitespace-pre-wrap text-ink/80">
                     {voorbeeld.tekst}
                   </p>
@@ -746,5 +757,62 @@ function Veld({
       {children}
       {hint && <span className="mt-1 block text-[10.5px] text-ink/40">{hint}</span>}
     </label>
+  );
+}
+
+function Domeingezondheid({ email }: { email: string }) {
+  const fn = useServerFn(controleerVerzenddomein);
+  const domein = domeinVan(email);
+  const query = useQuery({
+    queryKey: ["domein", domein],
+    queryFn: () => fn({ data: { email } }) as Promise<Gezondheid | null>,
+    enabled: !!domein,
+    staleTime: 5 * 60_000,
+  });
+  if (!domein) return null;
+  const g = query.data;
+  const kleur: Record<Gezondheid["totaal"], string> = {
+    goed: "border-mint/30 bg-mint/10 text-mint",
+    let_op: "border-amber-400/35 bg-amber-400/12 text-amber-300",
+    fout: "border-rose-400/35 bg-rose-400/12 text-rose-300",
+  };
+  const stip: Record<Gezondheid["totaal"], string> = { goed: "●", let_op: "●", fout: "●" };
+  return (
+    <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-[12.5px]/[1.6]">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-semibold text-ink/85">Verzenddomein {domein}</p>
+        {g && (
+          <span
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${kleur[g.totaal]}`}
+          >
+            {g.totaal === "goed"
+              ? "klaar om te versturen"
+              : g.totaal === "let_op"
+                ? "kan beter"
+                : "nog niet in orde"}
+          </span>
+        )}
+        <button
+          type="button"
+          className="text-[11.5px] text-violet hover:underline"
+          onClick={() => query.refetch()}
+        >
+          opnieuw controleren
+        </button>
+      </div>
+      {query.isLoading && <p className="mt-1 text-ink/50">Controleren…</p>}
+      {g && (
+        <ul className="mt-2 grid gap-1 text-ink/70">
+          {(["spf", "dkim", "dmarc"] as const).map((k) => (
+            <li key={k} className="flex gap-2">
+              <span className={kleur[g[k].oordeel].split(" ").pop()}>{stip[g[k].oordeel]}</span>
+              <span>
+                <strong className="uppercase text-ink/85">{k}</strong> · {g[k].tekst}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

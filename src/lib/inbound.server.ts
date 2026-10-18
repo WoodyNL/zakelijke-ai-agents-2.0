@@ -267,6 +267,40 @@ export async function verwerkInboundWebhook(
     return new Response("ok", { status: 200 });
   }
 
+  // Een sales-assistent krijgt leads: beoordelen en een eerste antwoord
+  // klaarzetten, zelfde patroon als offertes.
+  if (agentSoort === "sales_assistent") {
+    const inhoud = await haalTekst(emailId);
+    const sales = await import("@/lib/sales.server");
+    let leadId: string | null;
+    try {
+      leadId = await sales.ontvangLead({
+        agentId,
+        providerId: `mail:${emailId}`,
+        bron: "mail",
+        naam:
+          (d.from ?? "")
+            .replace(/<[^>]*>/, "")
+            .replace(/"/g, "")
+            .trim() || null,
+        email: van,
+        bericht: [inhoud.onderwerp ?? d.subject ?? "", inhoud.tekst].filter(Boolean).join("\n\n"),
+        messageId: inhoud.messageId ?? null,
+      });
+    } catch (e) {
+      console.error("Lead opslaan mislukt:", e);
+      return new Response("Storage failed", { status: 503 });
+    }
+    if (leadId) {
+      const werk = sales
+        .verwerkLead(leadId)
+        .catch((e) => console.error("Lead verwerken mislukt:", e));
+      if (naAfloop) naAfloop(werk);
+      else await werk;
+    }
+    return new Response("ok", { status: 200 });
+  }
+
   // Een afsprakenagent krijgt antwoorden op herinneringen: ja, verzetten,
   // afzeggen. De agent legt het vast en de ondernemer hoort alles behalve ja.
   if (agentSoort === "afspraken") {
