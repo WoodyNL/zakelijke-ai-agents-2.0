@@ -26,6 +26,11 @@ const contactSchema = z.object({
   /** Achtergrond over deze zaak; de agent leest het mee maar citeert het niet. */
   notitie: z.string().max(600).optional(),
   prioriteit: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  /** ISO-datum van de laatste bestelling, zoals contactimport hem teruggeeft. */
+  laatst_besteld: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   /** Staat er in het bestand zelf of dit een klant of een prospect is, dan wint dat. */
   herkomst: z.enum(["oud_klant", "koud", "test"]).optional(),
 });
@@ -113,6 +118,7 @@ export const importeerContacten = createServerFn({ method: "POST" })
       if (c.telefoon) rij.telefoon = c.telefoon;
       if (c.notitie) rij.notitie = c.notitie;
       if (c.prioriteit) (rij as Record<string, unknown>)["prioriteit"] = c.prioriteit;
+      if (c.laatst_besteld) rij.laatst_besteld_op = c.laatst_besteld;
       if (inGebied !== null) {
         (rij as Record<string, unknown>)["in_bezorggebied"] = inGebied;
       }
@@ -182,9 +188,7 @@ export const haalAntwoorden = createServerFn({ method: "GET" })
 /** Een antwoord afvinken, of weer openzetten. */
 export const zetAntwoordAf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z.object({ id: z.string().uuid(), afgehandeld: z.boolean() }).parse(d),
-  )
+  .validator((d: unknown) => z.object({ id: z.string().uuid(), afgehandeld: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase
       .from("outbound_replies")
@@ -265,7 +269,9 @@ export const haalContactReis = createServerFn({ method: "GET" })
     const [berichten, antwoorden, bezorgingen] = await Promise.all([
       context.supabase
         .from("outbound_messages")
-        .select("id, stap, status, onderwerp, tekst, gepland_voor, verzonden_op, fout, aangemaakt_op")
+        .select(
+          "id, stap, status, onderwerp, tekst, gepland_voor, verzonden_op, fout, aangemaakt_op",
+        )
         .eq("contact_id", data.contactId)
         .order("stap"),
       context.supabase
@@ -349,6 +355,7 @@ export const vulContactenAan = createServerFn({ method: "POST" })
       notitie: string | null;
       adres: string | null;
       postcode: string | null;
+      laatst_besteld_op: string | null;
       herkomst: string;
     };
 
@@ -356,7 +363,9 @@ export const vulContactenAan = createServerFn({ method: "POST" })
     for (let i = 0; i < adressen.length; i += 200) {
       const { data: rijen, error } = await context.supabase
         .from("outbound_contacts")
-        .select("id, email, naam, bedrijf, plaats, telefoon, notitie, adres, postcode, herkomst")
+        .select(
+          "id, email, naam, bedrijf, plaats, telefoon, notitie, adres, postcode, herkomst, laatst_besteld_op",
+        )
         .eq("agent_id", data.agentId)
         .in("email", adressen.slice(i, i + 200));
       if (error) throw new Error(error.message);
@@ -385,6 +394,11 @@ export const vulContactenAan = createServerFn({ method: "POST" })
         const huidig = rij[veld];
         const nieuw = (bron as Record<string, string | undefined>)[veld];
         if (nieuw && (huidig === null || String(huidig).trim() === "")) bij[veld] = nieuw;
+      }
+      // De datum van de laatste bestelling heet in het bestand anders dan in
+      // de tabel; daarom apart. Ook hier: alleen invullen wat leeg was.
+      if (bron.laatst_besteld && !rij.laatst_besteld_op) {
+        bij["laatst_besteld_op"] = bron.laatst_besteld;
       }
 
       // De rij in het bestand mag zijn eigen herkomst meebrengen; die wint,

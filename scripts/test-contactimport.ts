@@ -229,6 +229,24 @@ meld(leesHerkomst("proef") === "test", "\"proef\" telt ook als test");
 meld(leesHerkomst("klant") === "oud_klant", "en klant blijft oud-klant");
 meld(leesHerkomst("prospect") === "koud", "en prospect blijft koud");
 
+console.log("\nDe laatste bestelling\n" + "=".repeat(52));
+
+const metDatum = leesContacten(
+  [
+    ["E-mail", "Bedrijf", "Laatste bestelling"],
+    ["a@x.nl", "Bakker", "14-03-2025"],
+    ["b@x.nl", "Slager", "2024-11-02"],
+    ["c@x.nl", "Kok", "gisteren"],
+    ["d@x.nl", "Visboer", ""],
+  ],
+  ["email", "bedrijf", "laatst_besteld"],
+  true,
+);
+meld(metDatum.contacten[0]?.laatst_besteld === "2025-03-14", "Nederlandse datum wordt ISO");
+meld(metDatum.contacten[1]?.laatst_besteld === "2024-11-02", "ISO blijft ISO");
+meld(!("laatst_besteld" in metDatum.contacten[2]!), "onleesbaar wordt weggelaten, niet verzonnen");
+meld(!("laatst_besteld" in metDatum.contacten[3]!), "leeg blijft leeg");
+
 console.log("\n" + "=".repeat(52));
 if (gezakt === 0) console.log("Alles in orde.\n");
 else {

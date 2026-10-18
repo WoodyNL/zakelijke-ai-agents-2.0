@@ -15,6 +15,7 @@ import {
   pauzeerAgent,
 } from "@/lib/agent.functions";
 import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
+import { haalHeractivatie } from "@/lib/heractivatie.functions";
 import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
 import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
@@ -79,6 +80,12 @@ function AgentDetail() {
     queryKey: ["trechter", agentId],
     queryFn: () => trechterFn({ data: { agentId } }) as Promise<Trechter>,
     enabled: soort.bronnen.includes("trechter"),
+  });
+  const heractivatieFn = useServerFn(haalHeractivatie);
+  const heractivatieQuery = useQuery({
+    queryKey: ["heractivatie", agentId, days],
+    queryFn: () => heractivatieFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("heractivatie"),
   });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
@@ -187,6 +194,39 @@ function AgentDetail() {
                       : "—"
                   }
                   label="gemiddelde reactietijd"
+                />
+              </>
+            )}
+            {soort.bronnen.includes("heractivatie") && (
+              <>
+                <Stat
+                  value={
+                    heractivatieQuery.data ? String(heractivatieQuery.data.aangeschreven) : "—"
+                  }
+                  label="slapende klanten aangeschreven"
+                />
+                <Stat
+                  value={heractivatieQuery.data ? String(heractivatieQuery.data.gereageerd) : "—"}
+                  label="reageerden"
+                />
+                <Stat
+                  value={heractivatieQuery.data ? String(heractivatieQuery.data.teruggekomen) : "—"}
+                  label="weer klant"
+                />
+                {/* De waarde is de orderwaarde die de klant zelf opgaf, keer
+                    het aantal dat terug is. Zonder die instelling geen getal:
+                    een verzonnen bedrag is erger dan een streepje. */}
+                <Stat
+                  value={
+                    heractivatieQuery.data?.waarde != null
+                      ? `€ ${Math.round(heractivatieQuery.data.waarde).toLocaleString("nl-NL")}`
+                      : "—"
+                  }
+                  label={
+                    heractivatieQuery.data?.orderwaarde != null
+                      ? `waarde (× € ${heractivatieQuery.data.orderwaarde} per klant, jouw schatting)`
+                      : "waarde (vul je orderwaarde in bij de instellingen)"
+                  }
                 />
               </>
             )}

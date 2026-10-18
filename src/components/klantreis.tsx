@@ -1,5 +1,9 @@
 import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { herkomstNaam } from "@/lib/herkomst";
+import { markeerTeruggekomen } from "@/lib/heractivatie.functions";
+import { maandenGeleden } from "@/lib/slapend";
 import {
   Mail,
   Clock,
@@ -28,6 +32,7 @@ import {
 
 export type Reisgegevens = {
   contact: {
+    id: string;
     naam: string | null;
     bedrijf: string | null;
     plaats: string | null;
@@ -198,6 +203,12 @@ export function Klantreis({ g }: { g: Reisgegevens }) {
 
   const gestopt = g.contact.afgemeld_op || g.contact.bounce_op;
   const c = g.contact;
+  // Twee kolommen die de gegenereerde types pas kennen na de migratie van de
+  // heractivatie-agent; tot die tijd lezen we ze zo.
+  const extra = c as typeof c & {
+    teruggekomen_op?: string | null;
+    laatst_besteld_op?: string | null;
+  };
 
   return (
     /* Naast elkaar zodra er ruimte is. De reis is een smalle kolom tekst; die
@@ -234,8 +245,25 @@ export function Klantreis({ g }: { g: Reisgegevens }) {
                 buiten gebied
               </span>
             )}
+            {extra.teruggekomen_op && (
+              <span className="rounded-full bg-emerald-400/12 px-2.5 py-1 text-[10.5px] text-emerald-300">
+                teruggekomen
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Alleen bij oud-klanten: voor een koude lead is "laatst besteld"
+            een vraag zonder antwoord, en "teruggekomen" een woord dat niet
+            klopt. Dit is het ene vinkje waarop de heractivatie-agent wordt
+            beoordeeld — wij zien geen bestellingen, de klant wel. */}
+        {c.herkomst === "oud_klant" && (
+          <Teruggekomen
+            contactId={c.id}
+            teruggekomenOp={extra.teruggekomen_op ?? null}
+            laatstBesteld={extra.laatst_besteld_op ?? null}
+          />
+        )}
 
         {c.notitie && (
           <p className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[12.5px]/[1.65] text-ink/60">
@@ -323,6 +351,86 @@ export function Klantreis({ g }: { g: Reisgegevens }) {
           })}
         </ol>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Het vinkje "teruggekomen", met de laatste bestelling erbij.
+ *
+ * Een knop en geen schakelaar in een formulier: dit is iets wat je zet op het
+ * moment dat je het weet ("Bakker belde, hij bestelt weer"), niet iets wat je
+ * instelt. En het moet weer weg kunnen zonder ons: een vinkje per ongeluk is
+ * anders een verkeerd cijfer op het dashboard tot iemand ons mailt.
+ */
+function Teruggekomen({
+  contactId,
+  teruggekomenOp,
+  laatstBesteld,
+}: {
+  contactId: string;
+  teruggekomenOp: string | null;
+  laatstBesteld: string | null;
+}) {
+  const qc = useQueryClient();
+  const fn = useServerFn(markeerTeruggekomen);
+  const [bezig, setBezig] = React.useState(false);
+  const [fout, setFout] = React.useState<string | null>(null);
+
+  async function zet(terug: boolean) {
+    setBezig(true);
+    setFout(null);
+    try {
+      await fn({ data: { contactId, terug } });
+      await qc.invalidateQueries({ queryKey: ["klantreis", contactId] });
+    } catch (e) {
+      setFout(e instanceof Error ? e.message : "Dat lukte niet");
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  const geleden = maandenGeleden(laatstBesteld);
+  const bestelling =
+    laatstBesteld === null
+      ? "Laatste bestelling onbekend"
+      : geleden === 0
+        ? "Bestelde deze maand"
+        : `Laatst besteld ${geleden} ${geleden === 1 ? "maand" : "maanden"} geleden`;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
+      <p className="text-[12px] text-ink/55">{bestelling}</p>
+      {teruggekomenOp ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <p className="text-[12.5px] text-emerald-300">
+            Teruggekomen op{" "}
+            {new Date(teruggekomenOp).toLocaleDateString("nl-NL", {
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
+          <button
+            type="button"
+            disabled={bezig}
+            onClick={() => zet(false)}
+            className="text-[11.5px] text-ink/45 underline-offset-2 hover:underline disabled:opacity-50"
+          >
+            toch niet
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={bezig}
+          onClick={() => zet(true)}
+          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-[12px] font-medium text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-50"
+        >
+          <Handshake className="h-3.5 w-3.5" aria-hidden="true" />
+          {bezig ? "Bezig…" : "Is weer klant"}
+        </button>
+      )}
+      {fout && <p className="mt-2 text-[12px] text-rose-300">{fout}</p>}
     </div>
   );
 }

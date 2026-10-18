@@ -13,6 +13,10 @@
  * krijgt een reden, zodat zichtbaar is wat er niet is geïmporteerd.
  */
 
+// Relatief en niet via "@/": dit bestand wordt ook door node scripts/test-*.ts
+// geladen, en node lost die alias niet op.
+import { leesDatum } from "./slapend.ts";
+
 export type Kolomsoort =
   | "email"
   | "naam"
@@ -26,6 +30,7 @@ export type Kolomsoort =
   | "herkomst"
   | "notitie"
   | "prioriteit"
+  | "laatst_besteld"
   | "negeren";
 
 /**
@@ -41,7 +46,15 @@ const KOPPEN: Record<Exclude<Kolomsoort, "negeren">, string[]> = {
   voornaam: ["voornaam", "first name", "firstname"],
   achternaam: ["achternaam", "last name", "lastname", "familienaam"],
   naam: ["naam", "contactpersoon", "contact", "name", "volledige naam"],
-  bedrijf: ["bedrijf", "bedrijfsnaam", "relatienaam", "klantnaam", "company", "zaak", "handelsnaam"],
+  bedrijf: [
+    "bedrijf",
+    "bedrijfsnaam",
+    "relatienaam",
+    "klantnaam",
+    "company",
+    "zaak",
+    "handelsnaam",
+  ],
   plaats: ["plaats", "stad", "woonplaats", "vestigingsplaats", "city", "gemeente"],
   adres: ["adres", "straat", "straatnaam", "address", "street"],
   postcode: ["postcode", "postcodes", "zip", "postal code"],
@@ -49,6 +62,16 @@ const KOPPEN: Record<Exclude<Kolomsoort, "negeren">, string[]> = {
   herkomst: ["prospect/klant", "prospect / klant", "soort relatie", "relatiesoort", "type relatie"],
   notitie: ["notitie", "notities", "opmerking", "opmerkingen", "toelichting", "bijzonderheden"],
   prioriteit: ["prioriteit", "priority", "score"],
+  laatst_besteld: [
+    "laatst besteld",
+    "laatste bestelling",
+    "laatste order",
+    "laatste aankoop",
+    "laatste factuur",
+    "last order",
+    "last purchase",
+    "datum laatste",
+  ],
 };
 
 /**
@@ -66,8 +89,8 @@ function kernVanKop(ruw: string): string {
   // veld heel.
   const schuin = t.lastIndexOf(" / ");
   if (schuin > 0) t = t.slice(schuin + 3);
-  t = t.replace(/\([^)]*\)/g, " ");       // "(algemeen)" weg
-  t = t.replace(/\s*\d+\s*$/, "");         // "Bedrijfsnaam 2" -> "bedrijfsnaam"
+  t = t.replace(/\([^)]*\)/g, " "); // "(algemeen)" weg
+  t = t.replace(/\s*\d+\s*$/, ""); // "Bedrijfsnaam 2" -> "bedrijfsnaam"
   return t.replace(/\s+/g, " ").trim();
 }
 
@@ -226,6 +249,12 @@ export type GelezenContact = {
   notitie?: string;
   /** 1 is het hoogst; zo geeft oplopend sorteren vanzelf de beste eerst. */
   prioriteit?: 1 | 2 | 3;
+  /**
+   * Wanneer deze relatie voor het laatst iets afnam, als "2025-03-14". De
+   * heractivatie-agent rekent hiermee uit wie slapend is; zonder datum telt
+   * iemand als slapend (zie slapend.ts).
+   */
+  laatst_besteld?: string;
 };
 
 /** "Hoog", "Midden", "Laag" — of een cijfer dat er al staat. */
@@ -233,7 +262,8 @@ export function leesPrioriteit(cel: string): 1 | 2 | 3 | null {
   const t = cel.trim().toLowerCase();
   if (!t) return null;
   if (t.startsWith("hoog") || t.startsWith("high") || t === "1") return 1;
-  if (t.startsWith("midden") || t.startsWith("middel") || t.startsWith("med") || t === "2") return 2;
+  if (t.startsWith("midden") || t.startsWith("middel") || t.startsWith("med") || t === "2")
+    return 2;
   if (t.startsWith("laag") || t.startsWith("low") || t === "3") return 3;
   return null;
 }
@@ -287,7 +317,11 @@ export function leesContacten(
     if (rij.every((c) => !c || !c.trim())) return; // lege regels stilzwijgend overslaan
 
     if (emailKolom < 0) {
-      overgeslagen.push({ rij: nummer, reden: "geen e-mailkolom aangewezen", inhoud: samenvatting });
+      overgeslagen.push({
+        rij: nummer,
+        reden: "geen e-mailkolom aangewezen",
+        inhoud: samenvatting,
+      });
       return;
     }
 
@@ -336,6 +370,11 @@ export function leesContacten(
     if (notitie) contact.notitie = notitie.slice(0, 600);
     const prioriteit = leesPrioriteit(pak("prioriteit") ?? "");
     if (prioriteit) contact.prioriteit = prioriteit;
+    // Een datum die niet eenduidig te lezen is, laten we weg. Onbekend telt
+    // straks als slapend; een verkeerd gelezen datum zou iemand ten onrechte
+    // wakker of slapend maken.
+    const besteld = leesDatum(pak("laatst_besteld") ?? "");
+    if (besteld) contact.laatst_besteld = besteld.toISOString().slice(0, 10);
     contacten.push(contact);
   });
 

@@ -1,6 +1,7 @@
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import { opvolgmoment, planBericht, verdeelOverDagen } from "@/lib/verzenden.server";
 import { leesVenster, STANDAARD_VENSTER, type Venster } from "@/lib/verzendvenster";
+import { isSlapend, metRust, redenOmTerugTeKomen } from "@/lib/slapend";
 
 /**
  * Een campagne klaarzetten en verzenden.
@@ -41,25 +42,47 @@ async function haal<T>(d: Db, pad: string): Promise<T[]> {
 }
 
 /**
- * Het verzendvenster van de agent achter deze campagne.
+ * De instellingen van de agent achter deze campagne.
  *
- * Staat bij de agent en niet bij de campagne: het gaat over het verzenddomein
- * en de reputatie daarvan, en die zijn van de agent. Twee campagnes die elkaar
- * met verschillende vensters in de weg zitten, is precies wat je niet wilt.
+ * Staan bij de agent en niet bij de campagne: het verzendvenster gaat over het
+ * verzenddomein, en wie slapend is of met rust gelaten wordt, is een afspraak
+ * met de klant die voor al zijn campagnes geldt. Twee campagnes die elkaar met
+ * verschillende regels in de weg zitten, is precies wat je niet wilt.
  *
- * Mislukt het ophalen, dan het standaardvenster. Een campagne die blijft staan
- * omdat een instelling niet te lezen was, helpt niemand.
+ * Mislukt het ophalen, dan de standaard. Een campagne die blijft staan omdat
+ * een instelling niet te lezen was, helpt niemand.
  */
-async function venstervan(d: Db, agentId: string): Promise<Venster> {
+type Instellingen = {
+  kind: string;
+  opties: Record<string, unknown>;
+  venster: Venster;
+};
+
+async function instellingenVan(d: Db, agentId: string): Promise<Instellingen> {
   try {
-    const [agent] = await haal<{ opties: Record<string, unknown> | null }>(
+    const [agent] = await haal<{ kind: string | null; opties: Record<string, unknown> | null }>(
       d,
-      `agents?select=opties&id=eq.${agentId}`,
+      `agents?select=kind,opties&id=eq.${agentId}`,
     );
-    return leesVenster(agent?.opties?.["verzendvenster"]);
+    const opties = agent?.opties ?? {};
+    return {
+      kind: agent?.kind ?? "overig",
+      opties,
+      venster: leesVenster(opties["verzendvenster"]),
+    };
   } catch {
-    return STANDAARD_VENSTER;
+    return { kind: "overig", opties: {}, venster: STANDAARD_VENSTER };
   }
+}
+
+async function venstervan(d: Db, agentId: string): Promise<Venster> {
+  return (await instellingenVan(d, agentId)).venster;
+}
+
+/** Hoeveel berichten één klant hoogstens krijgt; zonder instelling geen grens. */
+function maxBerichten(i: Instellingen): number | null {
+  const n = Number(i.opties["max_berichten_per_klant"]);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 export type Campagne = {
@@ -93,8 +116,18 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
 
   const [campagne] = await haal<Campagne>(d, `outbound_campaigns?id=eq.${campagneId}`);
   if (!campagne) throw new Error("Deze campagne bestaat niet.");
-  if (!campagne.aanbod || !campagne.ondertekening) {
-    throw new Error("Vul eerst het aanbod en de ondertekening in bij de campagne.");
+  const instellingen = await instellingenVan(d, campagne.agent_id);
+  const heractivatie = instellingen.kind === "heractivatie";
+
+  // Bij de heractivatie-agent mag de reden om terug te komen bij de agent
+  // staan; dan hoeft niet elke campagne hem te herhalen.
+  const aanbod = redenOmTerugTeKomen(campagne.aanbod, instellingen.opties["heractivatie_aanbod"]);
+  if (!aanbod || !campagne.ondertekening) {
+    throw new Error(
+      heractivatie
+        ? "Vul eerst een reden om terug te komen in (bij de campagne of bij de agent) en de ondertekening."
+        : "Vul eerst het aanbod en de ondertekening in bij de campagne.",
+    );
   }
 
   const kennis = await haal<KennisRegel>(
@@ -135,15 +168,29 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
     plaats: string | null;
     herkomst: string;
     notitie: string | null;
+    laatst_besteld_op: string | null;
+    teruggekomen_op: string | null;
   }>(
     d,
-    `outbound_contacts?select=id,email,naam,bedrijf,plaats,herkomst,notitie` +
+    `outbound_contacts?select=id,email,naam,bedrijf,plaats,herkomst,notitie,laatst_besteld_op,teruggekomen_op` +
       `&agent_id=eq.${campagne.agent_id}&herkomst=eq.${campagne.herkomst}` +
       `&afgemeld_op=is.null&bounce_op=is.null${gebiedsfilter}` +
       `&order=prioriteit.asc.nullslast,aangemaakt_op.asc&limit=500`,
   );
 
-  const teDoen = contacten.filter((c) => !gehad.has(c.id));
+  // De heractivatie-agent schrijft alleen wie slapend is, laat met rust wie op
+  // de lijst staat, en slaat over wie al terug is. Dezelfde regels als in
+  // telDoelgroep; staan in slapend.ts zodat ze één keer bestaan.
+  const slapendNa = Number(instellingen.opties["slapend_na_maanden"]) || 12;
+  const rust = Array.isArray(instellingen.opties["nooit_aanschrijven"])
+    ? (instellingen.opties["nooit_aanschrijven"] as string[])
+    : [];
+  const teDoen = contacten.filter(
+    (c) =>
+      !gehad.has(c.id) &&
+      (!heractivatie ||
+        (!c.teruggekomen_op && isSlapend(c.laatst_besteld_op, slapendNa) && !metRust(c, rust))),
+  );
   const nu = teDoen.slice(0, portie);
 
   const overgeslagen: Voorbereiding["overgeslagen"] = [];
@@ -165,7 +212,7 @@ export async function bereidVoor(campagneId: string, portie = 10): Promise<Voorb
           campagne.ondertekening.split(",").pop()?.trim() ??
           campagne.ondertekening,
         ondertekening: campagne.ondertekening,
-        aanbod: campagne.aanbod,
+        aanbod,
       });
 
       const res = await fetch(`${d.url}/rest/v1/outbound_messages`, {
@@ -330,7 +377,13 @@ export async function bereidOpvolgingVoor(campagneId: string, portie = 10): Prom
     throw new Error("Vul eerst het aanbod en de ondertekening in bij de campagne.");
   }
 
-  const venster = await venstervan(d, campagne.agent_id);
+  const instellingen = await instellingenVan(d, campagne.agent_id);
+  const venster = instellingen.venster;
+
+  // Een opvolging is bericht twee. Staat het maximum per klant op één, dan is
+  // er niets te doen — en dat hoort geen fout te zijn maar een lege uitkomst.
+  const grens = maxBerichten(instellingen);
+  if (grens !== null && grens < 2) return { klaargezet: 0, overgeslagen: [], resterend: 0 };
 
   const kennis = await haal<KennisRegel>(
     d,
@@ -533,7 +586,13 @@ export async function bereidNavraagVoor(campagneId: string, portie = 10): Promis
     throw new Error("Vul eerst het aanbod en de ondertekening in bij de campagne.");
   }
 
-  const venster = await venstervan(d, campagne.agent_id);
+  const instellingen = await instellingenVan(d, campagne.agent_id);
+  const venster = instellingen.venster;
+
+  // De navraag is bericht drie. Bij de heractivatie-agent staat het maximum
+  // standaard op twee: wie na twee berichten niet reageert, wil niet.
+  const grens = maxBerichten(instellingen);
+  if (grens !== null && grens < 3) return { klaargezet: 0, overgeslagen: [], resterend: 0 };
 
   const kennis = await haal<KennisRegel>(
     d,

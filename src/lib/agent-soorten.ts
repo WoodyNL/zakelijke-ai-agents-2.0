@@ -35,8 +35,9 @@ export type Scherm =
  *   trechter    aangeschreven → bezorgd → reactie → afspraak (outbound_*)
  *   metingen    de dagcijfers die per agent worden bijgehouden (agent_stats)
  *   support     supportmail: binnen, automatisch, via concept, naar een mens
+ *   heractivatie  slapende klanten: aangeschreven, gereageerd, teruggekomen
  */
-export type Bron = "gesprekken" | "leads" | "trechter" | "metingen" | "support";
+export type Bron = "gesprekken" | "leads" | "trechter" | "metingen" | "support" | "heractivatie";
 
 type Beschrijving = {
   label: string;

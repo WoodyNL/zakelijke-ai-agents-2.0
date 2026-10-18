@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isSlapend, metRust } from "@/lib/slapend";
 import { mijnAgent, mijnCampagne } from "@/lib/agent-toegang";
 import { bevatBedrag } from "@/lib/bedragen";
 import { stelBerichtOp, zonderPrijzen, type KennisRegel } from "@/lib/bericht-opstellen.server";
@@ -83,36 +84,60 @@ export const telDoelgroep = createServerFn({ method: "GET" })
       return q;
     };
 
-    const totaal = await gebied(
-      context.supabase
-        .from("outbound_contacts")
-        .select("id", { count: "exact", head: true })
-        .eq("agent_id", data.agentId)
-        .eq("herkomst", data.herkomst)
-        .is("afgemeld_op", null)
-        .is("bounce_op", null),
-    );
-    if (totaal.error) throw new Error(totaal.error.message);
+    // De heractivatie-agent telt anders: alleen wie slapend is, niet wie met
+    // rust gelaten wordt, en niet wie al terug is. Dat zijn dezelfde regels als
+    // in bereidVoor (slapend.ts), zodat het getal klopt met wat er straks
+    // werkelijk wordt klaargezet.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- kolommen die de gegenereerde types pas na de migratie kennen
+    const { data: agent } = await (context.supabase as unknown as { from: (t: string) => any })
+      .from("agents")
+      .select("kind, opties")
+      .eq("id", data.agentId)
+      .maybeSingle();
+    const heractivatie = (agent as { kind?: string } | null)?.kind === "heractivatie";
+    const opties = ((agent as { opties?: Record<string, unknown> } | null)?.opties ?? {}) as Record<
+      string,
+      unknown
+    >;
 
-    // Wie al een eerste bericht heeft gehad telt niet meer mee, ook niet als
-    // dat uit een andere campagne kwam: bereidVoor kijkt naar de hele agent,
-    // niet naar deze campagne. Een contact krijgt maar één keer een eerste
-    // bericht, en de unieke index op (contact_id, stap) maakt deze join precies
-    // één rij per contact.
-    const gehad = await gebied(
-      context.supabase
+    const rijen = await gebied(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- kolommen die de gegenereerde types pas na de migratie kennen
+      (context.supabase as unknown as { from: (t: string) => any })
         .from("outbound_contacts")
-        .select("id, outbound_messages!inner(id)", { count: "exact", head: true })
+        .select("id, email, bedrijf, laatst_besteld_op, teruggekomen_op, outbound_messages(stap)")
         .eq("agent_id", data.agentId)
         .eq("herkomst", data.herkomst)
         .is("afgemeld_op", null)
         .is("bounce_op", null)
-        .eq("outbound_messages.stap", 1),
+        .limit(2000),
     );
-    if (gehad.error) throw new Error(gehad.error.message);
+    if (rijen.error) throw new Error(rijen.error.message);
 
-    const aantal = totaal.count ?? 0;
-    const alGehad = gehad.count ?? 0;
+    const slapendNa = Number(opties["slapend_na_maanden"]) || 12;
+    const rust = Array.isArray(opties["nooit_aanschrijven"])
+      ? (opties["nooit_aanschrijven"] as string[])
+      : [];
+    const inSelectie = (
+      (rijen.data ?? []) as Array<{
+        id: string;
+        email: string;
+        bedrijf: string | null;
+        laatst_besteld_op: string | null;
+        teruggekomen_op: string | null;
+        outbound_messages: Array<{ stap: number }> | null;
+      }>
+    ).filter(
+      (c) =>
+        !heractivatie ||
+        (!c.teruggekomen_op && isSlapend(c.laatst_besteld_op, slapendNa) && !metRust(c, rust)),
+    );
+
+    // Wie al een eerste bericht heeft gehad telt niet meer mee, ook niet als
+    // dat uit een andere campagne kwam: bereidVoor kijkt naar de hele agent.
+    const aantal = inSelectie.length;
+    const alGehad = inSelectie.filter((c) =>
+      (c.outbound_messages ?? []).some((m) => m.stap === 1),
+    ).length;
     return { aantal, alGehad, nieuw: Math.max(aantal - alGehad, 0) };
   });
 
