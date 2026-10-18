@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><title>Onze AI-agents</title>
+<style>
+  :root{--brand:oklch(0.2 0.04 285);--violet:oklch(0.58 0.19 296);--mint:oklch(0.62 0.13 163);--warn:oklch(0.62 0.17 35);--ink:oklch(0.34 0.02 285);--zacht:oklch(0.55 0.015 285);--lijn:oklch(0.91 0.008 285);--vlak:oklch(0.985 0.004 285)}
+  @page{size:A4;margin:14mm 13mm 12mm}*{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;color:var(--ink);font-size:10pt;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h1,h2,h3,h4{color:var(--brand);margin:0;letter-spacing:-.015em}h1{font-size:26pt;line-height:1.1;font-weight:800}h2{font-size:15pt;font-weight:800;margin-bottom:1.5mm}h3{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--violet);margin:3mm 0 1mm}
+  p{margin:0 0 2.5mm}.kop{border-bottom:2.5px solid var(--brand);padding-bottom:4mm;margin-bottom:6mm}
+  .merk{font-size:8.5pt;text-transform:uppercase;letter-spacing:.16em;color:var(--violet);font-weight:700;margin-bottom:2mm}
+  .lead{font-size:11.5pt;color:var(--zacht);max-width:62em;margin-top:2.5mm}
+  .intro{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:7mm}
+  .kaart{border:1px solid var(--lijn);border-radius:3mm;padding:4mm;background:var(--vlak)}
+  .kaart h4{font-size:10.5pt;margin-bottom:1.5mm}
+  ul{margin:1mm 0 0;padding-left:4.5mm}li{margin-bottom:1.2mm}li::marker{color:var(--violet)}
+  .agent{break-inside:avoid;border:1px solid var(--lijn);border-radius:3.5mm;padding:5mm;margin-bottom:5mm;page-break-inside:avoid}
+  .agent .top{display:flex;justify-content:space-between;align-items:flex-start;gap:4mm;margin-bottom:2mm}
+  .status{white-space:nowrap;border-radius:2mm;padding:.5mm 2.5mm;font-size:8pt;font-weight:700;align-self:flex-start}
+  .nu{background:oklch(0.95 0.04 163);color:var(--mint)}.prep{background:oklch(0.96 0.03 35);color:var(--warn)}
+  .een{font-size:11pt;color:var(--zacht);margin-bottom:2mm}
+  .kolommen{display:grid;grid-template-columns:1fr 1fr;gap:4mm 6mm}
+  .cijfer{display:inline-block;background:var(--vlak);border:1px solid var(--lijn);border-radius:2mm;padding:.5mm 2.5mm;margin:0 1.5mm 1.5mm 0;font-size:9pt}
+  .nooit{border-left:3px solid var(--warn);padding-left:3mm;font-size:9.5pt;color:var(--zacht)}
+  .combi{border:1px dashed var(--lijn);border-radius:3mm;padding:4mm;margin-top:2mm}
+  table{width:100%;border-collapse:collapse;margin-top:3mm;font-size:9.5pt}th{text-align:left;font-size:7.5pt;text-transform:uppercase;letter-spacing:.1em;color:var(--zacht);font-weight:700;border-bottom:1px solid var(--lijn);padding:0 0 1.5mm}td{padding:2mm 0;border-bottom:1px solid var(--lijn);vertical-align:top}td:first-child{font-weight:600;color:var(--brand);padding-right:4mm;width:26%}
+  footer{margin-top:7mm;padding-top:3mm;border-top:1px solid var(--lijn);font-size:8pt;color:var(--zacht);display:flex;justify-content:space-between}
+  .pagina{break-before:page}
+</style></head><body>
+
+<div class="kop">
+  <div class="merk">Zakelijke AI Agents</div>
+  <h1>Onze AI-agents</h1>
+  <p class="lead">Geen chatbot die praat, maar medewerkers die werk doen: offertes maken, facturen opvolgen, afspraken bevestigen, klanten terughalen. Elke agent werkt vanuit jouw kennis, zet standaard een concept klaar in plaats van zelf te versturen, en laat in jouw portaal zien wat hij heeft gedaan.</p>
+</div>
+
+<div class="intro">
+  <div class="kaart">
+    <h4>Wat elke agent gemeen heeft</h4>
+    <ul>
+      <li><b>Hij weet alleen wat jij hem vertelt.</b> Prijzen, voorwaarden, openingstijden: alles komt uit jouw kennisbank. Staat het er niet in, dan verzint hij niets en geeft hij het aan jou.</li>
+      <li><b>Concept eerst.</b> Standaard kijk jij na voordat er iets de deur uit gaat. Vertrouw je hem, dan zet je direct versturen aan — met grenzen die jij bepaalt.</li>
+      <li><b>Een mens blijft de baas.</b> Twijfel, klachten, geld, gevoelige zaken: altijd naar jou. Elke agent heeft een pauzeknop, in jouw portaal.</li>
+      <li><b>Je ziet wat hij doet.</b> Een dashboard per agent met de cijfers die ertoe doen, een logboek, en elke werkdag een kort dagoverzicht per mail als je dat wilt.</li>
+    </ul>
+  </div>
+  <div class="kaart">
+    <h4>Hoe het zit met je gegevens</h4>
+    <ul>
+      <li>Alles staat in de EU (Ierland). Wij zien aantallen, geen inhoud: niet je kennisbank, niet je gesprekken, niet je e-mails.</li>
+      <li>Jij bepaalt hoe lang gesprekken en mails bewaard blijven; daarna verdwijnen ze vanzelf.</li>
+      <li>De AI-modellen trainen niet op jouw gegevens. Instructies die in een binnenkomende mail staan ("negeer je regels"), voert de agent niet uit.</li>
+      <li>Verwerkersovereenkomst beschikbaar. Alles over beveiliging staat op zakelijkeaiagents.nl/veiligheid — inclusief wat we níét hebben.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 1 -->
+<div class="agent">
+  <div class="top"><div><h2>Chat-assistent</h2><p class="een">Beantwoordt vragen van bezoekers op je website, 24 uur per dag, alleen met wat in jouw kennisbank staat.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Bedrijven die veel dezelfde vragen krijgen: openingstijden, levertijden, "doen jullie ook…". Webshops, dienstverleners, horeca, praktijken. Ook sterk als eerste filter vóór een offerte-aanvraag.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Wij lezen je website in; jij vult aan wat ontbreekt.</li><li>De assistent staat op je site en antwoordt in jouw toon.</li><li>Toont iemand interesse, dan vraagt hij naam en adres en geeft die aan jou door.</li><li>Weet hij iets niet, dan zegt hij dat eerlijk en biedt hij aan dat jij terugkomt.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">gesprekken</span><span class="cijfer">leads binnengehaald</span><span class="cijfer">vragen die hij niet kon beantwoorden</span></p>
+      <p>Die laatste lijst is goud: elke vraag die hij niet wist, zet jij met één klik in de kennisbank. Zo wordt hij elke week beter.</p>
+      <h3>Jij stelt in</h3><p>Toon, welkomsttekst, of hij contactgegevens mag vragen, op welke websites hij mag draaien, hoe lang gesprekken bewaard blijven.</p>
+      <p class="nooit">Nooit: zelf prijzen optellen, iets beloven wat niet in de kennisbank staat, doen alsof hij een mens is.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="agent">
+  <div class="top"><div><h2>Inbox-assistent (supportmail)</h2><p class="een">Beantwoordt je klantenservicemail met je eigen kennisbank. Standaard als concept dat jij goedkeurt; zekere antwoorden kunnen direct.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Iedereen met een info@- of support@-postbus die vol stroomt met vragen waar het antwoord vaststaat: webshops (verzendkosten, retouren), verhuur, abonnementen, praktijken.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Je stuurt je supportadres door naar ons, of koppelt je Gmail of Outlook: dan staat het concept gewoon in je eigen Postvak IN.</li><li>De agent herkent waar een vraag over gaat en stelt een antwoord op met bronvermelding uit je kennisbank.</li><li>Jij verstuurt, past aan, of handelt zelf af. Zekere antwoorden over onderwerpen die jij aanwijst mogen direct.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">binnen</span><span class="cijfer">zelf beantwoord</span><span class="cijfer">via jouw concept</span><span class="cijfer">naar jou doorgezet</span><span class="cijfer">reactietijd</span></p>
+      <p>Plus een seintje als vragen langer liggen dan jouw streeftijd, en welk onderwerp steeds terugkomt zonder dat hij het zelf kon — tijd voor een kennisitem.</p>
+      <h3>Jij stelt in</h3><p>Concept of direct, en voor welke onderwerpen; afzender en ondertekening; streeftijd; bewaartermijn.</p>
+      <p class="nooit">Nooit: klachten, terugbetalingen of boze klanten zelf afhandelen. Die gaan naar een mens, met een voorzet.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="agent">
+  <div class="top"><div><h2>Uitgaande e-mailagent</h2><p class="een">Neemt zelf contact op met relaties en prospects, één persoonlijk bericht per ontvanger, en volgt op wie niet reageert.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Groothandels, producenten en B2B-dienstverleners met een lijst relaties die wel een nieuw aanbod kunnen gebruiken: een proefpakket, een seizoensactie, een kennismaking. Ook voor zorgvuldige cold e-mail naar bedrijven.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Je levert een lijst aan (export uit je boekhouding is genoeg); wij herkennen de kolommen.</li><li>Per contact een eigen bericht, verspreid over werkdagen binnen jouw verzenduren.</li><li>Antwoorden komen bij jou binnen met een voorstel; opvolging stopt vanzelf zodra iemand reageert.</li><li>Afmelden met één klik, altijd.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">aangeschreven</span><span class="cijfer">bezorgd</span><span class="cijfer">reacties</span><span class="cijfer">afspraken</span><span class="cijfer">verzenddomein: SPF, DKIM, DMARC</span></p>
+      <h3>Jij stelt in</h3><p>Aanbod, toon, verzendtempo en -uren, hoeveel bounces je accepteert, stoppen bij een spamklacht, afmeldingen.</p>
+      <p class="nooit">Nooit: prijzen noemen in een mail (wie ernaar vraagt, wordt gebeld), doorgaan na een spamklacht, je verzenddomein kapotmaken. Boven een bounce-grens zet hij zichzelf stil.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="agent">
+  <div class="top"><div><h2>Heractivatie-agent</h2><p class="een">Schrijft klanten aan die stil zijn geworden, met een reden om terug te komen, en laat zien wie er terugkomt en wat dat waard was.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Iedereen met een klantenbestand ouder dan een jaar: webshops, groothandel, salons, sportscholen, dienstverleners met terugkerend werk. Gevonden omzet, zonder advertentiebudget.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Je stelt in wanneer iemand "slapend" is (bijvoorbeeld na 12 maanden); ouder dan drie jaar laat hij met rust.</li><li>Hij schrijft persoonlijk, hoogstens twee keer, en stopt bij een reactie of afmelding.</li><li>Komt iemand terug, dan vink je dat aan — en het dashboard rekent uit wat de agent opleverde.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">aangeschreven</span><span class="cijfer">reageerden</span><span class="cijfer">weer klant</span><span class="cijfer">waarde (× jouw orderwaarde)</span></p>
+      <h3>Jij stelt in</h3><p>Slapend na hoeveel maanden, de reden om terug te komen, maximaal aantal berichten, wie nooit aangeschreven wordt, je gemiddelde orderwaarde.</p>
+      <p class="nooit">Nooit: iemand stalken (twee berichten, dan rust), een lijst van jaren oud aanschrijven, kortingen verzinnen.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="agent">
+  <div class="top"><div><h2>Offerte-agent</h2><p class="een">Maakt van een aanvraag binnen minuten een concept-offerte, opgebouwd uit jouw prijslijst. Jij kijkt na en verstuurt; hij volgt op.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Installateurs, schilders, hoveniers, schoonmaak, catering, evenementen, fotografen, B2B-dienstverleners: iedereen die meer dan een paar offertes per week maakt en ze 's avonds inhaalt. Wie het eerst een goede offerte stuurt, wint vaker.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Je laadt je prijslijst in (Excel is genoeg).</li><li>Een aanvraag komt binnen per mail of via je site; hij kiest de regels en aantallen, het systeem rekent de bedragen.</li><li>Jij past aantallen aan, verstuurt, en hij vraagt na een paar dagen of er nog vragen zijn.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">aanvragen</span><span class="cijfer">minuten tot concept</span><span class="cijfer">verstuurd</span><span class="cijfer">geaccepteerd</span><span class="cijfer">omzet uit geaccepteerde offertes</span></p>
+      <h3>Jij stelt in</h3><p>Concept of direct, maximumbedrag zonder jouw oog, geldigheid, opvolgen na hoeveel dagen, je standaardvoorwaarden.</p>
+      <p class="nooit">Nooit: een prijs noemen die niet in je prijslijst staat. Elk bedrag is herleidbaar naar een regel; ontbreekt iets, dan vraagt hij het jou.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="agent">
+  <div class="top"><div><h2>Betaalherinnering-agent</h2><p class="een">Houdt je openstaande facturen bij en herinnert op het juiste moment, in een toon die per stap zakelijker wordt. Stopt zodra er betaald is of iemand antwoordt.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Elk bedrijf dat op factuur werkt. In het Nederlandse mkb wordt 15% van de facturen te laat betaald en 3% nooit; de reden is zelden de factuur en bijna altijd de opvolging die niemand doet.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Je leest je openstaande facturen in (export uit je boekhoudpakket) of voert ze in.</li><li>Een vooraankondiging vóór de vervaldatum, daarna herinneringen op de dagen die jij kiest.</li><li>Antwoordt een debiteur ("ik betaal volgende week"), dan wacht de agent een week en krijg jij het bericht.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">openstaand</span><span class="cijfer">over de termijn</span><span class="cijfer">herinnerd</span><span class="cijfer">betaald binnen 7 dagen na herinnering</span><span class="cijfer">gemiddelde betaaltermijn</span></p>
+      <h3>Jij stelt in</h3><p>De momenten van de reeks, het maximum, wie nooit herinnerd wordt, je betaalgegevens onder elke mail, een kopie bij de laatste stap.</p>
+      <p class="nooit">Nooit: dreigen met incasso of rente. De laatste stap zegt dat jíj persoonlijk contact opneemt. En nooit een herinnering voor een factuur die al betaald is: zonder verse lijst gaan de latere stappen niet vanzelf.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 7 -->
+<div class="agent">
+  <div class="top"><div><h2>Review-agent</h2><p class="een">Vraagt na een klus of levering om een Google-review en zet een antwoord klaar op elke review die binnenkomt, in jouw toon.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Lokale dienstverleners en alles wat via Google gevonden wordt: garages, salons, tandartsen, installateurs, restaurants, verhuizers. 97% van de consumenten leest reviews; een derde kijkt alleen naar de laatste twee weken.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Je zet klaar wie een klus kreeg (één naam, of een lijst); een dag later gaat het verzoek met jouw link.</li><li>Iedereen krijgt dezelfde vraag — geen trucs — maar niet na een klacht, als jij dat instelt.</li><li>Een binnengekomen review plak je erin; het antwoord staat klaar, jij plaatst het.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">gemiddelde (90 dagen)</span><span class="cijfer">reviews</span><span class="cijfer">verzoeken</span><span class="cijfer">reviews per verzoek</span><span class="cijfer">nog onbeantwoord</span></p>
+      <h3>Jij stelt in</h3><p>Hoeveel dagen na de klus, je Google-link, niet vragen na een klacht, antwoorden als concept of vijf sterren automatisch.</p>
+      <p class="nooit">Nooit: alleen tevreden klanten doorsturen (Google verbiedt het, en het is niet eerlijk), een sjabloonantwoord, verdedigen bij een slechte review.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="agent">
+  <div class="top"><div><h2>Afsprakenagent</h2><p class="een">Bevestigt afspraken, herinnert op tijd, leest een 'ja', legt verzetten bij jou neer en vult vrijgekomen plekken vanuit een wachtlijst.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Alles met een agenda en een no-show-probleem: fysiotherapie, tandartsen, salons, garages, adviesgesprekken, showrooms. Vier op de vijf Nederlanders zegt dat een herinnering helpt om een afspraak niet te missen.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Afspraken komen uit een lijst of voer je in; de koppeling met Google Agenda en Microsoft 365 komt eraan.</li><li>Herinnering op bijvoorbeeld 48 en 2 uur vooraf; 'ja' is bevestigd, al het andere komt bij jou.</li><li>Na een no-show één vriendelijk bericht; bij een afzegging gaat de plek naar de wachtlijst.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">komende week</span><span class="cijfer">vooraf bevestigd</span><span class="cijfer">no-shows</span><span class="cijfer">wachtlijst</span></p>
+      <h3>Jij stelt in</h3><p>Herinneruren, tot hoeveel uur vooraf verzetten mag, wachtlijst aan, bericht na een no-show.</p>
+      <p class="nooit">Nooit: zelf een afspraak verzetten. "Ja, maar kan het ook donderdag?" is voor hem een vraag voor een mens, geen bevestiging.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 9 -->
+<div class="agent">
+  <div class="top"><div><h2>Sales-assistent</h2><p class="een">Beoordeelt elke binnenkomende lead binnen minuten tegen wie bij jou past, zet het eerste antwoord klaar, en houdt bij wat ermee gebeurt.</p></div><span class="status nu">beschikbaar</span></div>
+  <div class="kolommen">
+    <div>
+      <h3>Beste voor</h3>
+      <p>Bedrijven waar aanvragen binnenkomen via formulier, chat of mail en te lang blijven liggen. 95% van de bedrijven reageert niet binnen vijf minuten; wie dat wél doet, krijgt het gesprek.</p>
+      <h3>Zo werkt het</h3>
+      <ul><li>Jij beschrijft wie bij je past (regio, soort klant, wat je wel en niet doet).</li><li>Leads uit je chat-assistent, je formulier en je mail komen op één lijst, beoordeeld: past, past niet, of twijfel.</li><li>Het eerste antwoord staat klaar; past het en is alles duidelijk, dan mag het direct weg als jij dat wilt.</li></ul>
+    </div>
+    <div>
+      <h3>Wat jij ziet</h3>
+      <p><span class="cijfer">leads</span><span class="cijfer">minuten tot eerste antwoord</span><span class="cijfer">passen / twijfel</span><span class="cijfer">afspraken</span><span class="cijfer">gewonnen</span></p>
+      <h3>Jij stelt in</h3><p>Wie bij je past, de streeftijd, welke bronnen hij volgt, zelf antwoorden of concept.</p>
+      <p class="nooit">Nooit: een twijfelgeval zelf afwijzen, een afwijzing zelf versturen, iets beloven wat niet in de kennisbank staat.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 10 -->
+<div class="agent">
+  <div class="top"><div><h2>WhatsApp-opvolger</h2><p class="een">Houdt leads warm via WhatsApp en draagt over aan een mens zodra het ingewikkeld wordt.</p></div><span class="status prep">in voorbereiding</span></div>
+  <p>Vraagt een zakelijk WhatsApp-nummer via Meta en goedgekeurde berichtsjablonen. Bouwen we zodra een klant het nodig heeft; de herinneringen van de afsprakenagent zijn er dan als eerste bij.</p>
+</div>
+
+<div class="pagina"></div>
+<h2>Welke agents samen sterk zijn</h2>
+<table>
+  <tr><th>Type bedrijf</th><th>Combinatie</th><th>Waarom</th></tr>
+  <tr><td>Installateur, schilder, hovenier</td><td>Offerte + Betaalherinnering + Review</td><td>De drie momenten waar omzet weglekt: de aanvraag die blijft liggen, de factuur die niet wordt opgevolgd, en de review die nooit gevraagd wordt.</td></tr>
+  <tr><td>Groothandel, producent</td><td>Uitgaande e-mail + Heractivatie + Betaalherinnering</td><td>Nieuwe relaties aanschrijven, stille klanten terughalen, en de rekening op tijd binnen.</td></tr>
+  <tr><td>Webshop</td><td>Chat + Inbox-assistent + Review</td><td>Dezelfde vragen op de site en in de mailbox beantwoord uit één kennisbank; tevreden kopers gevraagd om een review.</td></tr>
+  <tr><td>Praktijk, salon, garage</td><td>Afspraken + Review + Chat</td><td>Minder no-shows, meer recente reviews, en de telefoon staat minder roodgloeiend.</td></tr>
+  <tr><td>Adviesbureau, B2B-dienstverlener</td><td>Chat + Sales-assistent + Offerte</td><td>Van vraag op de site naar beoordeelde lead naar offerte, binnen het uur.</td></tr>
+</table>
+
+<h2 style="margin-top:7mm">Zo beginnen we</h2>
+<table>
+  <tr><td>1. Verkenning (30 min)</td><td>Waar lekt tijd of omzet weg, en past er een agent op? Eerlijk antwoord, ook als dat nee is.</td></tr>
+  <tr><td>2. Kennisbank</td><td>We lezen je website in en vullen aan met je prijslijst, voorwaarden en veelgestelde vragen. Jij kijkt na: dit is wat de agent mag weten.</td></tr>
+  <tr><td>3. In opbouw</td><td>De agent staat in jouw portaal, op pauze. Je ziet concepten, past de toon aan, zet de grenzen.</td></tr>
+  <tr><td>4. Live</td><td>Eerst alles als concept. Vertrouw je hem, dan zet je stap voor stap meer op direct. Elke werkdag een dagoverzicht als je wilt.</td></tr>
+  <tr><td>Kosten</td><td>Per agent een vast maandbedrag met een afgesproken fair use; wat erboven zit rekenen we transparant af, nooit als verrassing. Actuele tarieven op zakelijkeaiagents.nl.</td></tr>
+</table>
+
+<div class="combi" style="margin-top:7mm">
+  <h4 style="margin-bottom:1.5mm">Eén zin om te onthouden</h4>
+  <p style="margin:0">Een agent van ons doet het saaie werk dat anders blijft liggen, weet alleen wat jij hem vertelt, en laat jou de baas. Als het misgaat, zet hij zichzelf stil — en jij ziet precies wat er gebeurde.</p>
+</div>
+
+<footer><span>Zakelijke AI Agents · Amsterdam · zakelijkeaiagents.nl</span><span>Oktober 2026</span></footer>
+</body></html>
