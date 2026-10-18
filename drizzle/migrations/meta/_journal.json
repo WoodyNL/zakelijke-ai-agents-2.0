@@ -113,6 +113,20 @@
       "when": 1792334423015,
       "tag": "0015_afspraken_agent",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792338773924,
+      "tag": "0016_sales_assistent",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792338796394,
+      "tag": "0017_chat_onbeantwoord_en_dagrapport",
+      "breakpoints": true
     }
   ]
 }
