@@ -153,6 +153,10 @@ export default {
         // liften we mee op het verkeer dat er toch is.
         const { rondePostvakken } = await import("./lib/postvak/postvak.server");
         wachtOpruimen.call(ctx, rondePostvakken());
+
+        // En de betaalherinneringen, hoogstens eens per tien minuten.
+        const { rondeHerinneringen } = await import("./lib/herinneringen.server");
+        wachtOpruimen.call(ctx, rondeHerinneringen());
       }
 
       const handler = await getServerEntry();

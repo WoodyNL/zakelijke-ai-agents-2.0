@@ -17,6 +17,8 @@ import {
 import { haalTrechter, type Trechter } from "@/lib/campagne.functions";
 import { haalHeractivatie } from "@/lib/heractivatie.functions";
 import { haalOfferteCijfers } from "@/lib/offerte.functions";
+import { haalFactuurCijfers } from "@/lib/facturen.functions";
+import { euroTekst } from "@/lib/prijsimport";
 import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
 import { getMe, getAgent, getAgentUsage } from "@/lib/dashboard.functions";
@@ -93,6 +95,12 @@ function AgentDetail() {
     queryKey: ["offerte-kerncijfers", agentId, days],
     queryFn: () => offerteFn({ data: { agentId, dagen: days || 3650 } }),
     enabled: soort.bronnen.includes("offertes"),
+  });
+  const factuurFn = useServerFn(haalFactuurCijfers);
+  const factuurQuery = useQuery({
+    queryKey: ["factuur-kerncijfers", agentId, days],
+    queryFn: () => factuurFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("facturen"),
   });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
@@ -262,6 +270,30 @@ function AgentDetail() {
                       : "—"
                   }
                   label="geaccepteerd"
+                />
+              </>
+            )}
+            {soort.bronnen.includes("facturen") && (
+              <>
+                <Stat
+                  value={factuurQuery.data ? euroTekst(factuurQuery.data.open_bedrag) : "—"}
+                  label={`openstaand (${factuurQuery.data?.open_aantal ?? 0})`}
+                />
+                <Stat
+                  value={factuurQuery.data ? euroTekst(factuurQuery.data.over_termijn_bedrag) : "—"}
+                  label="over de termijn"
+                />
+                <Stat
+                  value={factuurQuery.data ? String(factuurQuery.data.herinnerd) : "—"}
+                  label="herinneringen verstuurd"
+                />
+                <Stat
+                  value={
+                    factuurQuery.data && factuurQuery.data.betaald > 0
+                      ? `${factuurQuery.data.betaald_na_herinnering} van ${factuurQuery.data.betaald}`
+                      : "—"
+                  }
+                  label="betaald binnen 7 dagen na een herinnering"
                 />
               </>
             )}

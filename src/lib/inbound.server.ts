@@ -267,6 +267,24 @@ export async function verwerkInboundWebhook(
     return new Response("ok", { status: 200 });
   }
 
+  // Een betaalherinnering-agent krijgt antwoorden van debiteuren: de reeks
+  // pauzeert en de klant hoort het. Niets opstellen, niets terugsturen.
+  if (agentSoort === "betaalherinnering") {
+    const inhoud = await haalTekst(emailId);
+    const { verwerkReactie } = await import("@/lib/herinneringen.server");
+    const werk = verwerkReactie(
+      agentId,
+      van,
+      inhoud.onderwerp ?? d.subject ?? null,
+      inhoud.tekst,
+    ).catch((e) => {
+      console.error("Reactie op herinnering verwerken mislukt:", e);
+    });
+    if (naAfloop) naAfloop(werk);
+    else await werk;
+    return new Response("ok", { status: 200 });
+  }
+
   // Een offerte-agent krijgt aanvragen. Zelfde patroon als supportmail: eerst
   // vastleggen (lukt dat niet, dan 5xx zodat Resend het opnieuw biedt), dan
   // opstellen na het antwoord aan Resend.

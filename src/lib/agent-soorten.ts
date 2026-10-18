@@ -27,6 +27,7 @@ export type AgentSoort =
 export type Scherm =
   | "gesprekken"
   | "aanvragen"
+  | "facturen"
   | "contacten"
   | "campagnes"
   | "berichten"
@@ -44,9 +45,17 @@ export type Scherm =
  *   support     supportmail: binnen, automatisch, via concept, naar een mens
  *   heractivatie  slapende klanten: aangeschreven, gereageerd, teruggekomen
  *   offertes    aanvragen, reactietijd, verstuurd, geaccepteerd
+ *   facturen    openstaand, over de termijn, betaald na een herinnering
  */
 export type Bron =
-  "gesprekken" | "leads" | "trechter" | "metingen" | "support" | "heractivatie" | "offertes";
+  | "gesprekken"
+  | "leads"
+  | "trechter"
+  | "metingen"
+  | "support"
+  | "heractivatie"
+  | "offertes"
+  | "facturen";
 
 type Beschrijving = {
   label: string;
@@ -181,14 +190,10 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     uitleg:
       "Houdt openstaande facturen bij en herinnert op het juiste moment in de juiste toon. Stopt zodra er betaald is; dreigt nooit zelf.",
     labels: { metric: "herinneringen verstuurd", score: "betaald na herinnering" },
-    schermen: [],
+    schermen: ["facturen"],
     optioneel: [],
-    bronnen: ["metingen"],
-    binnenkort: [
-      "Openstaand, en hoeveel daarvan over de termijn is",
-      "Betaald binnen 7 dagen na een herinnering",
-      "Gemiddelde betaaltermijn van je klanten",
-    ],
+    bronnen: ["facturen"],
+    binnenkort: ["Koppeling met je boekhoudpakket"],
   },
   reviews: {
     label: "Review-agent",
@@ -240,6 +245,7 @@ export function heeftKennisbank(kind: string | null | undefined): boolean {
 export const ALLE_SCHERMEN: Scherm[] = [
   "gesprekken",
   "aanvragen",
+  "facturen",
   "support",
   "contacten",
   "campagnes",

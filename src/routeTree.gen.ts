@@ -38,6 +38,7 @@ import { Route as AuthenticatedBezorglijstRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCampagnesRouteImport } from './routes/_authenticated/campagnes'
 import { Route as AuthenticatedContactenRouteImport } from './routes/_authenticated/contacten'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFacturenRouteImport } from './routes/_authenticated/facturen'
 import { Route as AuthenticatedGesprekkenRouteImport } from './routes/_authenticated/gesprekken'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
@@ -194,6 +195,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFacturenRoute = AuthenticatedFacturenRouteImport.update({
+  id: '/facturen',
+  path: '/facturen',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedGesprekkenRoute = AuthenticatedGesprekkenRouteImport.update({
   id: '/gesprekken',
   path: '/gesprekken',
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/campagnes': typeof AuthenticatedCampagnesRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/facturen': typeof AuthenticatedFacturenRoute
   '/gesprekken': typeof AuthenticatedGesprekkenRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/support': typeof AuthenticatedSupportRoute
@@ -305,6 +312,7 @@ export interface FileRoutesByTo {
   '/campagnes': typeof AuthenticatedCampagnesRoute
   '/contacten': typeof AuthenticatedContactenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/facturen': typeof AuthenticatedFacturenRoute
   '/gesprekken': typeof AuthenticatedGesprekkenRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/support': typeof AuthenticatedSupportRoute
@@ -345,6 +353,7 @@ export interface FileRoutesById {
   '/_authenticated/campagnes': typeof AuthenticatedCampagnesRoute
   '/_authenticated/contacten': typeof AuthenticatedContactenRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/facturen': typeof AuthenticatedFacturenRoute
   '/_authenticated/gesprekken': typeof AuthenticatedGesprekkenRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
@@ -385,6 +394,7 @@ export interface FileRouteTypes {
     | '/campagnes'
     | '/contacten'
     | '/dashboard'
+    | '/facturen'
     | '/gesprekken'
     | '/knowledge'
     | '/support'
@@ -423,6 +433,7 @@ export interface FileRouteTypes {
     | '/campagnes'
     | '/contacten'
     | '/dashboard'
+    | '/facturen'
     | '/gesprekken'
     | '/knowledge'
     | '/support'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/_authenticated/campagnes'
     | '/_authenticated/contacten'
     | '/_authenticated/dashboard'
+    | '/_authenticated/facturen'
     | '/_authenticated/gesprekken'
     | '/_authenticated/knowledge'
     | '/_authenticated/support'
@@ -702,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/facturen': {
+      id: '/_authenticated/facturen'
+      path: '/facturen'
+      fullPath: '/facturen'
+      preLoaderRoute: typeof AuthenticatedFacturenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/gesprekken': {
       id: '/_authenticated/gesprekken'
       path: '/gesprekken'
@@ -772,6 +791,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCampagnesRoute: typeof AuthenticatedCampagnesRoute
   AuthenticatedContactenRoute: typeof AuthenticatedContactenRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFacturenRoute: typeof AuthenticatedFacturenRoute
   AuthenticatedGesprekkenRoute: typeof AuthenticatedGesprekkenRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
@@ -790,6 +810,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCampagnesRoute: AuthenticatedCampagnesRoute,
   AuthenticatedContactenRoute: AuthenticatedContactenRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFacturenRoute: AuthenticatedFacturenRoute,
   AuthenticatedGesprekkenRoute: AuthenticatedGesprekkenRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
