@@ -45,6 +45,7 @@ import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedReviewsRouteImport } from './routes/_authenticated/reviews'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
+import { Route as AuthenticatedWhatsappRouteImport } from './routes/_authenticated/whatsapp'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as BlogWaaromAiPilotsMislukkenRouteImport } from './routes/blog/waarom-ai-pilots-mislukken'
 import { Route as EmbedSlugRouteImport } from './routes/embed.$slug'
@@ -233,6 +234,11 @@ const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWhatsappRoute = AuthenticatedWhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -298,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/reviews': typeof AuthenticatedReviewsRoute
   '/support': typeof AuthenticatedSupportRoute
+  '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AuthenticatedLeadsRoute
   '/reviews': typeof AuthenticatedReviewsRoute
   '/support': typeof AuthenticatedSupportRoute
+  '/whatsapp': typeof AuthenticatedWhatsappRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/blog': typeof BlogIndexRoute
@@ -384,6 +392,7 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/reviews': typeof AuthenticatedReviewsRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
+  '/_authenticated/whatsapp': typeof AuthenticatedWhatsappRoute
   '/blog/waarom-ai-pilots-mislukken': typeof BlogWaaromAiPilotsMislukkenRoute
   '/embed/$slug': typeof EmbedSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/reviews'
     | '/support'
+    | '/whatsapp'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/blog/'
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/reviews'
     | '/support'
+    | '/whatsapp'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/blog'
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/reviews'
     | '/_authenticated/support'
+    | '/_authenticated/whatsapp'
     | '/blog/waarom-ai-pilots-mislukken'
     | '/embed/$slug'
     | '/blog/'
@@ -799,6 +811,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSupportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/whatsapp': {
+      id: '/_authenticated/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof AuthenticatedWhatsappRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -855,6 +874,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedReviewsRoute: typeof AuthenticatedReviewsRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
+  AuthenticatedWhatsappRoute: typeof AuthenticatedWhatsappRoute
   AuthenticatedAgentsAgentIdRoute: typeof AuthenticatedAgentsAgentIdRoute
   AuthenticatedContactContactIdRoute: typeof AuthenticatedContactContactIdRoute
 }
@@ -877,6 +897,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedReviewsRoute: AuthenticatedReviewsRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
+  AuthenticatedWhatsappRoute: AuthenticatedWhatsappRoute,
   AuthenticatedAgentsAgentIdRoute: AuthenticatedAgentsAgentIdRoute,
   AuthenticatedContactContactIdRoute: AuthenticatedContactContactIdRoute,
 }

@@ -171,6 +171,32 @@ async function cijfersVoor(
           },
         ],
       };
+    case "whatsapp_followup":
+      return {
+        scherm: "/whatsapp",
+        regels: [
+          {
+            getal: await tel(
+              d,
+              `whatsapp_berichten?agent_id=eq.${a.id}&richting=eq.in&${tussen("op")}`,
+            ),
+            tekst: "vragen via WhatsApp",
+          },
+          {
+            getal: await tel(
+              d,
+              `whatsapp_berichten?agent_id=eq.${a.id}&richting=eq.uit&door=eq.agent&${tussen("op")}`,
+            ),
+            tekst: "door de agent beantwoord",
+          },
+        ],
+        wacht: [
+          {
+            getal: await tel(d, `whatsapp_gesprekken?agent_id=eq.${a.id}&status=eq.overgedragen`),
+            tekst: "gesprekken wachten op jou",
+          },
+        ],
+      };
     case "offerte":
       return {
         scherm: "/aanvragen",

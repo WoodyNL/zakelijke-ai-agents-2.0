@@ -21,6 +21,7 @@ import { haalFactuurCijfers } from "@/lib/facturen.functions";
 import { haalReviewCijfers } from "@/lib/reviews.functions";
 import { haalAfspraakCijfers } from "@/lib/afspraken.functions";
 import { haalSalesCijfers } from "@/lib/sales.functions";
+import { haalWhatsAppCijfers } from "@/lib/whatsapp.functions";
 import { euroTekst } from "@/lib/prijsimport";
 import { haalAgentOpties, zetMijnAgentOpties } from "@/lib/opties.functions";
 import { soortVan } from "@/lib/agent-soorten";
@@ -122,6 +123,12 @@ function AgentDetail() {
     queryKey: ["sales-kerncijfers", agentId, days],
     queryFn: () => salesFn({ data: { agentId, dagen: days || 3650 } }),
     enabled: soort.bronnen.includes("sales"),
+  });
+  const waFn = useServerFn(haalWhatsAppCijfers);
+  const waQuery = useQuery({
+    queryKey: ["whatsapp-kerncijfers", agentId, days],
+    queryFn: () => waFn({ data: { agentId, dagen: days || 3650 } }),
+    enabled: soort.bronnen.includes("whatsapp"),
   });
   const stats = query.data?.stats ?? [];
   const total = stats.reduce((s: number, r: any) => s + (r.output_count ?? 0), 0);
@@ -388,6 +395,32 @@ function AgentDetail() {
                 <Stat
                   value={salesQuery.data ? String(salesQuery.data.afspraken) : "—"}
                   label="afspraken"
+                />
+              </>
+            )}
+            {soort.bronnen.includes("whatsapp") && (
+              <>
+                <Stat
+                  value={waQuery.data ? String(waQuery.data.gesprekken) : "—"}
+                  label="gesprekken"
+                />
+                <Stat
+                  value={waQuery.data ? String(waQuery.data.door_agent) : "—"}
+                  label="door de agent beantwoord"
+                />
+                <Stat
+                  value={waQuery.data ? String(waQuery.data.overdrachten) : "—"}
+                  label="aan een mens overgedragen"
+                />
+                <Stat
+                  value={
+                    waQuery.data?.reactie_seconden != null
+                      ? waQuery.data.reactie_seconden < 90
+                        ? `${waQuery.data.reactie_seconden} s`
+                        : `${Math.round(waQuery.data.reactie_seconden / 60)} min`
+                      : "—"
+                  }
+                  label="reactietijd"
                 />
               </>
             )}

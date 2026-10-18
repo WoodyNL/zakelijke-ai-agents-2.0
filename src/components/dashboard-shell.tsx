@@ -23,6 +23,7 @@ const SCHERMLINKS: Record<Scherm, { to: string; label: string }> = {
   berichten: { to: "/berichten", label: "Berichten" },
   antwoorden: { to: "/antwoorden", label: "Antwoorden" },
   bezorgen: { to: "/bezorgen", label: "Bezorgen" },
+  whatsapp: { to: "/whatsapp", label: "WhatsApp" },
 };
 
 /**

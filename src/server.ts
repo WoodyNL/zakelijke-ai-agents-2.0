@@ -47,6 +47,7 @@ function isH3SwallowedErrorBody(body: string): boolean {
 /** Het pad waarop Resend binnengekomen antwoorden meldt. */
 const INBOUND_PAD = "/api/inbound";
 const POSTVAK_PAD = "/api/postvak/terug";
+const WHATSAPP_PAD = "/api/whatsapp";
 
 /** Waar een afmeldlink op uitkomt; ook het adres in List-Unsubscribe. */
 const AFMELD_PAD = "/afmelden";
@@ -130,6 +131,15 @@ export default {
         return await verwerkTerugkomst(request);
       }
 
+      // De webhook van Meta voor WhatsApp. GET is de controle bij het
+      // instellen, POST zijn berichten en statusmeldingen; de echtheid zit in
+      // de HMAC over de ruwe tekst, dus ook hier geen serverfunctie.
+      if (pad === WHATSAPP_PAD) {
+        const { verwerkWhatsAppWebhook } = await import("./lib/whatsapp.server");
+        const wacht = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | null)?.waitUntil;
+        return await verwerkWhatsAppWebhook(request, wacht ? (p) => wacht.call(ctx, p) : undefined);
+      }
+
       if (pad === INBOUND_PAD) {
         const { verwerkInboundWebhook } = await import("./lib/inbound.server");
         // Het opstellen van een supportantwoord mag na het antwoord aan Resend
@@ -165,6 +175,10 @@ export default {
         // En de afspraakherinneringen, hoogstens eens per vijf minuten.
         const { rondeAfspraken } = await import("./lib/afspraken.server");
         wachtOpruimen.call(ctx, rondeAfspraken());
+
+        // En de WhatsApp-opvolging van stille leads, hoogstens eens per tien minuten.
+        const { rondeWhatsApp } = await import("./lib/whatsapp.server");
+        wachtOpruimen.call(ctx, rondeWhatsApp());
 
         // En de dagoverzichten, elke werkdag na achten, één per agent per dag.
         const { rondeDagrapporten } = await import("./lib/dagrapport.server");

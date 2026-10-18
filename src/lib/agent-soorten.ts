@@ -36,7 +36,8 @@ export type Scherm =
   | "berichten"
   | "antwoorden"
   | "bezorgen"
-  | "support";
+  | "support"
+  | "whatsapp";
 
 /**
  * Een kerncijfer op het dashboard van een agent, en waar het vandaan komt.
@@ -52,6 +53,7 @@ export type Scherm =
  *   reviews     verzoeken, reviews en gemiddelde (90 dagen), onbeantwoord
  *   afspraken   komende week, bevestigd, no-shows, wachtlijst
  *   sales       leads, oordeel, eerste antwoord in minuten, afspraken
+ *   whatsapp    gesprekken, door de agent beantwoord, overdrachten, reactietijd
  */
 export type Bron =
   | "gesprekken"
@@ -64,7 +66,8 @@ export type Bron =
   | "facturen"
   | "reviews"
   | "afspraken"
-  | "sales";
+  | "sales"
+  | "whatsapp";
 
 type Beschrijving = {
   label: string;
@@ -154,11 +157,13 @@ export const SOORTEN: Record<AgentSoort, Beschrijving> = {
     kennisbank: true,
     uitleg:
       "Houdt leads warm via WhatsApp en draagt over aan een mens zodra het ingewikkeld wordt.",
-    labels: { metric: "berichten verstuurd", score: "reacties" },
-    schermen: [],
+    // Gebouwd op 19 oktober 2026. Beantwoordt wat klanten appen en volgt
+    // leads van de sales-assistent op met een goedgekeurd sjabloon.
+    labels: { metric: "berichten beantwoord", score: "zonder mens afgehandeld" },
+    schermen: ["whatsapp"],
     optioneel: [],
-    bronnen: ["metingen"],
-    binnenkort: ["Berichten verstuurd", "Reacties ontvangen", "Overdrachten naar een mens"],
+    bronnen: ["whatsapp"],
+    binnenkort: ["Herinneringen van de afsprakenagent via WhatsApp"],
   },
   // -------------------------------------------------------------------------
   // De vijf van 18 oktober 2026. Nog geen van alle gebouwd: ze staan hier
@@ -266,6 +271,7 @@ export const ALLE_SCHERMEN: Scherm[] = [
   "berichten",
   "antwoorden",
   "bezorgen",
+  "whatsapp",
 ];
 
 /** Wat er voor deze soort aan of uit kan: de standaard plus het optionele. */

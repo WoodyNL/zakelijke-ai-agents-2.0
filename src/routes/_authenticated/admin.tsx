@@ -66,6 +66,7 @@ const SCHERMNAMEN: Record<Scherm, string> = {
   berichten: "Berichten",
   antwoorden: "Antwoorden",
   bezorgen: "Bezorgen",
+  whatsapp: "WhatsApp",
 };
 
 const inputCls =
