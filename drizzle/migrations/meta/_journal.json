@@ -134,6 +134,13 @@
       "when": 1792341703338,
       "tag": "0018_20261019120000_whatsapp",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792500571701,
+      "tag": "0019_20261020120000_agent_antwoordt",
+      "breakpoints": true
     }
   ]
 }

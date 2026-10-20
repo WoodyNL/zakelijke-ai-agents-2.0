@@ -1204,6 +1204,7 @@ export type Database = {
           fout: string | null
           gepland_voor: string | null
           id: string
+          in_antwoord_op: string | null
           onderwerp: string
           provider_id: string | null
           stap: number
@@ -1219,6 +1220,7 @@ export type Database = {
           fout?: string | null
           gepland_voor?: string | null
           id?: string
+          in_antwoord_op?: string | null
           onderwerp: string
           provider_id?: string | null
           stap?: number
@@ -1234,6 +1236,7 @@ export type Database = {
           fout?: string | null
           gepland_voor?: string | null
           id?: string
+          in_antwoord_op?: string | null
           onderwerp?: string
           provider_id?: string | null
           stap?: number
@@ -1261,6 +1264,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "outbound_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_in_antwoord_op_fkey"
+            columns: ["in_antwoord_op"]
+            isOneToOne: false
+            referencedRelation: "outbound_replies"
             referencedColumns: ["id"]
           },
         ]
