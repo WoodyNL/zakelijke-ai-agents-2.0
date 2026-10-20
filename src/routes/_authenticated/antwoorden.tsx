@@ -153,18 +153,27 @@ function AntwoordenPagina() {
                           onbekend adres
                         </span>
                       )}
+                      {/* Hier stond één knop met het woord "afgehandeld" erop,
+                          groen en met een vinkje, op de plek waar andere
+                          schermen een statuslabel tonen. Die las als "dit is
+                          afgehandeld" terwijl het de handeling was die je nog
+                          moest doen — bij een binnengekomen vraag van een klant
+                          is dat precies het verkeerde misverstand.
+
+                          Nu is het label een label en de knop een knop. */}
+                      {af && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10.5px] font-medium text-emerald-300">
+                          <Check className="h-3 w-3" aria-hidden="true" />
+                          afgehandeld
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={() => afvinken(a)}
                         disabled={bezig === a.id}
-                        className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11.5px] transition disabled:opacity-40 ${
-                          af
-                            ? "border-white/12 bg-white/[0.06] text-ink/60 hover:bg-white/10"
-                            : "border-emerald-400/30 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20"
-                        }`}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.04] px-2.5 py-1.5 text-[11.5px] text-ink/70 transition hover:bg-white/10 disabled:opacity-40"
                       >
-                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                        {af ? "weer openzetten" : "afgehandeld"}
+                        {af ? "weer openzetten" : "markeer als afgehandeld"}
                       </button>
                     </div>
                   </div>
