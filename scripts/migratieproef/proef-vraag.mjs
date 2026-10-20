@@ -22,13 +22,30 @@ await db.exec(`
   CREATE SCHEMA IF NOT EXISTS auth;
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT gen_random_uuid() $$;
 `);
+// De oude versie van de functie eerst neerzetten, precies zoals hij in
+// productie staat. Anders draait de migratie op een lege database en komt de
+// enige interessante fout niet boven: PostgreSQL weigert CREATE OR REPLACE als
+// het returntype verandert. Lovable moest daar met de hand een DROP voor
+// toevoegen, en dat had deze proef moeten vangen.
+await db.exec(`
+  CREATE OR REPLACE FUNCTION public.onbeantwoorde_vragen(_agent_id uuid, _limiet integer DEFAULT 50)
+  RETURNS TABLE (gesprek_id uuid, vraag text, antwoord text, op timestamptz)
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT g.id, 'oud'::text, a.tekst, a.op
+    FROM public.chatberichten a
+    JOIN public.chatgesprekken g ON g.id = a.gesprek_id
+    WHERE g.agent_id = _agent_id AND a.rol = 'agent' AND a.onbeantwoord
+  $$;
+`);
+
 const agent = "11111111-1111-1111-1111-111111111111";
 const { rows:[g] } = await db.query(`INSERT INTO public.chatgesprekken (agent_id) VALUES ($1) RETURNING id`,[agent]);
 await db.query(`INSERT INTO public.chatberichten (gesprek_id, rol, tekst) VALUES ($1,'bezoeker','Leveren jullie ook op zaterdag?')`,[g.id]);
 const { rows:[a] } = await db.query(`INSERT INTO public.chatberichten (gesprek_id, rol, tekst, onbeantwoord) VALUES ($1,'agent','Dat weet ik niet.',true) RETURNING id`,[g.id]);
 
 console.log("\nMigratie: een afgehandelde vraag komt niet terug\n" + "=".repeat(52));
-try { await db.exec(SQL); meld(true,"migratie draait"); } catch(e){ meld(false,"migratie draait",e.message); process.exit(1); }
+try { await db.exec(SQL); meld(true,"migratie draait over de bestaande functie heen"); }
+catch(e){ meld(false,"migratie draait over de bestaande functie heen",e.message); process.exit(1); }
 try { await db.exec(SQL); meld(true,"en kan twee keer draaien"); } catch(e){ meld(false,"en kan twee keer draaien",e.message); }
 
 const lijst = async () => (await db.query(`SELECT * FROM public.onbeantwoorde_vragen($1,50)`,[agent])).rows;

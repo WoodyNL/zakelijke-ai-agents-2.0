@@ -19,6 +19,13 @@ ALTER TABLE public.chatberichten
 
 -- De lijst laat voortaan weg wat al is afgehandeld, en geeft het id van het
 -- bericht mee zodat het scherm weet wat het moet markeren.
+--
+-- Eerst droppen, want PostgreSQL weigert CREATE OR REPLACE als het returntype
+-- verandert (42P13), en er komt een kolom bij. Dat is in deze repo vaker
+-- gebeurd en het staat erin omdat een migratie die bij de eerste de beste
+-- omgeving faalt, geen migratie is.
+DROP FUNCTION IF EXISTS public.onbeantwoorde_vragen(uuid, integer);
+
 CREATE OR REPLACE FUNCTION public.onbeantwoorde_vragen(_agent_id uuid, _limiet integer DEFAULT 50)
 RETURNS TABLE (bericht_id bigint, gesprek_id uuid, vraag text, antwoord text, op timestamptz)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
