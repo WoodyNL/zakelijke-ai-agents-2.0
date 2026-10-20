@@ -42,7 +42,16 @@ export type Opdracht = {
   /** Wat er is gebeurd bij de vorige mail; leeg bij het eerste bericht. */
   vorigBericht?: string | undefined;
   /** Welke stap in de reeks; bepaalt waar het bericht op uitkomt. */
-  soort?: "eerste" | "opvolging" | "navraag" | "bevestiging" | undefined;
+  soort?: "eerste" | "opvolging" | "navraag" | "bevestiging" | "antwoord" | undefined;
+  /** Alleen bij een antwoord: wat de klant schreef, en wat wij eerder stuurden. */
+  gesprek?:
+    | {
+        /** De vraag of reactie van de klant, zonder het aangehaalde deel. */
+        binnen: string;
+        /** Wat de agent eerder in dit gesprek heeft geantwoord, oudste eerst. */
+        eerder: string[];
+      }
+    | undefined;
   /** Alleen bij een bevestiging: de afspraak die wordt nagevraagd. */
   bezorging?:
     | {
@@ -218,7 +227,55 @@ Wat je hier niet doet:
 De toon is die van een bevestiging, niet van een verzoek. Zoals een leverancier die even laat weten dat hij langskomt.`
       : "";
 
-  return `Je schrijft namens ${o.bedrijfsnaam} één e-mail aan één persoon. Je schrijft Nederlands.${navraag}${bevestiging}
+
+  /**
+   * Antwoorden op wat de klant terugschrijft.
+   *
+   * Hier verandert de opdracht volledig. Bij alle andere berichten neemt de
+   * agent het initiatief en kiest hij zelf waar hij het over heeft. Hier is er
+   * een vraag gesteld, en die vraag is het enige wat telt.
+   *
+   * Het doel blijft hetzelfde als bij het eerste bericht: een proefpakket op
+   * een toonbank krijgen. Een antwoord dat de vraag beantwoordt en daar niet
+   * op uitkomt, laat het gesprek doodlopen.
+   */
+  const antwoord =
+    o.soort === "antwoord" && o.gesprek
+      ? `
+
+# Dit is een antwoord op wat deze persoon terugschreef
+
+Hij schreef:
+
+"""
+${o.gesprek.binnen}
+"""
+
+Beantwoord die vraag, en alleen die vraag. Dit is geen nieuwe verkoopmail en geen herhaling van wat je al stuurde: hij heeft dat gelezen, anders had hij niet geantwoord.
+
+Kort. Twee of drie zinnen is genoeg. Dit is een gesprek, geen brief.
+
+Waar het op uitkomt: een proefpakket dat de chauffeur op een vrijdag langsbrengt. Heb je de vraag beantwoord, vraag dan of je dat voor hem zult inplannen. Behalve als hij dat al heeft gezegd — dan bevestig je het en vraag je niets meer.
+
+Wat je hier niet doet:
+- je niet opnieuw voorstellen; dat heb je al gedaan
+- niet herhalen wat je in je vorige mail schreef
+- niets beweren wat niet in de kennisbank staat. Weet je het antwoord niet, zeg dan dat je het navraagt en erop terugkomt. Dat is een eerlijk antwoord en het kost niets; iets verzinnen kost een klant.
+${
+  o.gesprek.eerder.length > 0
+    ? `
+# Wat je eerder in dit gesprek hebt geantwoord
+
+Herhaal dit niet. Zeg iets nieuws of verwijs er kort naar.
+
+"""
+${o.gesprek.eerder.join('\n\n---\n\n')}
+"""`
+    : ""
+}`
+      : "";
+
+  return `Je schrijft namens ${o.bedrijfsnaam} één e-mail aan één persoon. Je schrijft Nederlands.${navraag}${bevestiging}${antwoord}
 
 # De belangrijkste regel
 
@@ -250,6 +307,8 @@ ${NOTITIEREGELS}` : ""
 ${
   o.soort === "navraag"
     ? `Deze persoon heeft het pakket gehad. Waar hij vandaan komt in de lijst doet er nu niet meer toe; schrijf over wat er bezorgd is en niet over hoe het contact ooit begon.`
+    : o.soort === "antwoord"
+    ? `Deze persoon heeft teruggeschreven. Waar hij vandaan komt in de lijst doet er nu niet meer toe; begin dus niet opnieuw over de overname of over hoe het contact begon. Hij heeft die mail gelezen en gereageerd — ga verder waar het gesprek is.`
     : o.soort === "bevestiging"
     ? `Met deze persoon is al gemaild en er staat een afspraak. Waar hij vandaan komt in de lijst doet er nu niet meer toe. Begin dus niet opnieuw over de overname, over het overlijden van de vorige eigenaar, of over hoe het contact begon — dat is verteld, en een bevestiging die dat herhaalt leest als een nieuwe verkoopmail.`
     : oud
@@ -272,6 +331,12 @@ ${
 ${o.aanbod}
 
 Dat is geweest. Je biedt het niet opnieuw aan.`
+      : o.soort === "antwoord"
+      ? `# Waar het gesprek over gaat
+
+${o.aanbod}
+
+Dat heb je al aangeboden. Je biedt het niet opnieuw aan; je beantwoordt zijn vraag erover.`
       : o.soort === "bevestiging"
       ? `# Wat er bezorgd wordt
 

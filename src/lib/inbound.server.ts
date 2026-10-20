@@ -55,22 +55,42 @@ function supabase(serviceRole = true) {
 /** De tekst van de mail ophalen. Mislukt dit, dan gaan we zonder tekst verder. */
 async function haalTekst(
   emailId: string,
-): Promise<{ tekst: string; onderwerp?: string; messageId?: string }> {
+): Promise<{
+  tekst: string;
+  onderwerp?: string;
+  messageId?: string;
+  /** In kleine letters, want afzenders schrijven ze allemaal anders. */
+  kopregels: Record<string, string>;
+}> {
   const sleutel = process.env["RESEND_API_KEY"];
-  if (!sleutel) return { tekst: "" };
+  if (!sleutel) return { tekst: "", kopregels: {} };
   try {
     const res = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
       headers: { Authorization: `Bearer ${sleutel}` },
     });
-    if (!res.ok) return { tekst: "" };
+    if (!res.ok) return { tekst: "", kopregels: {} };
     const body = (await res.json()) as {
       text?: string | null;
       subject?: string;
       message_id?: string;
       headers?: Record<string, string>;
     };
-    const uit: { tekst: string; onderwerp?: string; messageId?: string } = {
+    // Alles in kleine letters: "Auto-Submitted", "auto-submitted" en
+    // "AUTO-SUBMITTED" komen allemaal voor, en de regels die hierop beslissen
+    // moeten niet van de schrijfwijze van de afzender afhangen.
+    const kopregels: Record<string, string> = {};
+    for (const [k, v] of Object.entries(body.headers ?? {})) {
+      kopregels[k.toLowerCase()] = String(v);
+    }
+
+    const uit: {
+      tekst: string;
+      onderwerp?: string;
+      messageId?: string;
+      kopregels: Record<string, string>;
+    } = {
       tekst: (body.text ?? "").slice(0, 20_000),
+      kopregels,
     };
     if (body.subject) uit.onderwerp = body.subject;
     // Nodig om een antwoord in dezelfde draad te laten landen (In-Reply-To).
@@ -79,7 +99,7 @@ async function haalTekst(
     if (messageId) uit.messageId = messageId;
     return uit;
   } catch {
-    return { tekst: "" };
+    return { tekst: "", kopregels: {} };
   }
 }
 
@@ -392,7 +412,10 @@ export async function verwerkInboundWebhook(
 
   const opslaan = await fetch(`${db.url}/rest/v1/outbound_replies`, {
     method: "POST",
-    headers: { ...db.headers, Prefer: "return=minimal" },
+    // De id komt terug omdat de agent hem nodig heeft: zijn antwoord wordt
+    // aan dít binnengekomen bericht gekoppeld, en op die koppeling ligt de
+    // unieke index die een tweede antwoord onmogelijk maakt.
+    headers: { ...db.headers, Prefer: "return=representation" },
     body: JSON.stringify(rij),
   });
 
@@ -405,6 +428,9 @@ export async function verwerkInboundWebhook(
     console.error("Antwoord opslaan mislukt:", opslaan.status, await opslaan.text());
     return new Response("Storage failed", { status: 503 });
   }
+
+  const [bewaard] = (await opslaan.json().catch(() => [])) as Array<{ id?: string }>;
+  const replyId = bewaard?.id ?? null;
 
   // Wie heeft geantwoord, krijgt geen herinnering meer die al klaarstond. Die
   // ligt ingepland bij Resend en moet daar actief worden weggehaald.
@@ -436,6 +462,39 @@ export async function verwerkInboundWebhook(
       if (stand) console.info(`Bevestiging voor contact ${contactId}: ${stand}`);
     } catch (e) {
       console.error("Bevestiging verwerken mislukt:", e);
+    }
+  }
+
+  /**
+   * En dan het antwoord zelf.
+   *
+   * Dit staat als laatste met opzet. Alles ervoor — het antwoord bewaren, de
+   * opvolging intrekken, de bezorging bijwerken — moet gebeuren, ook als het
+   * opstellen mislukt of het model traag is.
+   *
+   * Een fout hier mag de afhandeling niet laten struikelen. Het antwoord is
+   * al opgeslagen en een mens ziet het op het antwoordenscherm; een 5xx zou de
+   * hele melding opnieuw laten aanbieden en dan begint de verwerking van voren
+   * af aan. Dat er geen tweede antwoord uitgaat is geborgd in de database, maar
+   * de rest nog eens overdoen heeft geen zin.
+   */
+  if (replyId) {
+    try {
+      const { beantwoordReactie } = await import("@/lib/email-antwoord.server");
+      const uit = await beantwoordReactie({
+        agentId,
+        replyId,
+        contactId,
+        tekst: inhoud.tekst,
+        onderwerp: inhoud.onderwerp ?? d.subject ?? null,
+        kopregels: inhoud.kopregels,
+        messageId: inhoud.messageId ?? null,
+      });
+      console.info(
+        `Antwoord op ${van}: ${uit.gedaan}${"reden" in uit ? ` (${uit.reden})` : ""}`,
+      );
+    } catch (e) {
+      console.error("Automatisch antwoorden mislukt:", e);
     }
   }
 

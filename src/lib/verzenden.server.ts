@@ -85,6 +85,14 @@ export type TePlannen = {
   afmeldsleutel: string;
   /** Wanneer het weg mag. Leeg betekent: meteen. */
   wanneer?: Date;
+  /**
+   * De Message-ID van het bericht waarop dit een antwoord is.
+   *
+   * Zonder deze kopregel begint een antwoord in Gmail een nieuwe draad, en
+   * dan staat het losse berichtje zonder context onder in de inbox. Met deze
+   * regel hangt het onder de vraag waar het bij hoort.
+   */
+  inAntwoordOp?: string;
 };
 
 export type Afzender = {
@@ -119,6 +127,14 @@ export async function planBericht(
     headers: {
       "List-Unsubscribe": `<${afmeldlink}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      // References erbij, want daar kijken de meeste clients naar bij het
+      // samenvoegen van een draad; In-Reply-To alleen is niet genoeg.
+      ...(bericht.inAntwoordOp
+        ? {
+            "In-Reply-To": bericht.inAntwoordOp,
+            References: bericht.inAntwoordOp,
+          }
+        : {}),
     },
   };
   if (bericht.wanneer) lichaam["scheduled_at"] = bericht.wanneer.toISOString();
