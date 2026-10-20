@@ -94,8 +94,15 @@ meld(
   "een moment in het verleden wordt naar voren gehaald",
 );
 
-// De hele lijst van FJ Snacks op tien per dag.
-const heleLijst = verdeelOverDagen(137, 10, maandag);
+// De hele lijst van FJ Snacks op tien per dag, vanaf nu.
+//
+// Met opzet vanaf nu en niet vanaf die maandag hierboven. De grens van dertig
+// dagen is die van Resend en telt vanaf het moment van inplannen; een aanloop
+// van een week in de ingang gaat dus van dat budget af en heeft niets met de
+// code te maken. Deze test zakte daardoor op 20 oktober 2026 zonder dat er
+// iets was veranderd — en een test die afhangt van de dag waarop je hem draait,
+// wordt genegeerd.
+const heleLijst = verdeelOverDagen(137, 10, new Date());
 const dagen = new Set(heleLijst.map(dagVan));
 
 // Deze controle miste eerst, en daardoor bleef een echte fout onzichtbaar: bij
@@ -105,7 +112,15 @@ const telPerDag = new Map<string, number>();
 for (const d of heleLijst) telPerDag.set(dagVan(d), (telPerDag.get(dagVan(d)) ?? 0) + 1);
 const drukste = Math.max(...telPerDag.values());
 meld(drukste <= 10, "ook over weekenden heen blijft het maximum staan", `drukste dag: ${drukste}`);
-meld(dagen.size === 14, "137 stuks bij 10 per dag = veertien werkdagen", `${dagen.size} dagen`);
+// Veertien werkdagen bij een start op de opening, vijftien bij een start
+// halverwege de dag: dan passen er vandaag geen tien meer vóór sluitingstijd
+// en schuift de rest door. Allebei goed; wat telt is dat geen dag boven het
+// maximum komt, en dat staat in de controle hierboven.
+meld(
+  dagen.size === 14 || dagen.size === 15,
+  "137 stuks bij 10 per dag = veertien of vijftien werkdagen",
+  `${dagen.size} dagen`,
+);
 meld(
   heleLijst.every((d) => weekdag(d) !== 0 && weekdag(d) !== 6),
   "ook in de lange lijst geen weekenddagen",
