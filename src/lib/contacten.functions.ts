@@ -169,6 +169,17 @@ export const haalContacten = createServerFn({ method: "GET" })
  * testbericht — het zijn juist de berichten die iemand moet lezen, omdat de
  * software er zelf geen raad mee weet.
  */
+/** Het antwoord dat de agent op een binnengekomen reactie terugstuurde. */
+type Bericht = {
+  id: string;
+  in_antwoord_op: string | null;
+  onderwerp: string;
+  tekst: string;
+  status: "concept" | "gepland" | "verzonden" | "mislukt" | "beantwoord";
+  verzonden_op: string | null;
+  fout: string | null;
+};
+
 export const haalAntwoorden = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ agentId: z.string().uuid() }).parse(d))
@@ -182,7 +193,39 @@ export const haalAntwoorden = createServerFn({ method: "GET" })
       .order("ontvangen_op", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
-    return rijen ?? [];
+    const antwoorden = rijen ?? [];
+
+    // Wat de agent hierop heeft teruggestuurd.
+    //
+    // Dit scherm liet alleen zien wat er binnenkwam, uit de tijd dat een
+    // binnengekomen bericht niets anders deed dan de opvolging intrekken.
+    // Sinds de agent zelf antwoordt is dat de helft van het verhaal: je zag
+    // de vraag wel en het antwoord niet, en dus leek het alsof er niets
+    // gebeurde. Het uitgaande bericht wijst met in_antwoord_op terug naar de
+    // reactie, dus één extra vraag is genoeg.
+    //
+    // Bewust geen ingebedde selectie: die loopt over de naam van de
+    // vreemde sleutel, en dat is een stille afhankelijkheid van een naam die
+    // niemand hier ooit uitspreekt. Twee gewone vragen zijn duidelijker.
+    if (antwoorden.length === 0) return [];
+
+    // In groepjes, want de lijst hierboven gaat tot 200 reacties en PostgREST
+    // zet de hele `in`-opsomming in de URL. Tweehonderd uuid's zijn ruim zeven
+    // kilobyte aan adres, en dan loop je tegen de limiet van de webserver aan —
+    // niet hier op kantoor met drie testadressen, wel zodra het druk wordt.
+    const perReactie = new Map<string, Bericht>();
+    for (let i = 0; i < antwoorden.length; i += 50) {
+      const groep = antwoorden.slice(i, i + 50).map((a) => a.id);
+      const { data: berichten, error: berichtFout } = await context.supabase
+        .from("outbound_messages")
+        .select("id, in_antwoord_op, onderwerp, tekst, status, verzonden_op, fout")
+        .in("in_antwoord_op", groep);
+      if (berichtFout) throw new Error(berichtFout.message);
+      for (const b of berichten ?? []) {
+        if (b.in_antwoord_op) perReactie.set(b.in_antwoord_op, b);
+      }
+    }
+    return antwoorden.map((a) => ({ ...a, agentbericht: perReactie.get(a.id) ?? null }));
   });
 
 /** Een antwoord afvinken, of weer openzetten. */

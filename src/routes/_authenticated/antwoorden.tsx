@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/antwoorden")({
   head: () => ({
     meta: [
       { title: "Antwoorden — Zakelijke AI Agents klantportaal" },
-      { name: "description", content: "Wat je relaties terugschrijven." },
+      { name: "description", content: "Wat je relaties terugschrijven en wat de agent terugstuurde." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -28,6 +28,14 @@ type Antwoord = {
   afgehandeld_op: string | null;
   contact_id: string | null;
   outbound_contacts: { naam: string | null; bedrijf: string | null } | null;
+  agentbericht: {
+    id: string;
+    onderwerp: string;
+    tekst: string;
+    status: "concept" | "gepland" | "verzonden" | "mislukt" | "beantwoord";
+    verzonden_op: string | null;
+    fout: string | null;
+  } | null;
 };
 
 const wanneer = (iso: string) =>
@@ -81,9 +89,15 @@ function AntwoordenPagina() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-[22px] font-bold text-brand">Antwoorden</h1>
-            <p className="mt-1.5 max-w-[68ch] text-[13px]/[1.7] text-ink/60">
-              Wat je relaties terugschrijven. Wie antwoordt krijgt automatisch geen opvolging
-              meer — die wordt ingetrokken zodra het bericht hier binnenkomt.
+            <p className="mt-1.5 max-w-[72ch] text-[13.5px]/[1.75] text-ink/70">
+              Wat je relaties terugschrijven, en wat de agent daarop heeft teruggestuurd. De
+              agent antwoordt zelf, meestal binnen een minuut, en blijft dat doen tot er een
+              proefpakket is afgesproken voor de eerstvolgende vrijdag.
+            </p>
+            <p className="mt-1.5 max-w-[72ch] text-[13.5px]/[1.75] text-ink/55">
+              Hij stopt en laat het aan jou bij een vraag over prijzen, bij een afzender die
+              niet in de lijst staat, en na drie beurten. De geplande opvolging vervalt zodra
+              iemand terugschrijft.
             </p>
           </div>
           {alles.length > 0 && (
@@ -194,6 +208,8 @@ function AntwoordenPagina() {
                       De inhoud kon niet worden opgehaald. Kijk in de postbus zelf.
                     </p>
                   )}
+
+                  <AgentAntwoord bericht={a.agentbericht} />
                 </article>
               );
             })}
@@ -201,5 +217,54 @@ function AntwoordenPagina() {
         )}
       </div>
     </DashboardShell>
+  );
+}
+
+/**
+ * Wat de agent op dit bericht heeft teruggestuurd.
+ *
+ * Staat hier omdat het scherm anders alleen de vraag toont. Dat was precies
+ * de klacht: de agent antwoordde wel, maar je zag het niet, en dan lijkt het
+ * alsof er niets gebeurt.
+ *
+ * Er is bewust geen derde geval voor "bewust overgeslagen". Of de agent een
+ * bericht negeerde of het aan een mens liet, wordt nergens vastgelegd —
+ * alleen het verstuurde antwoord staat in de database. Hier doen alsof we het
+ * verschil weten zou een verzinsel op het scherm zetten.
+ */
+function AgentAntwoord({ bericht }: { bericht: Antwoord["agentbericht"] }) {
+  if (!bericht) {
+    return (
+      <p className="mt-3 border-t border-white/8 pt-3 text-[12.5px]/[1.7] text-ink/45">
+        De agent heeft hier niet op geantwoord. Deze is voor jou.
+      </p>
+    );
+  }
+
+  const mislukt = bericht.status === "mislukt";
+
+  return (
+    <div
+      className={`mt-3 rounded-xl border-l-2 py-2.5 pr-3 pl-3.5 ${
+        mislukt ? "border-amber-400/70 bg-amber-400/[0.06]" : "border-violet/70 bg-violet/[0.07]"
+      }`}
+    >
+      <p className="text-[11.5px] font-semibold tracking-wide text-ink/70 uppercase">
+        {mislukt
+          ? "Antwoord van de agent is niet verstuurd"
+          : bericht.verzonden_op
+            ? `Agent antwoordde · ${wanneer(bericht.verzonden_op)}`
+            : "Agent heeft een antwoord klaarstaan"}
+      </p>
+
+      {mislukt && bericht.fout && (
+        <p className="mt-1 text-[12px]/[1.6] text-amber-300/90">{bericht.fout}</p>
+      )}
+
+      <p className="mt-1.5 text-[13px] font-medium text-ink/85">{bericht.onderwerp}</p>
+      <p className="mt-1 max-w-[78ch] text-[12.5px]/[1.7] whitespace-pre-wrap text-ink/70">
+        {bericht.tekst.length > 900 ? bericht.tekst.slice(0, 900) + "…" : bericht.tekst}
+      </p>
+    </div>
   );
 }
