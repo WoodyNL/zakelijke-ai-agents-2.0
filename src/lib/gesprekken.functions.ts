@@ -139,6 +139,7 @@ export const verwijderGesprek = createServerFn({ method: "POST" })
  * beantwoord krijgt.
  */
 export type OnbeantwoordeVraag = {
+  bericht_id: number;
   gesprek_id: string;
   vraag: string;
   antwoord: string;
@@ -169,12 +170,31 @@ export const zetInKennisbank = createServerFn({ method: "POST" })
         agentId: z.string().uuid(),
         vraag: z.string().trim().min(3).max(500),
         antwoord: z.string().trim().min(3).max(5000),
+        /** Het chatbericht dat hiermee is afgehandeld. */
+        berichtId: z.number().int().positive().optional(),
       })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
     await mijnAgent(context as { supabase: unknown; userId: string }, data.agentId);
     const sb = context.supabase as unknown as Ongetypt;
+
+    // Staat deze vraag er al? Dan is er eerder op geklikt, en een tweede
+    // kennisitem met dezelfde vraag is erger dan geen: de agent weet dan niet
+    // welke van de twee klopt. Dat kon gebeuren omdat de vraag na een
+    // herlaadbeurt terugkwam alsof het opslaan was mislukt.
+    const { data: bestaand } = await sb
+      .from("knowledge_items")
+      .select("id")
+      .eq("agent_id", data.agentId)
+      .eq("question", data.vraag)
+      .limit(1);
+
+    if (Array.isArray(bestaand) && bestaand.length > 0) {
+      if (data.berichtId) await markeerAfgehandeld(sb, data.berichtId);
+      return { ok: true as const, alAanwezig: true };
+    }
+
     const { error } = await sb.from("knowledge_items").insert({
       agent_id: data.agentId,
       category: "veelgestelde vragen",
@@ -184,5 +204,19 @@ export const zetInKennisbank = createServerFn({ method: "POST" })
       is_active: true,
     });
     if (error) throw new Error(error.message);
-    return { ok: true as const };
+
+    // Pas markeren nadat het kennisitem er echt staat. Andersom zou een
+    // mislukte invoeging een vraag laten verdwijnen die nergens is opgeslagen.
+    if (data.berichtId) await markeerAfgehandeld(sb, data.berichtId);
+
+    return { ok: true as const, alAanwezig: false };
   });
+
+/** Het chatbericht afvinken, zodat de vraag niet terugkomt na een herlaadbeurt. */
+async function markeerAfgehandeld(sb: Ongetypt, berichtId: number): Promise<void> {
+  const client = sb as unknown as {
+    rpc: (n: string, a: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+  };
+  const { error } = await client.rpc("markeer_vraag_afgehandeld", { _bericht_id: berichtId });
+  if (error) throw new Error(error.message);
+}

@@ -296,9 +296,14 @@ function Onbeantwoord({ agentId }: { agentId: string }) {
     if (antwoord.length < 3) return;
     setBezig(v.vraag);
     try {
-      await zetFn({ data: { agentId, vraag: v.vraag, antwoord } });
+      await zetFn({ data: { agentId, vraag: v.vraag, antwoord, berichtId: v.bericht_id } });
       setKlaar((k) => new Set([...k, v.vraag]));
+      // Allebei verversen. De vraag werd alleen in een lokale verzameling
+      // verborgen, dus na een herlaadbeurt stond hij er weer alsof het opslaan
+      // was mislukt — en dan klikt iemand nog eens en staan er twee
+      // kennisitems met dezelfde vraag.
       await qc.invalidateQueries({ queryKey: ["knowledge", agentId] });
+      await qc.invalidateQueries({ queryKey: ["onbeantwoord", agentId] });
     } finally {
       setBezig(null);
     }
