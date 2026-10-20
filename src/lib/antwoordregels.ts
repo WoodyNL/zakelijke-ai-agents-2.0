@@ -88,12 +88,50 @@ export function vraagtAfmelding(tekst: string): boolean {
 }
 
 /**
+ * Haalt onze eigen afmeldregel uit de tekst.
+ *
+ * Onder elk bericht dat wij sturen staat "Wil je geen post meer van ons? Meld
+ * je af via .../afmelden?s=...". Dat moet daar staan, het is wettelijk
+ * verplicht. Maar wie terugschrijft, stuurt onze mail mee onder zijn antwoord
+ * — inclusief die regel. En die regel bevat precies de woorden waar
+ * vraagtAfmelding op zoekt: "geen post meer" en "afmelden".
+ *
+ * Daardoor las de agent in elk binnengekomen antwoord een afmelding, ook in
+ * "wat zit er in het proefpakket?". Niet in één geval: in álle. Geen enkel
+ * antwoord kon ooit beantwoord worden, want onze eigen voettekst komt altijd
+ * mee terug.
+ *
+ * Het weghalen gebeurt per regel en niet vanaf de streep, zodat het ook werkt
+ * als het citaat midden in de tekst staat — wat het altijd doet.
+ */
+export function zonderOnzeAfmeldregel(tekst: string): string {
+  return tekst
+    .split(/\r?\n/)
+    .filter((r) => {
+      // Citaattekens eraf: in een antwoord staat onze regel als "> Wil je...".
+      const kaal = r.replace(/^[\s>]+/, "");
+      return !/wil je geen post meer van ons\?/i.test(kaal) &&
+        !/zakelijkeaiagents\.nl\/afmelden/i.test(kaal);
+    })
+    .join("\n");
+}
+
+/**
  * Het oordeel.
  *
  * De volgorde is niet willekeurig: eerst de dingen die schade doen als je ze
  * mist, dan pas de dingen die alleen ongemak opleveren.
  */
 export function beoordeelAntwoord(b: Binnenkomend): Oordeel {
+  // Onze eigen voettekst eruit, de rest laten staan. Bewust niet alleen het
+  // niet-aangehaalde deel bekijken: wie onder het citaat typt — en dat doen
+  // genoeg mensen — zou dan een afmelding kunnen schrijven die wij missen.
+  // Een afmelding missen is het ergste wat hier kan gebeuren.
+  const zonderOns = zonderOnzeAfmeldregel(b.tekst);
+
+  // Wat deze persoon zelf heeft getypt, zonder het aangehaalde deel.
+  const eigenWoorden = zonderCitaat(b.tekst);
+
   // 1. Een machine. Hier zit de lus, dus dit staat vooraan. Niet naar een mens
   //    ook: een afwezigheidsmelding hoeft niemand te lezen.
   if (isAutomatischBericht(b)) {
@@ -101,7 +139,7 @@ export function beoordeelAntwoord(b: Binnenkomend): Oordeel {
   }
 
   // 2. Afmelden. Nooit een verkoopmail terug naar wie om rust vraagt.
-  if (vraagtAfmelding(b.tekst)) {
+  if (vraagtAfmelding(zonderOns)) {
     return { doen: "mens", reden: "vraagt om geen post meer te krijgen" };
   }
 
@@ -122,8 +160,10 @@ export function beoordeelAntwoord(b: Binnenkomend): Oordeel {
   }
 
   // 5. Niets om op te antwoorden. Resend levert de tekst apart aan, en dat
-  //    kan mislukken; dan staat er een leeg bericht in het scherm.
-  if (b.tekst.trim().length < 2) {
+  //    kan mislukken; dan staat er een leeg bericht in het scherm. En wie
+  //    alleen ons eigen citaat terugstuurt zonder er iets boven te typen,
+  //    heeft ook niets gevraagd — dan krijgt het model een lege vraag.
+  if (eigenWoorden.trim().length < 2) {
     return { doen: "mens", reden: "geen leesbare tekst in het bericht" };
   }
 
