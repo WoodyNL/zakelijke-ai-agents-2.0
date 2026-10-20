@@ -198,16 +198,20 @@ html {
 
 .theme-dark .card-glass,
 .theme-dark .card-glass-lg {
-  background: rgba(255, 255, 255, 0.05) !important;
+  /* Bij 0.05 wit zweefden de kaarten nauwelijks los van het bijna-zwarte
+     vlak eronder; iets meer wit geeft de tekst een leesbaar eigen vlak. */
+  background: rgba(255, 255, 255, 0.07) !important;
   background-image: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   box-shadow: 0 24px 50px -30px rgba(0, 0, 0, 0.9) !important;
 }
 
 .theme-dark .card-lift:hover {
-  border-color: rgba(174, 143, 247, 0.45) !important;
-  background-color: rgba(255, 255, 255, 0.09) !important;
-  box-shadow: 0 26px 60px -28px rgba(120, 110, 255, 0.7) !important;
+  border-color: rgba(174, 143, 247, 0.6) !important;
+  background-color: rgba(255, 255, 255, 0.11) !important;
+  box-shadow:
+    0 30px 66px -26px rgba(120, 110, 255, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
 .theme-dark .step-row:hover {
@@ -522,9 +526,163 @@ html {
     color 0.2s ease,
     background-color 0.2s ease;
 
+  &::after {
+    content: "";
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: 3px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-violet);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
   &:hover {
     background-color: rgba(255, 255, 255, 0.08);
     color: var(--color-ink);
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    transform: scaleX(1);
+  }
+}
+
+/*
+ * Donkere kopknop.
+ *
+ * De paarse CTA uit de hero stond ook in de balk, waar hij als een los
+ * gekleurd blokje op het donkere vlak lag. Deze is bijna zwart met een
+ * violette rand en een halo die rustig ademt: hij valt op doordat hij
+ * gloeit, niet doordat hij schreeuwt — en de hero houdt zijn eigen
+ * primaire knop.
+ */
+@utility cta-dark {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(140deg, oklch(0.27 0.04 288), oklch(0.165 0.025 285));
+  border: 1px solid oklch(0.7 0.18 296 / 0.5);
+  box-shadow:
+    0 10px 24px -14px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(140deg, oklch(0.62 0.21 296), oklch(0.55 0.18 282));
+    opacity: 0.3;
+    filter: blur(10px);
+    animation: cta-breathe 3.8s ease-in-out infinite;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    overflow: hidden;
+    background: linear-gradient(
+      110deg,
+      transparent 42%,
+      rgba(255, 255, 255, 0.22) 50%,
+      transparent 58%
+    );
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(140deg, oklch(0.33 0.05 290), oklch(0.21 0.03 285));
+    border-color: oklch(0.78 0.18 296 / 0.95);
+    box-shadow:
+      0 18px 36px -16px rgba(0, 0, 0, 0.95),
+      0 0 32px -8px oklch(0.62 0.2 293 / 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+
+  &:hover::before {
+    opacity: 0.8;
+    animation: none;
+  }
+
+  &:hover::after {
+    opacity: 1;
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.99);
+  }
+}
+
+@keyframes cta-breathe {
+  0%,
+  100% {
+    opacity: 0.26;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Violette lijn die bij zweven over de bovenrand van een kaart uitgroeit. */
+@utility card-edge {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: -1px;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, transparent, var(--color-violet), transparent);
+    box-shadow: 0 0 12px 1px color-mix(in oklab, var(--color-violet) 55%, transparent);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  &:hover::before,
+  &:focus-within::before {
+    transform: scaleX(1);
+  }
+}
+
+/* Vraagrij: violet streepje links bij zweven én bij een open antwoord. */
+@utility faq-row {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12%;
+    bottom: 12%;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--color-violet);
+    transform: scaleY(0);
+    transform-origin: center;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  &:hover::before,
+  &[data-state="open"]::before {
+    transform: scaleY(1);
   }
 }
 
@@ -598,6 +756,17 @@ html {
   .cta-purple::after {
     animation: none;
     opacity: 0;
+  }
+
+  .cta-dark::before {
+    animation: none;
+    opacity: 0.45;
+  }
+
+  .card-edge::before,
+  .faq-row::before,
+  .nav-link::after {
+    transition: none;
   }
 
   .integration-tile,

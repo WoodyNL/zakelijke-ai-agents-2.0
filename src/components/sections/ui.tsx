@@ -41,7 +41,7 @@ export function Section({
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet">{children}</p>
+    <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-violet">{children}</p>
   );
 }
 
@@ -57,11 +57,11 @@ export function H2({ id, children }: { id?: string; children: React.ReactNode })
 }
 
 export function Lead({ children }: { children: React.ReactNode }) {
-  return <p className="mt-4 max-w-[68ch] text-[15px]/[1.75] text-ink/75">{children}</p>;
+  return <p className="mt-4 max-w-[68ch] text-[16px]/[1.8] text-ink/85">{children}</p>;
 }
 
 export function Source({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-[11.5px]/[1.5] text-ink/55">{children}</p>;
+  return <p className="mt-2 text-[12.5px]/[1.55] text-ink/68">{children}</p>;
 }
 
 export function Check({ className = "" }: { className?: string }) {

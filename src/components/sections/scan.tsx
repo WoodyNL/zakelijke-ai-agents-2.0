@@ -41,7 +41,7 @@ export function ScanSection() {
               <div className="mt-7 grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
                 <div>
                   {SCAN.body.map((p) => (
-                    <p key={p} className="mt-3 max-w-[62ch] text-[14.5px]/[1.8] text-ink/80">
+                    <p key={p} className="mt-3 max-w-[62ch] text-[15.5px]/[1.8] text-ink/88">
                       {p}
                     </p>
                   ))}
@@ -52,7 +52,7 @@ export function ScanSection() {
                     {SCAN.items.map((it) => (
                       <li
                         key={it}
-                        className="step-row flex gap-2 px-2 py-2 text-[13.5px]/[1.7] text-ink/85"
+                        className="step-row flex gap-2 px-2 py-2 text-[15px]/[1.7] text-ink/90"
                       >
                         <Check />
                         {it}
@@ -61,23 +61,23 @@ export function ScanSection() {
                   </ul>
                 </div>
 
-                <div className="card-lift rounded-3xl border border-white/12 bg-white/5 p-6 sm:p-7">
-                  <p className="text-[11.5px] uppercase tracking-[0.16em] text-ink/60">
+                <div className="card-lift card-edge group rounded-3xl border border-white/14 bg-white/[0.07] p-6 sm:p-7">
+                  <p className="text-[12.5px] uppercase tracking-[0.16em] text-ink/72">
                     {SCAN.priceLabel}
                   </p>
                   <p className="mt-3 font-display text-[42px] font-bold leading-none text-brand">
                     {SITE.scanPrice}
-                    <span className="ml-2 align-middle text-[13px] font-medium text-ink/60">
+                    <span className="ml-2 align-middle text-[14px] font-medium text-ink/72">
                       ex. btw
                     </span>
                   </p>
-                  <p className="mt-4 text-[13.5px]/[1.65] font-medium text-mint">
+                  <p className="mt-4 text-[15px]/[1.65] font-medium text-mint">
                     {SCAN.priceNote}
                   </p>
                   <CtaButton href="#contact" className="mt-6 w-full">
                     {SITE.ctaPrimary}
                   </CtaButton>
-                  <p className="mt-3 text-center text-[11.5px]/[1.55] text-ink/60">
+                  <p className="mt-3 text-center text-[12.5px]/[1.55] text-ink/72">
                     {SCAN.priceFooter}
                   </p>
                 </div>
@@ -98,7 +98,7 @@ export function BranchesSection() {
           <Eyebrow>{BRANCHES.eyebrow}</Eyebrow>
           <H2 id="branches-titel">{BRANCHES.h2}</H2>
           <Lead>{BRANCHES.intro}</Lead>
-          <p className="mt-2 text-[11.5px] text-ink/55">{BRANCHES.introSource}</p>
+          <p className="mt-2 text-[12.5px] text-ink/68">{BRANCHES.introSource}</p>
         </Reveal>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -106,14 +106,14 @@ export function BranchesSection() {
             const Icon = ICONS[c.icon as keyof typeof ICONS];
             return (
               <Reveal key={c.title} delay={i * 50}>
-                <article className="card-glass-lg card-lift group h-full rounded-2xl p-6">
+                <article className="card-glass-lg card-lift card-edge group h-full rounded-2xl p-6">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo/15 text-violet transition-all duration-300 group-hover:scale-110 group-hover:bg-indigo/25">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <h3 className="mt-4 font-display text-[16px] font-bold tracking-tight text-brand">
                     {c.title}
                   </h3>
-                  <p className="mt-2 text-[13.5px]/[1.7] text-ink/80">{c.body}</p>
+                  <p className="mt-2 text-[15px]/[1.7] text-ink/88">{c.body}</p>
                 </article>
               </Reveal>
             );
@@ -121,7 +121,7 @@ export function BranchesSection() {
         </div>
 
         <Reveal>
-          <p className="mt-8 text-center text-[13.5px]/[1.75] text-ink/75">
+          <p className="mt-8 text-center text-[15px]/[1.75] text-ink/90">
             {BRANCHES.footer}{" "}
             <a
               href="#contact"

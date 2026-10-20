@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LogIn, Menu, X } from "lucide-react";
+import { ArrowRight, LogIn, Menu, X } from "lucide-react";
 import * as React from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { NAV, SITE } from "@/content/site";
@@ -36,7 +36,7 @@ export function SiteHeader() {
             <a
               key={n.href}
               href={n.href}
-              className="nav-link px-2.5 py-2 text-[13px] font-medium whitespace-nowrap text-ink/80"
+              className="nav-link px-2.5 py-2 text-[13.5px] font-medium whitespace-nowrap text-ink/85"
             >
               {n.label}
             </a>
@@ -50,7 +50,7 @@ export function SiteHeader() {
           <Link
             to="/auth"
             aria-label="Inloggen klantportaal"
-            className="nav-link inline-flex items-center gap-1.5 px-2.5 py-2 text-[13px] font-medium whitespace-nowrap text-ink/75 hover:text-ink"
+            className="nav-link inline-flex items-center gap-1.5 px-2.5 py-2 text-[13.5px] font-medium whitespace-nowrap text-ink/85 hover:text-ink"
           >
             <LogIn className="h-4 w-4" aria-hidden="true" />
             <span className="hidden xl:inline">Inloggen</span>
@@ -62,10 +62,14 @@ export function SiteHeader() {
               is de knoptekst korter, anders past het daar ook niet. */}
           <a
             href="#contact"
-            className="cta-purple inline-flex h-11 items-center whitespace-nowrap rounded-full px-5 text-[13px] font-semibold text-white xl:px-6"
+            className="cta-dark group inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-full px-5 text-[13.5px] font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet focus-visible:ring-offset-2 focus-visible:ring-offset-transparent xl:px-6"
           >
             <span className="xl:hidden">Gratis verkenning</span>
             <span className="hidden xl:inline">{SITE.ctaPrimary}</span>
+            <ArrowRight
+              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden="true"
+            />
           </a>
         </div>
 
@@ -88,7 +92,7 @@ export function SiteHeader() {
                 key={n.href}
                 href={n.href}
                 onClick={() => setOpen(false)}
-                className="rounded-xl px-3 py-3 text-[14px] text-ink/85 transition-colors hover:bg-white/8 hover:text-ink"
+                className="rounded-xl px-3 py-3 text-[14.5px] text-ink/90 transition-colors hover:bg-white/8 hover:text-ink"
               >
                 {n.label}
               </a>
@@ -96,14 +100,14 @@ export function SiteHeader() {
             <a
               href="#ai-scan"
               onClick={() => setOpen(false)}
-              className="rounded-xl px-3 py-3 text-[14px] font-semibold text-ink/85 transition-colors hover:bg-white/8 hover:text-ink"
+              className="rounded-xl px-3 py-3 text-[14.5px] font-semibold text-ink/90 transition-colors hover:bg-white/8 hover:text-ink"
             >
               AI-scan
             </a>
             <Link
               to="/auth"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-xl px-3 py-3 text-[14px] text-ink/85 transition-colors hover:bg-white/8 hover:text-ink"
+              className="flex items-center gap-2 rounded-xl px-3 py-3 text-[14.5px] text-ink/90 transition-colors hover:bg-white/8 hover:text-ink"
             >
               <LogIn className="h-4 w-4" aria-hidden="true" />
               Inloggen klantportaal
@@ -111,7 +115,7 @@ export function SiteHeader() {
             <a
               href="#contact"
               onClick={() => setOpen(false)}
-              className="cta-purple mt-2 inline-flex h-12 items-center justify-center rounded-full px-6 text-[14px] font-semibold text-white"
+              className="cta-dark mt-2 inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[14.5px] font-semibold text-white"
             >
               {SITE.ctaPrimary}
             </a>

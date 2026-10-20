@@ -21,20 +21,20 @@ export function ServicesSection() {
             return (
               <Reveal key={c.title} delay={i * 70}>
                 <article
-                  className={`card-glass-lg card-lift group flex h-full flex-col rounded-3xl p-6 sm:p-7 ${
+                  className={`card-glass-lg card-lift card-edge group flex h-full flex-col rounded-3xl p-6 sm:p-7 ${
                     c.highlight ? "border-violet/40" : ""
                   }`}
                 >
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet/15 text-violet transition-all duration-300 group-hover:scale-110 group-hover:bg-violet/25">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <h3 className="mt-4 font-display text-[19px] font-bold tracking-tight text-brand">
+                  <h3 className="mt-4 font-display text-[20px] font-bold tracking-tight text-brand">
                     {c.title}
                   </h3>
-                  <p className="mt-2 text-[13.5px]/[1.65] text-ink/70">{c.subtitle}</p>
+                  <p className="mt-2 text-[15px]/[1.65] text-ink/82">{c.subtitle}</p>
                   <ul className="mt-5 grid gap-2.5">
                     {c.items.map((it) => (
-                      <li key={it} className="flex gap-2 text-[13.5px]/[1.65] text-ink/85">
+                      <li key={it} className="flex gap-2 text-[15px]/[1.65] text-ink/90">
                         <Check />
                         {it}
                       </li>
@@ -42,7 +42,7 @@ export function ServicesSection() {
                   </ul>
                   <a
                     href={c.link.href}
-                    className="mt-6 inline-flex items-center gap-1.5 py-2.5 -my-2.5 text-[13px] font-semibold text-violet transition-colors hover:text-ink"
+                    className="mt-6 inline-flex items-center gap-1.5 py-2.5 -my-2.5 text-[14px] font-semibold text-violet transition-colors hover:text-ink"
                   >
                     {c.link.label}
                     <ArrowRight
@@ -77,20 +77,20 @@ export function MethodSection() {
           />
           {METHOD.phases.map((p, i) => (
             <Reveal key={p.n} delay={i * 70}>
-              <article className="card-glass-lg card-lift group relative ml-10 h-full rounded-3xl p-6 lg:ml-0">
+              <article className="card-glass-lg card-lift card-edge group relative ml-10 h-full rounded-3xl p-6 lg:ml-0">
                 <div className="flex items-center gap-3">
                   <span className="font-display text-[22px] font-bold leading-none text-violet transition-transform duration-300 group-hover:scale-110">
                     {p.n}
                   </span>
-                  <h3 className="font-display text-[17px] font-bold tracking-tight text-brand">
+                  <h3 className="font-display text-[18px] font-bold tracking-tight text-brand">
                     {p.title}
                   </h3>
                 </div>
-                <span className="mt-3 inline-flex rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11.5px] font-semibold text-ink/80 transition-colors duration-300 group-hover:border-violet/40 group-hover:bg-violet/10">
+                <span className="mt-3 inline-flex rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12.5px] font-semibold text-ink/88 transition-colors duration-300 group-hover:border-violet/40 group-hover:bg-violet/10">
                   {p.badge}
                 </span>
-                <p className="mt-4 text-[13.5px]/[1.75] text-ink/80">{p.body}</p>
-                <p className="mt-4 text-[13.5px]/[1.75] text-ink/70">
+                <p className="mt-4 text-[15px]/[1.75] text-ink/88">{p.body}</p>
+                <p className="mt-4 text-[15px]/[1.75] text-ink/82">
                   <span className="font-semibold text-ink">Wat je krijgt: </span>
                   {p.result}
                 </p>
