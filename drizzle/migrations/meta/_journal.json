@@ -141,6 +141,13 @@
       "when": 1792500571701,
       "tag": "0019_20261020120000_agent_antwoordt",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792501245992,
+      "tag": "0020_vraag_afgehandeld",
+      "breakpoints": true
     }
   ]
 }

@@ -416,6 +416,7 @@ export type Database = {
         Row: {
           gesprek_id: string
           id: number
+          kennis_gemaakt_op: string | null
           onbeantwoord: boolean
           op: string
           rol: string
@@ -424,6 +425,7 @@ export type Database = {
         Insert: {
           gesprek_id: string
           id?: never
+          kennis_gemaakt_op?: string | null
           onbeantwoord?: boolean
           op?: string
           rol: string
@@ -432,6 +434,7 @@ export type Database = {
         Update: {
           gesprek_id?: string
           id?: never
+          kennis_gemaakt_op?: string | null
           onbeantwoord?: boolean
           op?: string
           rol?: string
@@ -2044,6 +2047,10 @@ export type Database = {
         Args: { _contact_id: string; _terug: boolean }
         Returns: string
       }
+      markeer_vraag_afgehandeld: {
+        Args: { _bericht_id: number }
+        Returns: boolean
+      }
       mijn_klant: { Args: never; Returns: string }
       mijn_logboek: {
         Args: { _aantal?: number }
@@ -2142,6 +2149,7 @@ export type Database = {
         Args: { _agent_id: string; _limiet?: number }
         Returns: {
           antwoord: string
+          bericht_id: number
           gesprek_id: string
           op: string
           vraag: string
