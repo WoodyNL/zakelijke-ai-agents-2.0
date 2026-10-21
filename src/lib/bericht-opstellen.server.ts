@@ -52,13 +52,28 @@ export type Opdracht = {
         eerder: string[];
       }
     | undefined;
-  /** Alleen bij een bevestiging: de afspraak die wordt nagevraagd. */
+  /**
+   * De afspraak die wordt nagevraagd (bevestiging) of zojuist is vastgelegd
+   * (antwoord). In het tweede geval staat de dag vast en is het een
+   * mededeling, geen vraag.
+   */
   bezorging?:
     | {
         /** Zoals een mens het zegt: "vrijdag 25 september". */
         dag: string;
         /** Het adres waar de chauffeur volgens onze gegevens heen gaat. */
         adres: string | null;
+      }
+    | undefined;
+  /**
+   * Alleen bij een antwoord: hij wil het pakket, maar het bezorgadres is nog
+   * niet door hem bevestigd. Er wordt dan niets ingepland en geen dag
+   * genoemd — eerst het adres rond, dan pas een vrijdag.
+   */
+  adresvraag?:
+    | {
+        /** Wat er in onze lijst staat, of null als we niets hebben. */
+        bekendAdres: string | null;
       }
     | undefined;
 };
@@ -255,13 +270,48 @@ Beantwoord die vraag, en alleen die vraag. Dit is geen nieuwe verkoopmail en gee
 
 Kort. Twee of drie zinnen is genoeg. Dit is een gesprek, geen brief.
 
-Waar het op uitkomt: een proefpakket dat de chauffeur op een vrijdag langsbrengt. Heb je de vraag beantwoord, vraag dan of je dat voor hem zult inplannen. Behalve als hij dat al heeft gezegd — dan bevestig je het en vraag je niets meer.
+${
+  o.bezorging
+    ? `Waar het op uitkomt is al geregeld: de bezorging staat vast. Zie hieronder wat je daarover zegt.`
+    : o.adresvraag
+      ? `Waar het op uitkomt is al geregeld: hij wil het pakket. Zie hieronder wat je nog nodig hebt.`
+      : `Waar het op uitkomt: een proefpakket dat de chauffeur op een vrijdag langsbrengt. Heb je de vraag beantwoord, vraag dan of je dat voor hem zult inplannen. Behalve als hij dat al heeft gezegd — dan bevestig je het en vraag je niets meer.`
+}
 
 Wat je hier niet doet:
 - je niet opnieuw voorstellen; dat heb je al gedaan
 - niet herhalen wat je in je vorige mail schreef
 - niets beweren wat niet in de kennisbank staat. Weet je het antwoord niet, zeg dan dat je het navraagt en erop terugkomt. Dat is een eerlijk antwoord en het kost niets; iets verzinnen kost een klant.
 ${
+  o.bezorging
+    ? `
+# De bezorging staat vast
+
+Hij heeft het adres bevestigd, en de rit is zojuist vastgelegd. Dit is dus geen vraag meer maar een mededeling.
+
+- de chauffeur komt ${o.bezorging.dag}
+${o.bezorging.adres ? `- hij komt naar: ${o.bezorging.adres}. Zet dat adres voluit in de zin, precies zoals het hier staat.` : ""}
+
+Zeg dat in één zin, gewoon zoals je het tegen iemand zou zeggen. Vraag niet nog een keer of het klopt — dat heeft hij net gedaan, en nog eens navragen leest als twijfel. Vraag ook niet of het schikt: komt het niet uit, dan schrijft hij dat vanzelf.
+
+Beloof verder niets over de tijd. Je weet niet hoe laat de chauffeur er is.`
+    : o.adresvraag
+      ? `
+# Hij wil het pakket, maar je mist het bezorgadres
+
+Dit is het enige wat je nog nodig hebt, dus vraag het, en vraag niets anders.
+
+${
+  o.adresvraag.bekendAdres
+    ? `In onze lijst staat dit adres: ${o.adresvraag.bekendAdres}
+
+Leg hem dat voor en vraag of het nog klopt. Zet het adres voluit in de zin, precies zoals het hier staat. Zeg er niet bij dat het "in ons systeem" of "in onze lijst" staat — dat is onze administratie, daar heeft hij niets mee te maken. Dat het er al stond komt doordat jullie eerder zaken deden, en zo mag je het ook zeggen.`
+    : `Wij hebben geen adres van hem. Vraag waar het pakket bezorgd moet worden.`
+}
+
+Noem geen dag en geen datum. Die wordt pas vastgelegd als hij het adres heeft bevestigd, en een vrijdag toezeggen die je nog niet hebt vastgelegd is een belofte die je niet kunt waarmaken. Je mag wel zeggen dát de chauffeur op vrijdag rijdt — dat is hoe het werkt, geen toezegging.`
+      : ""
+}${
   o.gesprek.eerder.length > 0
     ? `
 # Wat je eerder in dit gesprek hebt geantwoord

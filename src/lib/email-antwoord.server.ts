@@ -1,6 +1,13 @@
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import { planBericht } from "@/lib/verzenden.server";
 import { beoordeelAntwoord, zonderCitaat, type Binnenkomend } from "@/lib/antwoordregels";
+import { alsDagInTekst } from "@/lib/bevestiging-lezen";
+import {
+  adresRegel,
+  bewaarAdresOpContact,
+  leesWens,
+  planEerstvolgendeVrijdag,
+} from "@/lib/proefpakket.server";
 
 /**
  * De agent antwoordt zelf op een binnengekomen reactie.
@@ -94,6 +101,8 @@ export async function beantwoordReactie(o: {
     naam: string | null;
     bedrijf: string | null;
     plaats: string | null;
+    adres: string | null;
+    postcode: string | null;
     herkomst: string;
     afmeldsleutel: string;
     afgemeld_op: string | null;
@@ -132,6 +141,57 @@ export async function beantwoordReactie(o: {
   );
   const [agent] = await haal<{ name: string }>(d, `agents?select=name&id=eq.${o.agentId}`);
 
+  /*
+   * Wat wil deze persoon, en kan er een vrijdag op?
+   *
+   * Dit gebeurt vóór het opstellen, zodat de datum in dezelfde mail staat als
+   * het antwoord. Anders krijgt iemand eerst "leuk dat u het wilt" en daarna
+   * los "het wordt de 23e", en zo praat geen mens.
+   *
+   * Alles hier is afgeschermd: gaat het lezen of het vastleggen mis, dan
+   * wordt er niets ingepland, niets toegezegd en gewoon een antwoord
+   * geschreven. Een gemiste inplanning ziet een mens op het bezorgscherm; een
+   * verkeerde inplanning ziet hij pas als de chauffeur voor een dichte deur
+   * staat.
+   */
+  const adresInLijst = adresRegel(contact);
+  let bezorging: { dag: string; adres: string | null } | undefined;
+  let adresvraag: { bekendAdres: string | null } | undefined;
+
+  try {
+    const wens = await leesWens(zonderCitaat(o.tekst), {
+      adresInLijst,
+      eerderGeantwoord: eerdereAntwoorden.length > 0,
+    });
+
+    if (wens.stand === "bevestigd" && wens.adres && wens.citaat) {
+      const plan = await planEerstvolgendeVrijdag({
+        agentId: o.agentId,
+        contactId: contact.id,
+        adres: wens.adres,
+        citaat: wens.citaat,
+      });
+      if (plan.gelukt) {
+        bezorging = { dag: alsDagInTekst(plan.dag), adres: plan.adres };
+        // Het adres dat hij zelf opschreef is beter dan wat er stond.
+        if (plan.nieuw && wens.bron === "zelf_geschreven") {
+          await bewaarAdresOpContact(contact.id, wens.adres);
+        }
+      } else {
+        // Geen dag gevonden of niet kunnen vastleggen. Dan zegt de agent niets
+        // toe over een datum; het gesprek loopt gewoon door.
+        adresvraag = undefined;
+      }
+    } else if (wens.stand === "wil_pakket") {
+      // Hij wil het, maar het adres is niet door hém bevestigd. Ook niet als
+      // er al jaren een adres in de lijst staat: dat is een aanname en geen
+      // afspraak. Eerst voorleggen, dan pas een vrijdag.
+      adresvraag = { bekendAdres: adresInLijst };
+    }
+  } catch {
+    // Stil: een antwoord zonder afspraak is beter dan geen antwoord.
+  }
+
   let concept;
   try {
     concept = await stelBerichtOp({
@@ -150,6 +210,8 @@ export async function beantwoordReactie(o: {
         binnen: zonderCitaat(o.tekst),
         eerder: eerdereAntwoorden.map((e) => e.tekst),
       },
+      ...(bezorging ? { bezorging } : {}),
+      ...(adresvraag ? { adresvraag } : {}),
     });
   } catch (e) {
     return { gedaan: "mens", reden: e instanceof Error ? e.message : "opstellen mislukt" };
