@@ -1280,6 +1280,8 @@ export type Database = {
       }
       outbound_replies: {
         Row: {
+          beoordeeld_op: string | null
+          beoordeling: string | null
           afgehandeld_op: string | null
           agent_id: string
           contact_id: string | null
@@ -1293,6 +1295,8 @@ export type Database = {
           van_naam: string | null
         }
         Insert: {
+          beoordeeld_op?: string | null
+          beoordeling?: string | null
           afgehandeld_op?: string | null
           agent_id: string
           contact_id?: string | null
@@ -1306,6 +1310,8 @@ export type Database = {
           van_naam?: string | null
         }
         Update: {
+          beoordeeld_op?: string | null
+          beoordeling?: string | null
           afgehandeld_op?: string | null
           agent_id?: string
           contact_id?: string | null

@@ -29,6 +29,8 @@ type Antwoord = {
   afgehandeld_op: string | null;
   contact_id: string | null;
   outbound_contacts: { naam: string | null; bedrijf: string | null } | null;
+  beoordeling: string | null;
+  beoordeeld_op: string | null;
   agentbericht: {
     id: string;
     onderwerp: string;
@@ -210,7 +212,7 @@ function AntwoordenPagina() {
                     </p>
                   )}
 
-                  <AgentAntwoord bericht={a.agentbericht} />
+                  <AgentAntwoord bericht={a.agentbericht} beoordeling={a.beoordeling} />
                 </article>
               );
             })}
@@ -237,17 +239,42 @@ function AntwoordenPagina() {
  * is verstuurd, is geen antwoord. Daar hoort geen geruststellende regel bij
  * maar een knop.
  */
-function AgentAntwoord({ bericht }: { bericht: Antwoord["agentbericht"] }) {
+function AgentAntwoord({
+  bericht,
+  beoordeling,
+}: {
+  bericht: Antwoord["agentbericht"];
+  beoordeling: string | null;
+}) {
   const qc = useQueryClient();
   const opnieuwFn = useServerFn(verstuurAntwoordOpnieuw);
   const [bezig, zetBezig] = useState(false);
   const [fout, zetFout] = useState<string | null>(null);
 
   if (!bericht) {
+    /*
+     * Hier stond alleen "De agent heeft hier niet op geantwoord". Dat was
+     * waar en nutteloos: de enige vraag die je op dat moment hebt is waarom
+     * niet, en daar zei het scherm niets over. Nu staat de reden erbij, als
+     * die is vastgelegd.
+     *
+     * Staat er geen reden, dan is dat zelf ook informatie: dan is de agent
+     * er nooit aan toegekomen. Dat is iets anders dan een bewuste keuze om
+     * niet te antwoorden, en het scherm zegt dat ook zo.
+     */
     return (
-      <p className="mt-3 border-t border-white/8 pt-3 text-[12.5px]/[1.7] text-ink/45">
-        De agent heeft hier niet op geantwoord. Deze is voor jou.
-      </p>
+      <div className="mt-3 border-t border-white/8 pt-3">
+        <p className="text-[12.5px]/[1.7] text-ink/55">
+          De agent heeft hier niet op geantwoord. Deze is voor jou.
+        </p>
+        <p className="mt-1 text-[12.5px]/[1.7] text-ink/75">
+          {beoordeling ?? (
+            <span className="text-ink/45 italic">
+              De agent is er niet aan toegekomen — er is geen beoordeling vastgelegd.
+            </span>
+          )}
+        </p>
+      </div>
     );
   }
 

@@ -187,7 +187,7 @@ export const haalAntwoorden = createServerFn({ method: "GET" })
     const { data: rijen, error } = await context.supabase
       .from("outbound_replies")
       .select(
-        "id, van_email, van_naam, onderwerp, tekst, ontvangen_op, afgehandeld_op, contact_id, outbound_contacts(naam, bedrijf)",
+        "id, van_email, van_naam, onderwerp, tekst, ontvangen_op, afgehandeld_op, contact_id, beoordeling, beoordeeld_op, outbound_contacts(naam, bedrijf)",
       )
       .eq("agent_id", data.agentId)
       .order("ontvangen_op", { ascending: false })

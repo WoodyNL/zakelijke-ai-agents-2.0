@@ -68,6 +68,55 @@ export async function beantwoordReactie(o: {
   /** De Message-ID van het binnengekomen bericht, voor de draad. */
   messageId: string | null;
 }): Promise<AntwoordUitkomst> {
+  const uit = await bepaalEnAntwoord(o);
+
+  /*
+   * Het oordeel op de reactie zetten.
+   *
+   * Dit ging eerst alleen naar console.info, en dat is nergens te lezen voor
+   * wie het portaal gebruikt. Op het scherm stond dan "De agent heeft hier
+   * niet op geantwoord" — waar, en precies het antwoord op de vraag die
+   * niemand had. De vraag is waarom niet, en het verschil tussen "al drie
+   * keer geantwoord", "dit lijkt een automatisch bericht" en "het opstellen
+   * ging stuk" bepaalt wat je vervolgens doet.
+   *
+   * Een schil om de hele afhandeling, zodat geen enkele uitgang eraan
+   * ontsnapt. Mislukt het wegschrijven, dan is dat jammer maar niet erg: het
+   * antwoord zelf is dan al verstuurd of al bewust niet verstuurd.
+   */
+  try {
+    const d = db();
+    await fetch(`${d.url}/rest/v1/outbound_replies?id=eq.${o.replyId}`, {
+      method: "PATCH",
+      headers: { ...d.headers, Prefer: "return=minimal" },
+      body: JSON.stringify({
+        beoordeling: alsZin(uit).slice(0, 300),
+        beoordeeld_op: new Date().toISOString(),
+      }),
+    });
+  } catch {
+    // Stil.
+  }
+
+  return uit;
+}
+
+/** Het oordeel in gewone taal, zoals het op het scherm komt te staan. */
+function alsZin(uit: AntwoordUitkomst): string {
+  if (uit.gedaan === "verstuurd") return `Beantwoord: ${uit.onderwerp}`;
+  if (uit.gedaan === "overgeslagen") return `Niet beantwoord — ${uit.reden}`;
+  return `Doorgegeven aan jou — ${uit.reden}`;
+}
+
+async function bepaalEnAntwoord(o: {
+  agentId: string;
+  replyId: string;
+  contactId: string | null;
+  tekst: string;
+  onderwerp: string | null;
+  kopregels: Record<string, string>;
+  messageId: string | null;
+}): Promise<AntwoordUitkomst> {
   const d = db();
 
   // Hoe vaak heeft de agent dit contact al geantwoord? Dat is de rem op een

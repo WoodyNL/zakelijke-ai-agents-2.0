@@ -33,8 +33,23 @@ export type Oordeel =
   | { doen: "mens"; reden: string }
   | { doen: "negeren"; reden: string };
 
-/** Hoeveel beurten de agent een gesprek mag voeren voordat een mens het overneemt. */
-export const MAX_ANTWOORDEN = 3;
+/**
+ * Hoeveel beurten de agent een gesprek mag voeren voordat een mens het
+ * overneemt.
+ *
+ * Dit stond op drie, en dat bleek te krap voor waar het voor bedoeld is. Het
+ * kortste gesprek dat tot een proefpakket leidt is al drie beurten: de vraag
+ * beantwoorden, het adres voorleggen, de afspraak bevestigen. Eén tussenvraag
+ * — en die komt er altijd — en de agent stopt vlak voordat het doel bereikt
+ * is. Precies het tegenovergestelde van wat hij moet doen.
+ *
+ * Zes dus. Dat is geen afweging over veiligheid: wat een lus tussen twee
+ * machines voorkomt, zijn de kopregels van een automatisch bericht, de
+ * afmeldherkenning en de eis dat de afzender in de lijst staat. Die staan
+ * hierboven en veranderen niet. Dit getal is een rem op een gesprek dat
+ * nergens heen gaat en op wat het kost, niet op een gesprek dat vordert.
+ */
+export const MAX_ANTWOORDEN = 6;
 
 /**
  * Is dit door een machine gestuurd?
