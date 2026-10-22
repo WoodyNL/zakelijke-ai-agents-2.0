@@ -15,6 +15,8 @@ import {
   beoordeelAntwoord,
   isAutomatischBericht,
   vraagtAfmelding,
+  GESPREKSVENSTER_DAGEN,
+  gespreksvenster,
   zonderCitaat,
   zonderOnzeAfmeldregel,
   type Binnenkomend,
@@ -228,6 +230,40 @@ meld(
   beoordeelAntwoord(basis({ tekst: MET_VOETTEKST.slice(MET_VOETTEKST.indexOf("> Op 19")) })).doen ===
     "mens",
   "alleen een citaat, zonder eigen tekst, gaat naar een mens",
+);
+
+console.log("\nHet gespreksvenster\n" + "=".repeat(52));
+
+/*
+ * De teller van beurten keek naar alles wat de agent dit contact ooit had
+ * geantwoord. Een klant die in oktober een gesprek voerde en in maart
+ * terugschrijft, was daardoor voorgoed over zijn beurten heen.
+ */
+const nu = new Date("2026-10-22T11:00:00Z");
+const grens = new Date(gespreksvenster(nu));
+
+meld(
+  Math.round((nu.getTime() - grens.getTime()) / 86_400_000) === GESPREKSVENSTER_DAGEN,
+  `de grens ligt ${GESPREKSVENSTER_DAGEN} dagen terug`,
+  grens.toISOString(),
+);
+meld(grens < nu, "en in het verleden");
+meld(
+  gespreksvenster(nu).endsWith("Z"),
+  "als ISO-tijdstip, zodat PostgREST het begrijpt",
+  gespreksvenster(nu),
+);
+
+// Een antwoord van gisteren telt mee, een van vorig kwartaal niet.
+meld(new Date("2026-10-21T09:00:00Z") > grens, "gisteren valt binnen het venster");
+meld(new Date("2026-07-01T09:00:00Z") < grens, "drie maanden geleden valt erbuiten");
+
+// De grens hangt niet aan de klok van de machine: hetzelfde moment geeft
+// hetzelfde antwoord, waar de server ook staat.
+meld(
+  gespreksvenster(new Date("2026-10-22T11:00:00Z")) ===
+    gespreksvenster(new Date("2026-10-22T13:00:00+02:00")),
+  "zelfde moment, zelfde grens, ongeacht tijdzone",
 );
 
 console.log("\n" + "=".repeat(52));

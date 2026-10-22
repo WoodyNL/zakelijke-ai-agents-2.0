@@ -132,6 +132,31 @@ export function zonderOnzeAfmeldregel(tekst: string): string {
 }
 
 /**
+ * Hoe lang stilte duurt voordat het een nieuw gesprek is.
+ *
+ * De teller van beurten keek naar alles wat de agent dit contact ooit had
+ * geantwoord. Dat is een andere regel dan hij lijkt: een klant die in oktober
+ * een gesprek voert en in maart terugschrijft, is dan voorgoed over zijn
+ * beurten heen en krijgt nooit meer antwoord. Niet omdat er iets mis is, maar
+ * omdat hij een halfjaar eerder al eens iets vroeg.
+ *
+ * Dertig dagen. Daarna is het geen doorlopend gesprek meer maar een nieuw
+ * bericht, en begint de teller opnieuw. Voor waar de rem voor bedoeld is —
+ * twee machines die elkaar aan de praat houden — verandert er niets: dat
+ * gebeurt in minuten, niet in maanden.
+ *
+ * Dit bepaalt ook wat de agent als "eerder in dit gesprek" te lezen krijgt.
+ * Een antwoord van een halfjaar geleden als gespreksgeschiedenis meegeven is
+ * net zo verkeerd als erop doortellen.
+ */
+export const GESPREKSVENSTER_DAGEN = 30;
+
+/** Het moment waarvóór een antwoord niet meer bij dit gesprek hoort. */
+export function gespreksvenster(nu: Date): string {
+  return new Date(nu.getTime() - GESPREKSVENSTER_DAGEN * 86_400_000).toISOString();
+}
+
+/**
  * Het oordeel.
  *
  * De volgorde is niet willekeurig: eerst de dingen die schade doen als je ze

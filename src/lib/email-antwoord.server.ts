@@ -1,6 +1,11 @@
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import { planBericht } from "@/lib/verzenden.server";
-import { beoordeelAntwoord, zonderCitaat, type Binnenkomend } from "@/lib/antwoordregels";
+import {
+  beoordeelAntwoord,
+  gespreksvenster,
+  zonderCitaat,
+  type Binnenkomend,
+} from "@/lib/antwoordregels";
 import { alsDagInTekst } from "@/lib/bevestiging-lezen";
 import {
   adresRegel,
@@ -119,14 +124,23 @@ async function bepaalEnAntwoord(o: {
 }): Promise<AntwoordUitkomst> {
   const d = db();
 
-  // Hoe vaak heeft de agent dit contact al geantwoord? Dat is de rem op een
-  // gesprek dat blijft duren, en hij telt op het contact en niet op de
-  // campagne: iemand die twee campagnes heeft gehad, is nog steeds één persoon.
+  /*
+   * Hoe vaak heeft de agent dit contact al geantwoord in dít gesprek?
+   *
+   * Op het contact en niet op de campagne: iemand die twee campagnes heeft
+   * gehad, is nog steeds één persoon.
+   *
+   * En binnen een venster, want zonder dat telde hij álles mee wat hij dit
+   * contact ooit had geantwoord. Dan is iemand die in oktober een gesprek
+   * voerde in maart voorgoed over zijn beurten heen — niet omdat er iets mis
+   * is, maar omdat hij een halfjaar eerder iets vroeg.
+   */
   let eerdereAntwoorden: Array<{ tekst: string }> = [];
   if (o.contactId) {
     eerdereAntwoorden = await haal<{ tekst: string }>(
       d,
       `outbound_messages?select=tekst&contact_id=eq.${o.contactId}&stap=eq.${STAP_ANTWOORD}` +
+        `&aangemaakt_op=gte.${gespreksvenster(new Date())}` +
         `&order=aangemaakt_op.asc&limit=10`,
     );
   }
