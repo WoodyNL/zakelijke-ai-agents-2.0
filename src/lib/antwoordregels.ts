@@ -43,13 +43,20 @@ export type Oordeel =
  * — en die komt er altijd — en de agent stopt vlak voordat het doel bereikt
  * is. Precies het tegenovergestelde van wat hij moet doen.
  *
- * Zes dus. Dat is geen afweging over veiligheid: wat een lus tussen twee
+ * Tien dus. Dat is geen afweging over veiligheid: wat een lus tussen twee
  * machines voorkomt, zijn de kopregels van een automatisch bericht, de
  * afmeldherkenning en de eis dat de afzender in de lijst staat. Die staan
- * hierboven en veranderen niet. Dit getal is een rem op een gesprek dat
- * nergens heen gaat en op wat het kost, niet op een gesprek dat vordert.
+ * hierboven, grijpen binnen één of twee beurten in, en veranderen niet. Dit
+ * getal is een rem op een gesprek dat nergens heen gaat en op wat het kost,
+ * niet op een gesprek dat vordert.
+ *
+ * Waarom tien en niet zes: iemand die echt belangstelling heeft, stelt meer
+ * dan één vraag. Houdbaarheid, levertijden, wat er nog meer is, en pas dan
+ * het adres. Stopt de agent halverwege zo'n gesprek, dan valt de stilte
+ * precies op het moment dat iemand het meest geïnteresseerd is. Dat kost een
+ * klant; tien beurten kosten een paar dubbeltjes aan modelgebruik.
  */
-export const MAX_ANTWOORDEN = 6;
+export const MAX_ANTWOORDEN = 10;
 
 /**
  * Is dit door een machine gestuurd?

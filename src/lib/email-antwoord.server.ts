@@ -1,6 +1,7 @@
 import { stelBerichtOp, type KennisRegel } from "@/lib/bericht-opstellen.server";
 import { planBericht } from "@/lib/verzenden.server";
 import {
+  MAX_ANTWOORDEN,
   beoordeelAntwoord,
   gespreksvenster,
   zonderCitaat,
@@ -141,7 +142,9 @@ async function bepaalEnAntwoord(o: {
       d,
       `outbound_messages?select=tekst&contact_id=eq.${o.contactId}&stap=eq.${STAP_ANTWOORD}` +
         `&aangemaakt_op=gte.${gespreksvenster(new Date())}` +
-        `&order=aangemaakt_op.asc&limit=10`,
+        // Ruimer dan de drempel, anders telt hij nooit verder dan de limiet
+        // en kan hij de grens niet passeren maar alleen raken.
+        `&order=aangemaakt_op.asc&limit=${MAX_ANTWOORDEN + 5}`,
     );
   }
 
@@ -271,7 +274,10 @@ async function bepaalEnAntwoord(o: {
       soort: "antwoord",
       gesprek: {
         binnen: zonderCitaat(o.tekst),
-        eerder: eerdereAntwoorden.map((e) => e.tekst),
+        // Tellen doen we over het hele gesprek, meegeven niet: tien eerdere
+        // antwoorden volplempen de opdracht en duwen de kennisbank eruit.
+        // De laatste vier zijn waar het gesprek nu staat.
+        eerder: eerdereAntwoorden.slice(-4).map((e) => e.tekst),
       },
       ...(bezorging ? { bezorging } : {}),
       ...(adresvraag ? { adresvraag } : {}),
