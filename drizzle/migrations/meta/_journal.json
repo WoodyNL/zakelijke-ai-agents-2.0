@@ -148,6 +148,13 @@
       "when": 1792501245992,
       "tag": "0020_vraag_afgehandeld",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792667961934,
+      "tag": "0021_beoordeling_zichtbaar",
+      "breakpoints": true
     }
   ]
 }
