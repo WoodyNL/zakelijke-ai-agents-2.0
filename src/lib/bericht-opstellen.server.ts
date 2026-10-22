@@ -76,6 +76,12 @@ export type Opdracht = {
         bekendAdres: string | null;
       }
     | undefined;
+  /**
+   * Alleen bij een antwoord: dit is het laatste bericht dat de agent in dit
+   * gesprek stuurt. Hij beantwoordt de vraag nog en draagt daarna over aan
+   * een mens.
+   */
+  overdracht?: boolean | undefined;
 };
 
 export type Concept = { onderwerp: string; tekst: string };
@@ -271,11 +277,13 @@ Beantwoord die vraag, en alleen die vraag. Dit is geen nieuwe verkoopmail en gee
 Kort. Twee of drie zinnen is genoeg. Dit is een gesprek, geen brief.
 
 ${
-  o.bezorging
-    ? `Waar het op uitkomt is al geregeld: de bezorging staat vast. Zie hieronder wat je daarover zegt.`
-    : o.adresvraag
-      ? `Waar het op uitkomt is al geregeld: hij wil het pakket. Zie hieronder wat je nog nodig hebt.`
-      : `Waar het op uitkomt: een proefpakket dat de chauffeur op een vrijdag langsbrengt. Heb je de vraag beantwoord, vraag dan of je dat voor hem zult inplannen. Behalve als hij dat al heeft gezegd — dan bevestig je het en vraag je niets meer.`
+  o.overdracht
+    ? `Waar dit bericht op uitkomt staat hieronder, en dat is iets anders dan anders.`
+    : o.bezorging
+      ? `Waar het op uitkomt is al geregeld: de bezorging staat vast. Zie hieronder wat je daarover zegt.`
+      : o.adresvraag
+        ? `Waar het op uitkomt is al geregeld: hij wil het pakket. Zie hieronder wat je nog nodig hebt.`
+        : `Waar het op uitkomt: een proefpakket dat de chauffeur op een vrijdag langsbrengt. Heb je de vraag beantwoord, vraag dan of je dat voor hem zult inplannen. Behalve als hij dat al heeft gezegd — dan bevestig je het en vraag je niets meer.`
 }
 
 Wat je hier niet doet:
@@ -283,8 +291,24 @@ Wat je hier niet doet:
 - niet herhalen wat je in je vorige mail schreef
 - niets beweren wat niet in de kennisbank staat. Weet je het antwoord niet, zeg dan dat je het navraagt en erop terugkomt. Dat is een eerlijk antwoord en het kost niets; iets verzinnen kost een klant.
 ${
-  o.bezorging
+  o.overdracht
     ? `
+# Dit is je laatste bericht in dit gesprek
+
+Jullie schrijven al een tijd heen en weer. Dat is een goed teken — wie zo lang doorvraagt, is echt geïnteresseerd — maar het is ook het moment waarop een telefoongesprek meer oplevert dan weer een mail.
+
+Doe twee dingen, in deze volgorde:
+
+1. Beantwoord zijn vraag nog, kort, voor zover het antwoord in de kennisbank staat. Laat hem niet met een onbeantwoorde vraag achter; dat is geen overdracht maar een afscheid.
+2. Zeg daarna dat ${o.ondertekening.split(",")[0]} hem even belt om de rest door te nemen, en vraag wanneer het schikt.
+
+Schrijf het als iemand die het gesprek prettig vond, niet als een systeem dat afsluit. Zeg niet dat je "het maximum hebt bereikt", dat je "een agent" bent of dat het gesprek wordt "overgedragen" — dat is onze administratie en daar heeft hij niets mee te maken. Een mens die zegt "hier bellen we even over" doet precies hetzelfde zonder uitleg.
+
+Vraag niet om een telefoonnummer alsof je het niet hebt; vraag wanneer het uitkomt. Heeft hij er een genoemd, dan is dat genoeg.
+
+En beloof niets over bedragen, kortingen of voorwaarden. Dat is juist waarover gebeld gaat worden.`
+    : o.bezorging
+      ? `
 # De bezorging staat vast
 
 Hij heeft het adres bevestigd, en de rit is zojuist vastgelegd. Dit is dus geen vraag meer maar een mededeling.
@@ -295,8 +319,8 @@ ${o.bezorging.adres ? `- hij komt naar: ${o.bezorging.adres}. Zet dat adres volu
 Zeg dat in één zin, gewoon zoals je het tegen iemand zou zeggen. Vraag niet nog een keer of het klopt — dat heeft hij net gedaan, en nog eens navragen leest als twijfel. Vraag ook niet of het schikt: komt het niet uit, dan schrijft hij dat vanzelf.
 
 Beloof verder niets over de tijd. Je weet niet hoe laat de chauffeur er is.`
-    : o.adresvraag
-      ? `
+      : o.adresvraag
+        ? `
 # Hij wil het pakket, maar je mist het bezorgadres
 
 Dit is het enige wat je nog nodig hebt, dus vraag het, en vraag niets anders.
@@ -310,7 +334,7 @@ Leg hem dat voor en vraag of het nog klopt. Zet het adres voluit in de zin, prec
 }
 
 Noem geen dag en geen datum. Die wordt pas vastgelegd als hij het adres heeft bevestigd, en een vrijdag toezeggen die je nog niet hebt vastgelegd is een belofte die je niet kunt waarmaken. Je mag wel zeggen dát de chauffeur op vrijdag rijdt — dat is hoe het werkt, geen toezegging.`
-      : ""
+        : ""
 }${
   o.gesprek.eerder.length > 0
     ? `

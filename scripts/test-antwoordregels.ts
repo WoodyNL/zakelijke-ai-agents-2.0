@@ -102,12 +102,46 @@ meld(beoordeelAntwoord(basis()).doen === "beantwoorden", "een gewone vraag wordt
   meld(u.doen === "mens", "een onbekend adres gaat naar een mens");
 }
 {
+  const u = beoordeelAntwoord(basis({ eerdereAntwoorden: MAX_ANTWOORDEN - 1 }));
+  meld(u.doen === "beantwoorden", `bij ${MAX_ANTWOORDEN - 1} mag hij gewoon antwoorden`);
+}
+/*
+ * Op de grens volgt nog één bericht, waarin het gesprek wordt overgedragen.
+ * Dat "precies op de grens" doet het werk: elk verstuurd antwoord telt er één
+ * bij op, dus deze gelijkheid komt per gesprek één keer voor. Zou dit >= zijn,
+ * dan stuurde de agent bij elk volgend bericht opnieuw een afscheidsmail.
+ */
+{
   const u = beoordeelAntwoord(basis({ eerdereAntwoorden: MAX_ANTWOORDEN }));
-  meld(u.doen === "mens", `na ${MAX_ANTWOORDEN} beurten neemt een mens het over`);
+  meld(u.doen === "overdragen", `op beurt ${MAX_ANTWOORDEN} draagt hij over`, JSON.stringify(u));
 }
 {
-  const u = beoordeelAntwoord(basis({ eerdereAntwoorden: MAX_ANTWOORDEN - 1 }));
-  meld(u.doen === "beantwoorden", `bij ${MAX_ANTWOORDEN - 1} mag hij nog`);
+  const u = beoordeelAntwoord(basis({ eerdereAntwoorden: MAX_ANTWOORDEN + 1 }));
+  meld(u.doen === "mens", "daarna is hij stil");
+}
+{
+  // En hij blijft stil, hoe lang het ook doorgaat.
+  const standen = [2, 5, 20].map(
+    (n) => beoordeelAntwoord(basis({ eerdereAntwoorden: MAX_ANTWOORDEN + n })).doen,
+  );
+  meld(
+    standen.every((d) => d === "mens"),
+    "ook bij veel meer berichten: één overdracht, daarna een mens",
+    standen.join(", "),
+  );
+}
+{
+  // De gevaarlijke regels gaan vóór de overdracht. Een afmelding op beurt tien
+  // mag geen vriendelijk afscheidsmailtje opleveren.
+  const u = beoordeelAntwoord(
+    basis({ eerdereAntwoorden: MAX_ANTWOORDEN, tekst: "Graag afmelden, geen mail meer." }),
+  );
+  meld(u.doen === "mens", "een afmelding op de grens gaat naar een mens, niet naar een overdracht");
+
+  const m = beoordeelAntwoord(
+    basis({ eerdereAntwoorden: MAX_ANTWOORDEN, kopregels: { "auto-submitted": "auto-replied" } }),
+  );
+  meld(m.doen === "negeren", "een automatisch bericht op de grens wordt genegeerd");
 }
 {
   const u = beoordeelAntwoord(basis({ tekst: "  " }));

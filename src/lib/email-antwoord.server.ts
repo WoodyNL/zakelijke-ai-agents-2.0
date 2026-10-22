@@ -61,6 +61,7 @@ export const STAP_ANTWOORD = 5;
 
 export type AntwoordUitkomst =
   | { gedaan: "verstuurd"; onderwerp: string }
+  | { gedaan: "overgedragen"; onderwerp: string }
   | { gedaan: "overgeslagen"; reden: string }
   | { gedaan: "mens"; reden: string };
 
@@ -110,6 +111,9 @@ export async function beantwoordReactie(o: {
 /** Het oordeel in gewone taal, zoals het op het scherm komt te staan. */
 function alsZin(uit: AntwoordUitkomst): string {
   if (uit.gedaan === "verstuurd") return `Beantwoord: ${uit.onderwerp}`;
+  if (uit.gedaan === "overgedragen") {
+    return `Beantwoord en aan jou overgedragen — bel deze klant: ${uit.onderwerp}`;
+  }
   if (uit.gedaan === "overgeslagen") return `Niet beantwoord — ${uit.reden}`;
   return `Doorgegeven aan jou — ${uit.reden}`;
 }
@@ -157,9 +161,9 @@ async function bepaalEnAntwoord(o: {
   };
 
   const oordeel = beoordeelAntwoord(binnen);
-  if (oordeel.doen !== "beantwoorden") {
-    return { gedaan: oordeel.doen === "negeren" ? "overgeslagen" : "mens", reden: oordeel.reden };
-  }
+  if (oordeel.doen === "negeren") return { gedaan: "overgeslagen", reden: oordeel.reden };
+  if (oordeel.doen === "mens") return { gedaan: "mens", reden: oordeel.reden };
+  const draagtOver = oordeel.doen === "overdragen";
 
   const [contact] = await haal<{
     id: string;
@@ -224,39 +228,45 @@ async function bepaalEnAntwoord(o: {
   let bezorging: { dag: string; adres: string | null } | undefined;
   let adresvraag: { bekendAdres: string | null } | undefined;
 
-  try {
-    const wens = await leesWens(zonderCitaat(o.tekst), {
-      adresInLijst,
-      eerderGeantwoord: eerdereAntwoorden.length > 0,
-    });
-
-    if (wens.stand === "bevestigd" && wens.adres && wens.citaat) {
-      const plan = await planEerstvolgendeVrijdag({
-        agentId: o.agentId,
-        contactId: contact.id,
-        adres: wens.adres,
-        citaat: wens.citaat,
+  // Bij een overdracht blijft dit achterwege. Dat scheelt niet alleen een
+  // modelaanroep: een laatste bericht dat tegelijk afscheid neemt en om een
+  // adres vraagt, stelt twee dingen tegelijk en krijgt antwoord op geen van
+  // beide. Wat er over de bezorging te regelen valt, doet Frank aan de
+  // telefoon.
+  if (!draagtOver)
+    try {
+      const wens = await leesWens(zonderCitaat(o.tekst), {
+        adresInLijst,
+        eerderGeantwoord: eerdereAntwoorden.length > 0,
       });
-      if (plan.gelukt) {
-        bezorging = { dag: alsDagInTekst(plan.dag), adres: plan.adres };
-        // Het adres dat hij zelf opschreef is beter dan wat er stond.
-        if (plan.nieuw && wens.bron === "zelf_geschreven") {
-          await bewaarAdresOpContact(contact.id, wens.adres);
+
+      if (wens.stand === "bevestigd" && wens.adres && wens.citaat) {
+        const plan = await planEerstvolgendeVrijdag({
+          agentId: o.agentId,
+          contactId: contact.id,
+          adres: wens.adres,
+          citaat: wens.citaat,
+        });
+        if (plan.gelukt) {
+          bezorging = { dag: alsDagInTekst(plan.dag), adres: plan.adres };
+          // Het adres dat hij zelf opschreef is beter dan wat er stond.
+          if (plan.nieuw && wens.bron === "zelf_geschreven") {
+            await bewaarAdresOpContact(contact.id, wens.adres);
+          }
+        } else {
+          // Geen dag gevonden of niet kunnen vastleggen. Dan zegt de agent niets
+          // toe over een datum; het gesprek loopt gewoon door.
+          adresvraag = undefined;
         }
-      } else {
-        // Geen dag gevonden of niet kunnen vastleggen. Dan zegt de agent niets
-        // toe over een datum; het gesprek loopt gewoon door.
-        adresvraag = undefined;
+      } else if (wens.stand === "wil_pakket") {
+        // Hij wil het, maar het adres is niet door hém bevestigd. Ook niet als
+        // er al jaren een adres in de lijst staat: dat is een aanname en geen
+        // afspraak. Eerst voorleggen, dan pas een vrijdag.
+        adresvraag = { bekendAdres: adresInLijst };
       }
-    } else if (wens.stand === "wil_pakket") {
-      // Hij wil het, maar het adres is niet door hém bevestigd. Ook niet als
-      // er al jaren een adres in de lijst staat: dat is een aanname en geen
-      // afspraak. Eerst voorleggen, dan pas een vrijdag.
-      adresvraag = { bekendAdres: adresInLijst };
+    } catch {
+      // Stil: een antwoord zonder afspraak is beter dan geen antwoord.
     }
-  } catch {
-    // Stil: een antwoord zonder afspraak is beter dan geen antwoord.
-  }
 
   let concept;
   try {
@@ -281,6 +291,7 @@ async function bepaalEnAntwoord(o: {
       },
       ...(bezorging ? { bezorging } : {}),
       ...(adresvraag ? { adresvraag } : {}),
+      ...(draagtOver ? { overdracht: true } : {}),
     });
   } catch (e) {
     return { gedaan: "mens", reden: e instanceof Error ? e.message : "opstellen mislukt" };
@@ -352,5 +363,6 @@ async function bepaalEnAntwoord(o: {
     });
     return { gedaan: "mens", reden: uit.fout };
   }
+  if (draagtOver) return { gedaan: "overgedragen", onderwerp: concept.onderwerp };
   return { gedaan: "verstuurd", onderwerp: concept.onderwerp };
 }

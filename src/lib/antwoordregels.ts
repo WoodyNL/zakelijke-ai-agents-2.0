@@ -30,6 +30,15 @@ export type Binnenkomend = {
 
 export type Oordeel =
   | { doen: "beantwoorden" }
+  /**
+   * Nog één keer antwoorden, en daarin het gesprek overdragen aan een mens.
+   *
+   * Dit is de laatste beurt en niet de eerste daarna. Zwijgen bij beurt elf
+   * van een levendig gesprek is het slechtste wat er kan gebeuren: wie zo
+   * lang doorschrijft heeft belangstelling, en die krijgt dan stilte op het
+   * moment dat hij het meest geïnteresseerd is.
+   */
+  | { doen: "overdragen"; reden: string }
   | { doen: "mens"; reden: string }
   | { doen: "negeren"; reden: string };
 
@@ -196,13 +205,25 @@ export function beoordeelAntwoord(b: Binnenkomend): Oordeel {
     return { doen: "mens", reden: "afzender staat niet in de contactenlijst" };
   }
 
-  // 4. Een gesprek dat blijft duren. Drie beurten is genoeg om een vraag te
-  //    beantwoorden en een bezorging af te spreken; daarna is er iets aan de
-  //    hand wat een mens moet zien.
-  if (b.eerdereAntwoorden >= MAX_ANTWOORDEN) {
+  /*
+   * 4. Een gesprek dat lang duurt.
+   *
+   * Precies op de grens volgt nog één bericht waarin de agent het gesprek
+   * overdraagt; daarna is hij stil. Dat "precies" is geen toeval en geen
+   * extra administratie: elk verstuurd antwoord telt er één bij op, dus deze
+   * gelijkheid doet zich per gesprek één keer voor. De overdracht zelf is
+   * ook een antwoord, dus het bericht erna valt al in de regel eronder.
+   */
+  if (b.eerdereAntwoorden === MAX_ANTWOORDEN) {
+    return {
+      doen: "overdragen",
+      reden: `na ${b.eerdereAntwoorden} beurten draagt de agent het gesprek over`,
+    };
+  }
+  if (b.eerdereAntwoorden > MAX_ANTWOORDEN) {
     return {
       doen: "mens",
-      reden: `de agent heeft al ${b.eerdereAntwoorden} keer geantwoord in dit gesprek`,
+      reden: `het gesprek is al overgedragen na ${MAX_ANTWOORDEN} beurten`,
     };
   }
 

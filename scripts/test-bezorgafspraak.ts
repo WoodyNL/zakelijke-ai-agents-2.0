@@ -122,6 +122,40 @@ meld(
   "en gebruikt niet het blok van het antwoord",
 );
 
+console.log("\nHet laatste bericht: de overdracht\n" + "=".repeat(52));
+
+const over = systeemprompt(basis({ overdracht: true }));
+
+meld(over.includes("Dit is je laatste bericht in dit gesprek"), "het blok staat erin");
+meld(over.includes("Beantwoord zijn vraag nog"), "de vraag wordt eerst nog beantwoord");
+meld(
+  over.includes("Frank Ransijn hem even belt"),
+  "en de naam uit de ondertekening belt, niet 'de agent'",
+);
+
+/*
+ * Wat er niet in mag. De klant hoort niet te lezen dat hij tegen een machine
+ * praatte of dat er een teller afliep; dat is onze administratie. Een mens
+ * die zegt "hier bellen we even over" doet hetzelfde zonder uitleg.
+ */
+for (const verboden of ["het maximum", "een agent", "overgedragen"]) {
+  meld(
+    over.includes(`Zeg niet`) && over.includes(verboden),
+    `de opdracht verbiedt met zoveel woorden: "${verboden}"`,
+  );
+}
+
+meld(
+  !over.includes("vraag dan of je dat voor hem zult inplannen"),
+  "de standaardvraag om in te plannen vervalt",
+);
+meld(!over.includes("De bezorging staat vast"), "en het bezorgblok staat er niet bij");
+meld(!over.includes("je mist het bezorgadres"), "het adresblok ook niet");
+meld(
+  over.includes("beloof niets over bedragen"),
+  "en er wordt niets toegezegd over geld",
+);
+
 console.log("\n" + "=".repeat(52));
 if (gezakt > 0) {
   console.log(`${gezakt} test(s) mislukt.\n`);
