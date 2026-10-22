@@ -258,6 +258,30 @@ export async function beantwoordReactie(o: {
     },
   );
 
-  if (!uit.ok) return { gedaan: "mens", reden: uit.fout };
+  if (!uit.ok) {
+    /*
+     * De mail ging niet weg. Dat moet op de rij komen te staan.
+     *
+     * planBericht raakt de rij alleen aan als het lukt, dus zonder dit blijft
+     * hij op "concept" staan — en dat las op het antwoordenscherm als "de
+     * agent heeft een antwoord klaarstaan", alsof het zo weggaat. Er is
+     * niemand die het alsnog verstuurt: dit draait in een webhook en niemand
+     * drukt hier later nog op verzenden.
+     *
+     * Erger nog: op in_antwoord_op ligt een unieke index. Die bestaat om een
+     * tweede antwoord te voorkomen, maar hij houdt net zo goed een hérkansing
+     * tegen. De rij staat er, dus een nieuwe poging botst — terwijl er niets
+     * is verstuurd. Daarom markeren we hem hier, zodat het scherm het laat
+     * zien en er één klik overheen kan.
+     */
+    await fetch(`${d.url}/rest/v1/outbound_messages?id=eq.${bericht.id}`, {
+      method: "PATCH",
+      headers: { ...d.headers, Prefer: "return=minimal" },
+      body: JSON.stringify({ status: "mislukt", fout: uit.fout.slice(0, 500) }),
+    }).catch(() => {
+      // Stil: het antwoord is hieronder toch al als mislukt gemeld.
+    });
+    return { gedaan: "mens", reden: uit.fout };
+  }
   return { gedaan: "verstuurd", onderwerp: concept.onderwerp };
 }

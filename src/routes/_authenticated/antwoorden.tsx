@@ -5,7 +5,8 @@ import { useState } from "react";
 import { Inbox, Check, CircleHelp } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getMe, listAgents } from "@/lib/dashboard.functions";
-import { haalAntwoorden, zetAntwoordAf } from "@/lib/contacten.functions";
+import { haalAntwoorden, verstuurAntwoordOpnieuw, zetAntwoordAf } from "@/lib/contacten.functions";
+import { bezorgstand } from "@/lib/berichtstand";
 
 export const Route = createFileRoute("/_authenticated/antwoorden")({
   head: () => ({
@@ -227,12 +228,21 @@ function AntwoordenPagina() {
  * de klacht: de agent antwoordde wel, maar je zag het niet, en dan lijkt het
  * alsof er niets gebeurt.
  *
- * Er is bewust geen derde geval voor "bewust overgeslagen". Of de agent een
- * bericht negeerde of het aan een mens liet, wordt nergens vastgelegd —
- * alleen het verstuurde antwoord staat in de database. Hier doen alsof we het
- * verschil weten zou een verzinsel op het scherm zetten.
+ * Er is bewust geen geval voor "bewust overgeslagen". Of de agent een bericht
+ * negeerde of het aan een mens liet, wordt nergens vastgelegd — alleen het
+ * verstuurde antwoord staat in de database. Hier doen alsof we het verschil
+ * weten zou een verzinsel op het scherm zetten.
+ *
+ * Het onderscheid dat er wél toe doet: een antwoord dat klaarstaat maar niet
+ * is verstuurd, is geen antwoord. Daar hoort geen geruststellende regel bij
+ * maar een knop.
  */
 function AgentAntwoord({ bericht }: { bericht: Antwoord["agentbericht"] }) {
+  const qc = useQueryClient();
+  const opnieuwFn = useServerFn(verstuurAntwoordOpnieuw);
+  const [bezig, zetBezig] = useState(false);
+  const [fout, zetFout] = useState<string | null>(null);
+
   if (!bericht) {
     return (
       <p className="mt-3 border-t border-white/8 pt-3 text-[12.5px]/[1.7] text-ink/45">
@@ -241,25 +251,55 @@ function AgentAntwoord({ bericht }: { bericht: Antwoord["agentbericht"] }) {
     );
   }
 
-  const mislukt = bericht.status === "mislukt";
+  // De regel staat apart en wordt apart getest: hij stond eerder fout en dat
+  // was op het scherm niet te zien.
+  const stand = bezorgstand(bericht);
+  const verstuurd = stand === "verstuurd";
+  const blijftLiggen = stand === "blijft_liggen";
+
+  async function opnieuw() {
+    zetBezig(true);
+    zetFout(null);
+    try {
+      await opnieuwFn({ data: { berichtId: bericht!.id } });
+      await qc.invalidateQueries({ queryKey: ["antwoorden"] });
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Versturen mislukt.");
+    } finally {
+      zetBezig(false);
+    }
+  }
 
   return (
     <div
       className={`mt-3 rounded-xl border-l-2 py-2.5 pr-3 pl-3.5 ${
-        mislukt ? "border-amber-400/70 bg-amber-400/[0.06]" : "border-violet/70 bg-violet/[0.07]"
+        blijftLiggen
+          ? "border-amber-400/70 bg-amber-400/[0.06]"
+          : "border-violet/70 bg-violet/[0.07]"
       }`}
     >
-      <p className="text-[11.5px] font-semibold tracking-wide text-ink/70 uppercase">
-        {mislukt
-          ? "Antwoord van de agent is niet verstuurd"
-          : bericht.verzonden_op
-            ? `Agent antwoordde · ${wanneer(bericht.verzonden_op)}`
-            : "Agent heeft een antwoord klaarstaan"}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="text-[11.5px] font-semibold tracking-wide text-ink/70 uppercase">
+          {verstuurd
+            ? `Agent antwoordde · ${wanneer(bericht.verzonden_op ?? "")}`
+            : "Dit antwoord is niet verstuurd — de klant wacht nog"}
+        </p>
+        {blijftLiggen && (
+          <button
+            type="button"
+            onClick={opnieuw}
+            disabled={bezig}
+            className="shrink-0 rounded-lg border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 text-[11.5px] font-medium text-amber-200 transition hover:bg-amber-400/20 disabled:opacity-40"
+          >
+            {bezig ? "bezig…" : "opnieuw versturen"}
+          </button>
+        )}
+      </div>
 
-      {mislukt && bericht.fout && (
-        <p className="mt-1 text-[12px]/[1.6] text-amber-300/90">{bericht.fout}</p>
+      {bericht.fout && (
+        <p className="mt-1 text-[12.5px]/[1.6] text-amber-300/90">{bericht.fout}</p>
       )}
+      {fout && <p className="mt-1 text-[12.5px]/[1.6] text-amber-300">{fout}</p>}
 
       <p className="mt-1.5 text-[13px] font-medium text-ink/85">{bericht.onderwerp}</p>
       <p className="mt-1 max-w-[78ch] text-[12.5px]/[1.7] whitespace-pre-wrap text-ink/70">

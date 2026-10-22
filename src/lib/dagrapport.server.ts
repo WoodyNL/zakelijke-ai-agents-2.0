@@ -123,6 +123,17 @@ async function cijfersVoor(
             getal: await tel(d, `outbound_replies?agent_id=eq.${a.id}&afgehandeld_op=is.null`),
             tekst: "antwoorden nog niet afgehandeld",
           },
+          {
+            // Antwoorden van de agent die niet de deur uit zijn gegaan. Stap 5
+            // is het antwoord in een gesprek; staat daar geen verzendmoment op,
+            // dan wacht die klant nog — en niemand merkt dat vanzelf, want dit
+            // gebeurt in een webhook waar geen mens bij zit.
+            getal: await tel(
+              d,
+              `outbound_messages?agent_id=eq.${a.id}&stap=eq.5&verzonden_op=is.null`,
+            ),
+            tekst: "antwoorden van de agent niet verstuurd",
+          },
         ],
       };
     case "inbox_draft":

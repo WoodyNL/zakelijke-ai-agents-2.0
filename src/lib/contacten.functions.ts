@@ -228,6 +228,104 @@ export const haalAntwoorden = createServerFn({ method: "GET" })
     return antwoorden.map((a) => ({ ...a, agentbericht: perReactie.get(a.id) ?? null }));
   });
 
+/**
+ * Een mislukt antwoord opnieuw versturen.
+ *
+ * Nodig omdat niets dat uit zichzelf doet. Het antwoord wordt opgesteld in de
+ * webhook, en als het versturen daar strandt — Resend die hapert, een adres
+ * dat geweigerd wordt — komt er nooit meer iemand langs. De tekst staat er
+ * wel, netjes opgesteld, en de klant wacht.
+ *
+ * Automatisch opnieuw proberen zou hier verkeerd zijn. Weigert Resend de mail
+ * om wat erin staat of naar wie hij gaat, dan verandert een tweede poging
+ * niets en een tiende ook niet. Daarom is dit een knop: een mens leest wat er
+ * misging, kijkt naar de tekst die eronder staat, en beslist.
+ *
+ * De ene rand die hieraan zit: lukte het versturen wél maar mislukte het
+ * wegschrijven van de uitslag, dan staat de rij ook zonder provider_id. Een
+ * herkansing stuurt de mail dan een tweede keer. Daar is geen controle tegen
+ * zonder dat Resend ons een sleutel teruggeeft die wij vooraf kiezen. Wat er
+ * wél is: zodra er een provider_id staat, weigert deze functie — dat dekt het
+ * gewone geval dat iemand twee keer op de knop drukt.
+ */
+export const verstuurAntwoordOpnieuw = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ berichtId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: bericht, error } = await context.supabase
+      .from("outbound_messages")
+      .select("id, agent_id, contact_id, onderwerp, tekst, status, provider_id, in_antwoord_op")
+      .eq("id", data.berichtId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!bericht) throw new Error("Dat bericht bestaat niet.");
+    if (bericht.provider_id) {
+      throw new Error("Dit bericht is al verstuurd.");
+    }
+
+    const { data: contact } = await context.supabase
+      .from("outbound_contacts")
+      .select("email, afmeldsleutel, afgemeld_op, bounce_op")
+      .eq("id", bericht.contact_id)
+      .maybeSingle();
+    if (!contact) throw new Error("Het contact bestaat niet meer.");
+    if (contact.afgemeld_op || contact.bounce_op) {
+      throw new Error("Dit contact is afgemeld of onbestelbaar.");
+    }
+
+    // De afzender komt uit dezelfde campagne als het eerste bericht, net als
+    // bij het oorspronkelijke antwoord. Een herkansing die ineens van een
+    // ander adres komt, leest als een vreemde.
+    const { data: eerste } = await context.supabase
+      .from("outbound_messages")
+      .select("outbound_campaigns(afzender_naam, afzender_email, antwoord_naar)")
+      .eq("contact_id", bericht.contact_id)
+      .eq("stap", 1)
+      .limit(1)
+      .maybeSingle();
+    const camp = eerste?.outbound_campaigns;
+    if (!camp?.afzender_email) {
+      throw new Error("Geen campagnegegevens om vanaf te versturen.");
+    }
+
+    // De draad: het Message-ID van de reactie waarop dit het antwoord is.
+    let inAntwoordOp: string | null = null;
+    if (bericht.in_antwoord_op) {
+      const { data: reactie } = await context.supabase
+        .from("outbound_replies")
+        .select("message_id")
+        .eq("id", bericht.in_antwoord_op)
+        .maybeSingle();
+      inAntwoordOp = reactie?.message_id ?? null;
+    }
+
+    const { planBericht } = await import("@/lib/verzenden.server");
+    const uit = await planBericht(
+      {
+        berichtId: bericht.id,
+        naar: contact.email,
+        onderwerp: bericht.onderwerp,
+        tekst: bericht.tekst,
+        afmeldsleutel: contact.afmeldsleutel,
+        ...(inAntwoordOp ? { inAntwoordOp } : {}),
+      },
+      {
+        naam: camp.afzender_naam ?? "",
+        email: camp.afzender_email,
+        antwoordNaar: camp.antwoord_naar ?? camp.afzender_email,
+      },
+    );
+
+    if (!uit.ok) {
+      await context.supabase
+        .from("outbound_messages")
+        .update({ status: "mislukt", fout: uit.fout.slice(0, 500) })
+        .eq("id", bericht.id);
+      throw new Error(uit.fout);
+    }
+    return { ok: true };
+  });
+
 /** Een antwoord afvinken, of weer openzetten. */
 export const zetAntwoordAf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
