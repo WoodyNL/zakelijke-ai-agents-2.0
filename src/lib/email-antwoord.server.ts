@@ -8,6 +8,7 @@ import {
   type Binnenkomend,
 } from "@/lib/antwoordregels";
 import { alsDagInTekst } from "@/lib/bevestiging-lezen";
+import { STANDAARD_OVERDRACHTSWOORDEN } from "@/lib/overdrachtswoorden";
 import {
   adresRegel,
   bewaarAdresOpContact,
@@ -140,6 +141,13 @@ async function bepaalEnAntwoord(o: {
    * voerde in maart voorgoed over zijn beurten heen — niet omdat er iets mis
    * is, maar omdat hij een halfjaar eerder iets vroeg.
    */
+  // Naam en instellingen in één keer: de naam is voor de ondertekening, de
+  // instellingen bepalen onder meer bij welke woorden de agent zwijgt.
+  const [agent] = await haal<{ name: string; opties: Record<string, unknown> | null }>(
+    d,
+    `agents?select=name,opties&id=eq.${o.agentId}`,
+  );
+
   let eerdereAntwoorden: Array<{ tekst: string }> = [];
   if (o.contactId) {
     eerdereAntwoorden = await haal<{ tekst: string }>(
@@ -152,12 +160,25 @@ async function bepaalEnAntwoord(o: {
     );
   }
 
+  /*
+   * De woorden waarbij een mens het overneemt.
+   *
+   * Uit de instellingen van deze agent, met de standaardlijst als die er niet
+   * staat. Een lege lijst is een geldige keuze en zet de rem uit — dus geen
+   * `??` op een lege array, want dan zou "uit" niet te kiezen zijn.
+   */
+  const ingesteld = agent?.opties?.["overdracht_woorden"];
+  const overdrachtswoorden = Array.isArray(ingesteld)
+    ? ingesteld.map(String)
+    : [...STANDAARD_OVERDRACHTSWOORDEN];
+
   const binnen: Binnenkomend = {
     tekst: o.tekst,
     onderwerp: o.onderwerp,
     kopregels: o.kopregels,
     bekendContact: o.contactId !== null,
     eerdereAntwoorden: eerdereAntwoorden.length,
+    overdrachtswoorden,
   };
 
   const oordeel = beoordeelAntwoord(binnen);
@@ -209,7 +230,6 @@ async function bepaalEnAntwoord(o: {
     d,
     `knowledge_items?select=category,title,content&agent_id=eq.${o.agentId}&is_active=eq.true&order=sort_order`,
   );
-  const [agent] = await haal<{ name: string }>(d, `agents?select=name&id=eq.${o.agentId}`);
 
   /*
    * Wat wil deze persoon, en kan er een vrijdag op?

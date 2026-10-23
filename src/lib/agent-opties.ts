@@ -22,6 +22,10 @@ import type { AgentSoort } from "@/lib/agent-soorten";
  *            belooft iets wat niet gebeurt.
  */
 
+// Relatief en met extensie: scripts/test-catalogus.ts laadt dit bestand
+// rechtstreeks met Node, en die kent het @/-pad niet.
+import { STANDAARD_OVERDRACHTSWOORDEN } from "./overdrachtswoorden.ts";
+
 export type OptieType = "schakelaar" | "getal" | "tekst" | "tekstlang" | "keuze" | "lijst";
 
 export type OptieBron =
@@ -181,6 +185,18 @@ const UITGAAND: Optie[] = [
     bron: { soort: "optie" },
     gebouwd: true,
     standaard: 3,
+    groep: "grenzen",
+  },
+  {
+    sleutel: "overdracht_woorden",
+    label: "Direct overdragen bij",
+    uitleg:
+      "Schrijft iemand een van deze woorden, dan antwoordt de agent niet maar leg je het zelf. Denk aan klacht, bedorven of jurist. Leeg laten zet deze rem uit.",
+    type: "lijst",
+    wie: "klant",
+    bron: { soort: "optie" },
+    gebouwd: true,
+    standaard: [...STANDAARD_OVERDRACHTSWOORDEN],
     groep: "grenzen",
   },
   {

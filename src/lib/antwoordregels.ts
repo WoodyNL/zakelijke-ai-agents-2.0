@@ -16,6 +16,8 @@
  * Puur en zonder imports, zodat het te testen is zonder netwerk.
  */
 
+import { vraagtOverdracht } from "./overdrachtswoorden.ts";
+
 /** Wat er over een binnengekomen bericht bekend is. */
 export type Binnenkomend = {
   tekst: string;
@@ -26,6 +28,11 @@ export type Binnenkomend = {
   bekendContact: boolean;
   /** Hoeveel keer de agent dit contact al automatisch heeft geantwoord. */
   eerdereAntwoorden: number;
+  /**
+   * Woorden waarbij een mens het overneemt. Laat leeg om die regel niet te
+   * gebruiken; de aanroeper vult de ingestelde of de standaardlijst.
+   */
+  overdrachtswoorden?: readonly string[];
 };
 
 export type Oordeel =
@@ -141,8 +148,10 @@ export function zonderOnzeAfmeldregel(tekst: string): string {
     .filter((r) => {
       // Citaattekens eraf: in een antwoord staat onze regel als "> Wil je...".
       const kaal = r.replace(/^[\s>]+/, "");
-      return !/wil je geen post meer van ons\?/i.test(kaal) &&
-        !/zakelijkeaiagents\.nl\/afmelden/i.test(kaal);
+      return (
+        !/wil je geen post meer van ons\?/i.test(kaal) &&
+        !/zakelijkeaiagents\.nl\/afmelden/i.test(kaal)
+      );
     })
     .join("\n");
 }
@@ -199,14 +208,33 @@ export function beoordeelAntwoord(b: Binnenkomend): Oordeel {
     return { doen: "mens", reden: "vraagt om geen post meer te krijgen" };
   }
 
-  // 3. Een adres dat niet in de lijst staat. We weten niet wie dit is, en dus
+  /*
+   * 3. Waar het over gaat. Een klacht, iets met eten, een jurist.
+   *
+   * Hier gaat het niet om wat de agent zou antwoorden maar om dat hij
+   * antwoordt. Wie schrijft dat de vorige levering bedorven was en binnen een
+   * minuut een opgewekte aanbieding voor gratis kipsaté terugkrijgt, is
+   * daarna niet boos op de agent maar op het bedrijf.
+   *
+   * Alleen in wat hij zélf schreef, niet in het aangehaalde deel. Onder zijn
+   * antwoord staat onze eigen mail, en die bevat de tekst van de campagne —
+   * zou daar een van deze woorden in staan, dan ging deze regel bij élk
+   * antwoord af en zweeg de agent tegen iedereen. Dat is precies wat de
+   * afmeldregel op 21 oktober deed.
+   */
+  const woord = vraagtOverdracht(eigenWoorden, b.overdrachtswoorden ?? []);
+  if (woord) {
+    return { doen: "mens", reden: `schrijft over "${woord}" — dit wil je zelf lezen` };
+  }
+
+  // 4. Een adres dat niet in de lijst staat. We weten niet wie dit is, en dus
   //    ook niet waar het gesprek over gaat.
   if (!b.bekendContact) {
     return { doen: "mens", reden: "afzender staat niet in de contactenlijst" };
   }
 
   /*
-   * 4. Een gesprek dat lang duurt.
+   * 5. Een gesprek dat lang duurt.
    *
    * Precies op de grens volgt nog één bericht waarin de agent het gesprek
    * overdraagt; daarna is hij stil. Dat "precies" is geen toeval en geen
@@ -227,7 +255,7 @@ export function beoordeelAntwoord(b: Binnenkomend): Oordeel {
     };
   }
 
-  // 5. Niets om op te antwoorden. Resend levert de tekst apart aan, en dat
+  // 6. Niets om op te antwoorden. Resend levert de tekst apart aan, en dat
   //    kan mislukken; dan staat er een leeg bericht in het scherm. En wie
   //    alleen ons eigen citaat terugstuurt zonder er iets boven te typen,
   //    heeft ook niets gevraagd — dan krijgt het model een lege vraag.

@@ -32,8 +32,8 @@ import {
   magZelfBeginnen,
   normaliseerNummer,
   overdrachtTekst,
-  vraagtOverdracht,
 } from "@/lib/whatsapp";
+import { vraagtOverdracht } from "@/lib/overdrachtswoorden";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 

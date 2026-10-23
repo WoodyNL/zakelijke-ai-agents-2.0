@@ -23,24 +23,6 @@ export function normaliseerNummer(ruw: string): string | null {
   return n;
 }
 
-/** Staat er een woord in waarbij een mens het moet overnemen? */
-export function vraagtOverdracht(tekst: string, woorden: unknown): string | null {
-  const lijst = Array.isArray(woorden)
-    ? woorden.map((w) => String(w).trim().toLowerCase()).filter(Boolean)
-    : [];
-  const t = tekst.toLowerCase();
-  for (const w of lijst) {
-    // Als heel woord, zodat "jurist" niet afgaat op "juristerij"... maar wel
-    // op "mijn jurist". Een woord met spaties telt als zinsdeel.
-    const patroon = new RegExp(
-      `(^|[^\\p{L}])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\p{L}])`,
-      "iu",
-    );
-    if (patroon.test(t)) return w;
-  }
-  return null;
-}
-
 export type InkomendBericht = {
   waId: string;
   van: string;

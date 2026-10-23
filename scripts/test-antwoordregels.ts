@@ -21,6 +21,7 @@ import {
   zonderOnzeAfmeldregel,
   type Binnenkomend,
 } from "../src/lib/antwoordregels.ts";
+import { STANDAARD_OVERDRACHTSWOORDEN } from "../src/lib/overdrachtswoorden.ts";
 
 let gezakt = 0;
 const meld = (goed: boolean, naam: string, detail = "") => {
@@ -34,6 +35,7 @@ const basis = (o: Partial<Binnenkomend> = {}): Binnenkomend => ({
   kopregels: {},
   bekendContact: true,
   eerdereAntwoorden: 0,
+  overdrachtswoorden: STANDAARD_OVERDRACHTSWOORDEN,
   ...o,
 });
 
@@ -298,6 +300,67 @@ meld(
   gespreksvenster(new Date("2026-10-22T11:00:00Z")) ===
     gespreksvenster(new Date("2026-10-22T13:00:00+02:00")),
   "zelfde moment, zelfde grens, ongeacht tijdzone",
+);
+
+console.log("\nWaar het over gaat\n" + "=".repeat(52));
+
+for (const [zin, waarom] of [
+  ["De vorige levering was bedorven.", "bedorven eten"],
+  ["Ik heb een klacht over jullie service.", "een klacht"],
+  ["Mijn jurist kijkt hier naar.", "een jurist"],
+  ["Graag de hele boel annuleren.", "annuleren"],
+  ["Iemand is ziek geworden van die saté.", "ziek geworden"],
+  ["Jullie houden mij aansprakelijk? Andersom.", "aansprakelijk"],
+] as const) {
+  const u = beoordeelAntwoord(basis({ tekst: zin }));
+  meld(u.doen === "mens", `${waarom} gaat naar een mens`, JSON.stringify(u));
+}
+
+/*
+ * "Advocaat" staat met opzet niet in de lijst. Bij een snackleverancier is
+ * dat net zo goed een drank, en "heb je ook advocaat?" is een bestelling en
+ * geen dreigement.
+ */
+meld(
+  beoordeelAntwoord(basis({ tekst: "Verkopen jullie ook advocaat?" })).doen === "beantwoorden",
+  "een vraag over advocaat (de drank) wordt gewoon beantwoord",
+);
+
+meld(
+  beoordeelAntwoord(basis({ tekst: "Wat zit er in het proefpakket?" })).doen === "beantwoorden",
+  "een gewone vraag blijft gewoon een vraag",
+);
+
+/*
+ * En de valkuil die de afmeldregel op 21 oktober wél in ging: deze woorden
+ * mogen alleen tellen in wat de afzender zelf schreef. Zou ons eigen bericht
+ * er een bevatten, dan kwam het in elk antwoord mee terug in het citaat en
+ * zweeg de agent tegen iedereen.
+ */
+const MET_ONS_WOORD = `Ja graag, klinkt goed!
+
+> Op 19 okt 2026 om 12:12 heeft Frank Ransijn het volgende geschreven:
+>
+> Geen klacht ooit gehad over deze saté, en annuleren kan altijd kosteloos.`;
+meld(
+  beoordeelAntwoord(basis({ tekst: MET_ONS_WOORD })).doen === "beantwoorden",
+  "woorden uit ons eigen citaat tellen niet mee",
+  JSON.stringify(beoordeelAntwoord(basis({ tekst: MET_ONS_WOORD }))),
+);
+
+// De rem is uit te zetten door de lijst leeg te maken.
+meld(
+  beoordeelAntwoord(basis({ tekst: "Ik heb een klacht.", overdrachtswoorden: [] })).doen ===
+    "beantwoorden",
+  "een lege lijst zet deze rem uit",
+);
+
+// En de gevaarlijke regels gaan nog steeds voor.
+meld(
+  beoordeelAntwoord(
+    basis({ tekst: "Ik heb een klacht, en meld me af.", }),
+  ).doen === "mens",
+  "een klacht met een afmelding erin gaat ook naar een mens",
 );
 
 console.log("\n" + "=".repeat(52));

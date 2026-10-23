@@ -10,8 +10,8 @@ import {
   leesWebhook,
   magZelfBeginnen,
   normaliseerNummer,
-  vraagtOverdracht,
 } from "../src/lib/whatsapp.ts";
+import { vraagtOverdracht } from "../src/lib/overdrachtswoorden.ts";
 let gezakt = 0;
 const meld = (goed: boolean, naam: string, detail = "") => {
   console.log(`  ${goed ? "✓" : "✗"} ${naam}${detail ? `  ${detail}` : ""}`);
