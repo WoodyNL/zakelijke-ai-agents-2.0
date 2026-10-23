@@ -21,6 +21,12 @@ export type TweestapsStand = {
 export type Eis =
   /** Alles in orde, of niet van toepassing. */
   | { stand: "mag" }
+  /**
+   * We weten het niet. Alleen voor een beheerder een belemmering, en
+   * nadrukkelijk iets anders dan "staat uit": wie hem wél aan heeft en dit
+   * scherm te zien krijgt, moet niet gaan instellen wat er al staat.
+   */
+  | { stand: "onbekend"; uitleg: string }
   /** Hij moet een authenticator koppelen voordat hij verder kan. */
   | { stand: "moet_aanzetten"; uitleg: string }
   /** Hij heeft er een, maar deze sessie is er nog geen code ingevuld. */
@@ -36,11 +42,26 @@ export type Eis =
  * gebruiken. Dat verschil is met opzet: hem aanzetten mag nooit nadelig
  * uitpakken, anders zet niemand hem aan.
  *
- * `stand` mag null zijn — dan is er niets bekend. Voor een beheerder is dat
- * geen reden om de deur dicht te gooien: de aanroeper besluit dat, want die
- * weet of de vraag mislukte of dat er werkelijk niets stond.
+ * `bekend` op false betekent: de vraag aan de database mislukte, we weten het
+ * dus niet. Voor een beheerder is dat geen toestemming — maar het is ook niet
+ * hetzelfde als "staat uit", en dat onderscheid hoort op het scherm. Iemand
+ * die zijn authenticator allang heeft, moet niet te horen krijgen dat hij er
+ * een moet instellen; dan gaat hij zoeken naar een knop die er niet is.
  */
-export function beoordeelTweedeStap(isBeheerder: boolean, stand: TweestapsStand | null): Eis {
+export function beoordeelTweedeStap(
+  isBeheerder: boolean,
+  stand: TweestapsStand | null,
+  bekend = true,
+): Eis {
+  if (!bekend) {
+    if (!isBeheerder) return { stand: "mag" };
+    return {
+      stand: "onbekend",
+      uitleg:
+        "We konden je tweestapsverificatie even niet controleren. Er is niets gewijzigd; probeer het zo opnieuw.",
+    };
+  }
+
   const ingesteld = stand?.ingesteld === true;
   const bevestigd = stand?.niveau === "aal2";
 
@@ -64,16 +85,21 @@ export function beoordeelTweedeStap(isBeheerder: boolean, stand: TweestapsStand 
   return { stand: "mag" };
 }
 
-/** Een mislukte controle geeft een beheerder nooit toestemming. */
+/**
+ * Een mislukte controle geeft een beheerder nooit toestemming.
+ *
+ * De beslissing zelf staat hierboven, zodat het scherm en de server niet uit
+ * elkaar kunnen lopen: deze functie vertaalt alleen het antwoord van de
+ * database naar die ene regel, en gooit wat eruit komt.
+ */
 export function controleerTweedeStap(
   isBeheerder: boolean,
   resultaat: { data: unknown; error: { message: string } | null },
 ): void {
   if (resultaat.error) {
-    if (isBeheerder) {
-      throw new Error("Tweestapsverificatie kon niet worden gecontroleerd. Probeer opnieuw; er is niets gewijzigd.");
-    }
     // Voor support blijft het bestaande gedrag ongewijzigd.
+    const eis = beoordeelTweedeStap(isBeheerder, null, false);
+    if (eis.stand !== "mag") throw new Error(eis.uitleg);
     return;
   }
   const rijen = Array.isArray(resultaat.data) ? resultaat.data : [];

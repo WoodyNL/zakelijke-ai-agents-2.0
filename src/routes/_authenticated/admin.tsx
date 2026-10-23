@@ -154,8 +154,45 @@ function AdminPanel() {
    * de controle niet uit elkaar kunnen lopen.
    */
   const eis = meQuery.data
-    ? beoordeelTweedeStap(meQuery.data.isAdmin === true, meQuery.data.tweestaps ?? null)
+    ? beoordeelTweedeStap(
+        meQuery.data.isAdmin === true,
+        meQuery.data.tweestaps ?? null,
+        meQuery.data.tweestaps?.bekend !== false,
+      )
     : { stand: "mag" as const };
+
+  /*
+   * "We weten het niet" is iets anders dan "staat uit".
+   *
+   * De server weigert beheeracties in allebei de gevallen, maar wat jij moet
+   * doen verschilt: in het ene geval iets instellen, in het andere even
+   * opnieuw proberen. Het verkeerde scherm laat iemand zoeken naar een knop
+   * die er niet is.
+   */
+  if (eis.stand === "onbekend") {
+    return (
+      <DashboardShell isAdmin userName={meQuery.data?.name ?? ""}>
+        <h1 className="font-display text-[24px] font-bold tracking-tight text-brand">Beheer</h1>
+        <div className="mt-4 max-w-[62ch] rounded-2xl border border-amber-400/40 bg-amber-400/[0.08] px-5 py-4">
+          <p className="font-display text-[15px] font-semibold text-amber-100">
+            Even niet te controleren
+          </p>
+          <p className="mt-2 text-[13px]/[1.75] text-amber-100/90">{eis.uitleg}</p>
+          <p className="mt-2 text-[13px]/[1.75] text-amber-100/90">
+            Dit zegt niets over jouw instellingen — als je tweestapsverificatie aan hebt, staat
+            hij gewoon aan. Je hoeft niets opnieuw in te stellen.
+          </p>
+          <button
+            type="button"
+            onClick={() => qc.invalidateQueries({ queryKey: ["me"] })}
+            className="mt-4 inline-flex items-center rounded-xl border border-amber-400/40 bg-amber-400/15 px-3.5 py-2 text-[13px] font-semibold text-amber-100 transition hover:bg-amber-400/25"
+          >
+            Opnieuw proberen
+          </button>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   if (eis.stand === "moet_aanzetten") {
     return (

@@ -91,6 +91,15 @@ export const getMe = createServerFn({ method: "GET" })
     const eigenaar = await (context.supabase as unknown as Rpc).rpc("ben_eigenaar");
     const tweestaps = await (context.supabase as unknown as Rpc).rpc("mijn_tweestaps");
     const stand = ((tweestaps.data ?? []) as Array<{ ingesteld: boolean; niveau: string }>)[0];
+    /*
+     * Of we het überhaupt weten.
+     *
+     * Zonder dit viel een mislukte vraag terug op "staat uit", en dan kreeg
+     * iemand die zijn authenticator allang heeft het scherm te zien dat hij
+     * er een moet instellen. Die gaat dan zoeken naar een knop die er niet
+     * is. "Weten we niet" is een eigen toestand en hoort ook zo te heten.
+     */
+    const bekend = !tweestaps.error;
     return {
       id: context.userId,
       name: profile?.name ?? "",
@@ -98,7 +107,11 @@ export const getMe = createServerFn({ method: "GET" })
       isAdmin,
       isStaf,
       isEigenaar: eigenaar.error ? true : eigenaar.data === true,
-      tweestaps: { ingesteld: stand?.ingesteld === true, niveau: stand?.niveau ?? "aal1" },
+      tweestaps: {
+        ingesteld: stand?.ingesteld === true,
+        niveau: stand?.niveau ?? "aal1",
+        bekend,
+      },
     };
   });
 
