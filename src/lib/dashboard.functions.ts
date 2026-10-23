@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { beoordeelTweedeStap } from "@/lib/tweestaps-eis";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { leesKlant } from "@/lib/klant";
@@ -23,27 +24,35 @@ type Rpc = {
 
 /** Beheerder of support: mag het overzicht in /admin zien, niets wijzigen. */
 /**
- * Heeft iemand tweestapsverificatie aan, dan moet hij hem in deze sessie ook
- * gebruikt hebben voordat hij iets in het beheer doet.
+ * De tweede stap afdwingen voordat er iets in het beheer gebeurt.
  *
- * Alleen voor wie hem al aan heeft: wie hem nog niet heeft, wordt niet
- * buitengesloten. Zo kan het aanzetten nooit tot een dichte deur leiden, en
- * blijft de drang om het aan te zetten een melding in plaats van een val.
+ * Voor een beheerder is hij verplicht: dat account kan bij de gegevens van
+ * elke klant, en dan is één wachtwoord te weinig. Heeft hij er geen, dan kan
+ * hij niets in het beheer doen behalve er een instellen — en dat kan, want
+ * getMe en de accountpagina hebben deze controle niet. Geen dichte deur dus,
+ * wel een dwingende.
+ *
+ * Voor wie geen beheerder is blijft hij vrijwillig, maar wie hem aanzet moet
+ * hem ook gebruiken. Dat verschil is met opzet: aanzetten mag nooit nadelig
+ * uitpakken, anders doet niemand het.
+ *
+ * Mislukt de vraag aan de database, dan verandert er niets aan wat er mocht.
+ * Dat is een bewuste keuze en geen vergetelheid. Fail-closed zou betekenen
+ * dat een haperende database de enige beheerder buiten zijn eigen portaal
+ * zet, en op Lovable Cloud is er geen console om jezelf weer binnen te laten.
+ * De tweede stap is hier een extra slot, niet het enige: het wachtwoord staat
+ * er nog steeds voor.
  */
-async function assertTweedeStap(context: Ctx) {
+async function assertTweedeStap(context: Ctx, isBeheerder: boolean) {
   const { data, error } = await (
     context.supabase as unknown as {
       rpc: (n: string) => Promise<{ data: unknown; error: { message: string } | null }>;
     }
   ).rpc("mijn_tweestaps");
-  // Staat de migratie er nog niet, dan verandert er niets aan wat er mocht.
   if (error) return;
-  const stand = ((data ?? []) as Array<{ ingesteld: boolean; niveau: string }>)[0];
-  if (stand?.ingesteld && stand.niveau !== "aal2") {
-    throw new Error(
-      "Bevestig eerst je tweestapsverificatie. Log opnieuw in en vul de code uit je app in.",
-    );
-  }
+  const stand = ((data ?? []) as Array<{ ingesteld: boolean; niveau: string }>)[0] ?? null;
+  const eis = beoordeelTweedeStap(isBeheerder, stand);
+  if (eis.stand !== "mag") throw new Error(eis.uitleg);
 }
 
 async function assertStaf(context: Ctx) {
@@ -56,7 +65,8 @@ async function assertStaf(context: Ctx) {
   if (!rollen.includes("admin") && !rollen.includes("support")) {
     throw new Error("Geen toegang tot het beheer");
   }
-  await assertTweedeStap(context);
+  // Alleen voor beheerders verplicht. Support kijkt mee en wijzigt niets.
+  await assertTweedeStap(context, rollen.includes("admin"));
 }
 
 async function assertAdmin(context: Ctx) {
@@ -68,7 +78,7 @@ async function assertAdmin(context: Ctx) {
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Geen beheerdersrechten");
-  await assertTweedeStap(context);
+  await assertTweedeStap(context, true);
 }
 
 export const getMe = createServerFn({ method: "GET" })

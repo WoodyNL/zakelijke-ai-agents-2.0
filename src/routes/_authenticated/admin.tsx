@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
+import { beoordeelTweedeStap } from "@/lib/tweestaps-eis";
 import { AgentAannames } from "@/components/agent-aannames";
 import { AgentOptiesFormulier, type Waarden } from "@/components/agent-opties-formulier";
 import { LEGE_AANNAMES, alsGetal, alsTekst, type Aannamewaarden } from "@/lib/agent-aannames";
@@ -134,6 +135,49 @@ function AdminPanel() {
     );
   }
 
+  /*
+   * Een beheerder zonder tweede stap komt niet verder dan deze melding.
+   *
+   * De server weigert zijn aanroepen toch al, dus zonder dit zou de pagina
+   * zich vullen met foutmeldingen die niet zeggen wat er aan de hand is. Nu
+   * staat er één scherm met één ding dat je moet doen.
+   *
+   * Het is nadrukkelijk geen uitsluiting: de accountpagina en het gewone
+   * dashboard werken gewoon, en daar staat de knop om het aan te zetten.
+   * Dezelfde functie beslist dit als aan de serverkant, zodat het scherm en
+   * de controle niet uit elkaar kunnen lopen.
+   */
+  const eis = meQuery.data
+    ? beoordeelTweedeStap(meQuery.data.isAdmin === true, meQuery.data.tweestaps ?? null)
+    : { stand: "mag" as const };
+
+  if (eis.stand === "moet_aanzetten") {
+    return (
+      <DashboardShell isAdmin userName={meQuery.data?.name ?? ""}>
+        <h1 className="font-display text-[24px] font-bold tracking-tight text-brand">Beheer</h1>
+        <div className="mt-4 max-w-[62ch] rounded-2xl border border-amber-400/40 bg-amber-400/[0.08] px-5 py-4">
+          <p className="font-display text-[15px] font-semibold text-amber-100">
+            Zet eerst tweestapsverificatie aan
+          </p>
+          <p className="mt-2 text-[13px]/[1.75] text-amber-100/90">
+            Een beheerdersaccount kan bij de gegevens van elke klant. Eén wachtwoord is daar te
+            weinig voor, dus het beheer blijft dicht tot je een authenticator-app hebt gekoppeld.
+            Dat kost een minuut.
+          </p>
+          <Link
+            to="/account"
+            className="mt-4 inline-flex items-center rounded-xl border border-amber-400/40 bg-amber-400/15 px-3.5 py-2 text-[13px] font-semibold text-amber-100 transition hover:bg-amber-400/25"
+          >
+            Naar je account
+          </Link>
+          <p className="mt-3 text-[12px]/[1.6] text-amber-100/70">
+            Je dashboard en je account blijven gewoon werken; alleen het beheer wacht hierop.
+          </p>
+        </div>
+      </DashboardShell>
+    );
+  }
+
   const clients = clientsQuery.data ?? [];
 
   return (
@@ -165,7 +209,9 @@ function AdminPanel() {
         </div>
       )}
 
-      {meQuery.data && meQuery.data.tweestaps?.ingesteld === false && (
+      {/* Beheerders komen hier niet eens; dit is de zachte variant voor
+          support, waar de tweede stap vrijwillig is. */}
+      {meQuery.data && !isAdmin && meQuery.data.tweestaps?.ingesteld === false && (
         <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3 text-[12.5px]/[1.6] text-amber-100">
           Tweestapsverificatie staat uit. Nu is één wachtwoord genoeg om bij de gegevens van al je
           klanten te komen.{" "}
