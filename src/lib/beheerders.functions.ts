@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { legVast } from "@/lib/beheerlog";
-import { beoordeelTweedeStap } from "@/lib/tweestaps-eis";
+import { controleerTweedeStap } from "@/lib/tweestaps-eis";
 
 /**
  * Wie het beheer in mag.
@@ -64,11 +64,7 @@ async function alleenBeheerder(context: Ctx) {
   if (!data) throw new Error("Geen beheerdersrechten");
 
   const stap = await (context.supabase as Rpc).rpc("mijn_tweestaps");
-  if (!stap.error) {
-    const stand = ((stap.data ?? []) as Array<{ ingesteld: boolean; niveau: string }>)[0] ?? null;
-    const eis = beoordeelTweedeStap(true, stand);
-    if (eis.stand !== "mag") throw new Error(eis.uitleg);
-  }
+  controleerTweedeStap(true, stap);
 }
 
 export const haalBeheerders = createServerFn({ method: "GET" })

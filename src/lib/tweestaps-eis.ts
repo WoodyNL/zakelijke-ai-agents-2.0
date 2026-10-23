@@ -63,3 +63,21 @@ export function beoordeelTweedeStap(isBeheerder: boolean, stand: TweestapsStand 
 
   return { stand: "mag" };
 }
+
+/** Een mislukte controle geeft een beheerder nooit toestemming. */
+export function controleerTweedeStap(
+  isBeheerder: boolean,
+  resultaat: { data: unknown; error: { message: string } | null },
+): void {
+  if (resultaat.error) {
+    if (isBeheerder) {
+      throw new Error("Tweestapsverificatie kon niet worden gecontroleerd. Probeer opnieuw; er is niets gewijzigd.");
+    }
+    // Voor support blijft het bestaande gedrag ongewijzigd.
+    return;
+  }
+  const rijen = Array.isArray(resultaat.data) ? resultaat.data : [];
+  const stand = rijen[0] as TweestapsStand | undefined;
+  const eis = beoordeelTweedeStap(isBeheerder, stand ?? null);
+  if (eis.stand !== "mag") throw new Error(eis.uitleg);
+}

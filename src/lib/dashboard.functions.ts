@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { beoordeelTweedeStap } from "@/lib/tweestaps-eis";
+import { controleerTweedeStap } from "@/lib/tweestaps-eis";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { leesKlant } from "@/lib/klant";
@@ -36,12 +36,8 @@ type Rpc = {
  * hem ook gebruiken. Dat verschil is met opzet: aanzetten mag nooit nadelig
  * uitpakken, anders doet niemand het.
  *
- * Mislukt de vraag aan de database, dan verandert er niets aan wat er mocht.
- * Dat is een bewuste keuze en geen vergetelheid. Fail-closed zou betekenen
- * dat een haperende database de enige beheerder buiten zijn eigen portaal
- * zet, en op Lovable Cloud is er geen console om jezelf weer binnen te laten.
- * De tweede stap is hier een extra slot, niet het enige: het wachtwoord staat
- * er nog steeds voor.
+ * Mislukt de controle, dan worden beheeracties geweigerd. Account en het
+ * eigen dashboard blijven bereikbaar; support houdt het bestaande gedrag.
  */
 async function assertTweedeStap(context: Ctx, isBeheerder: boolean) {
   const { data, error } = await (
@@ -49,10 +45,7 @@ async function assertTweedeStap(context: Ctx, isBeheerder: boolean) {
       rpc: (n: string) => Promise<{ data: unknown; error: { message: string } | null }>;
     }
   ).rpc("mijn_tweestaps");
-  if (error) return;
-  const stand = ((data ?? []) as Array<{ ingesteld: boolean; niveau: string }>)[0] ?? null;
-  const eis = beoordeelTweedeStap(isBeheerder, stand);
-  if (eis.stand !== "mag") throw new Error(eis.uitleg);
+  controleerTweedeStap(isBeheerder, { data, error });
 }
 
 async function assertStaf(context: Ctx) {
