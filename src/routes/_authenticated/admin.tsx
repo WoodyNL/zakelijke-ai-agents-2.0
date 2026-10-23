@@ -4,6 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { DashboardShell, STATUS_META } from "@/components/dashboard-shell";
 import { beoordeelTweedeStap } from "@/lib/tweestaps-eis";
+import {
+  haalBeheerders,
+  maakBeheerder,
+  trekBeheerIn,
+  type Beheerder,
+} from "@/lib/beheerders.functions";
 import { AgentAannames } from "@/components/agent-aannames";
 import { AgentOptiesFormulier, type Waarden } from "@/components/agent-opties-formulier";
 import { LEGE_AANNAMES, alsGetal, alsTekst, type Aannamewaarden } from "@/lib/agent-aannames";
@@ -267,6 +273,8 @@ function AdminPanel() {
           </button>
         </section>
       )}
+
+      {isAdmin && <Beheerders />}
 
       {isAdmin && <LeadRequests enabled />}
 
@@ -1429,6 +1437,153 @@ function Logboek() {
           Meer tonen
         </button>
       )}
+    </section>
+  );
+}
+
+/**
+ * Wie het beheer in mag.
+ *
+ * Stond tot nu toe nergens: de rol werd toegekend door een regel in de
+ * database met één e-mailadres erin. Hier is het een handeling met een naam,
+ * een logregel en een grens — de laatste beheerder kan er niet uit, en dat
+ * wordt ook door de database zelf bewaakt.
+ */
+function Beheerders() {
+  const qc = useQueryClient();
+  const lijstFn = useServerFn(haalBeheerders);
+  const maakFn = useServerFn(maakBeheerder);
+  const trekFn = useServerFn(trekBeheerIn);
+
+  const query = useQuery({ queryKey: ["beheerders"], queryFn: () => lijstFn() });
+  const [naam, zetNaam] = useState("");
+  const [email, zetEmail] = useState("");
+  const [bezig, zetBezig] = useState(false);
+  const [melding, zetMelding] = useState<string | null>(null);
+  const [fout, zetFout] = useState<string | null>(null);
+
+  const lijst = (query.data ?? []) as Beheerder[];
+
+  async function toevoegen() {
+    zetBezig(true);
+    zetFout(null);
+    zetMelding(null);
+    try {
+      const uit = await maakFn({ data: { naam: naam.trim(), email: email.trim() } });
+      zetMelding(
+        uit.nieuw
+          ? `${naam.trim()} heeft een uitnodiging gekregen. Hij kiest zelf een wachtwoord.`
+          : `${naam.trim()} is nu beheerder. Hij kan meteen inloggen.`,
+      );
+      zetNaam("");
+      zetEmail("");
+      await qc.invalidateQueries({ queryKey: ["beheerders"] });
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Toevoegen mislukt.");
+    } finally {
+      zetBezig(false);
+    }
+  }
+
+  async function intrekken(b: Beheerder) {
+    const zeker = window.confirm(
+      `Beheerdersrechten van ${b.naam || b.email} intrekken?\n\n` +
+        "Zijn account blijft bestaan en wordt weer een gewoon klantaccount.",
+    );
+    if (!zeker) return;
+    zetBezig(true);
+    zetFout(null);
+    zetMelding(null);
+    try {
+      await trekFn({ data: { userId: b.userId } });
+      await qc.invalidateQueries({ queryKey: ["beheerders"] });
+    } catch (e) {
+      zetFout(e instanceof Error ? e.message : "Intrekken mislukt.");
+    } finally {
+      zetBezig(false);
+    }
+  }
+
+  return (
+    <section className="card-glass-lg mt-5 rounded-3xl p-5">
+      <p className="font-display text-[15px] font-semibold text-brand">Beheerders</p>
+      <p className="mt-1 max-w-[70ch] text-[12.5px]/[1.7] text-ink/60">
+        Een beheerder ziet de gegevens van elke klant. Geef die rol dus alleen aan wie bij ons
+        werkt. Tweestapsverificatie is verplicht: zonder authenticator komt iemand het beheer niet
+        in, ook niet met het juiste wachtwoord.
+      </p>
+
+      {query.isLoading ? (
+        <p className="mt-4 text-[12.5px] text-ink/50">Bezig met laden…</p>
+      ) : (
+        <ul className="mt-4 grid gap-2">
+          {lijst.map((b) => (
+            <li
+              key={b.userId}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5"
+            >
+              <div className="min-w-0">
+                <p className="text-[13.5px] font-medium text-ink/90">
+                  {b.naam || b.email}
+                  {b.jijZelf && <span className="ml-2 text-[11.5px] text-ink/50">jij</span>}
+                </p>
+                <p className="mt-0.5 text-[12px] text-ink/55">{b.email}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {b.tweestaps ? (
+                  <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-[11.5px] font-medium text-emerald-300">
+                    tweestaps aan
+                  </span>
+                ) : (
+                  /* Zonder tweede stap kan deze beheerder niets. Dat hoort
+                     hier te staan, anders zit hij te wachten op iets wat hij
+                     zelf moet doen. */
+                  <span className="rounded-full bg-amber-400/15 px-2.5 py-1 text-[11.5px] font-medium text-amber-300">
+                    nog geen tweestaps — kan niets
+                  </span>
+                )}
+                {lijst.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => intrekken(b)}
+                    disabled={bezig}
+                    className="rounded-lg border border-white/12 bg-white/[0.04] px-2.5 py-1.5 text-[11.5px] text-ink/70 transition hover:bg-white/10 disabled:opacity-40"
+                  >
+                    rechten intrekken
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_1.3fr_auto]">
+        <input
+          className={inputCls}
+          placeholder="Naam"
+          value={naam}
+          onChange={(e) => zetNaam(e.target.value)}
+        />
+        <input
+          className={inputCls}
+          placeholder="E-mailadres"
+          type="email"
+          value={email}
+          onChange={(e) => zetEmail(e.target.value)}
+        />
+        <button
+          type="button"
+          onClick={toevoegen}
+          disabled={bezig || naam.trim() === "" || email.trim() === ""}
+          className="cta-purple rounded-xl px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40"
+        >
+          {bezig ? "bezig…" : "beheerder maken"}
+        </button>
+      </div>
+
+      {melding && <p className="mt-2 text-[12.5px] font-medium text-mint">{melding}</p>}
+      {fout && <p className="mt-2 text-[12.5px] font-medium text-amber-300">{fout}</p>}
     </section>
   );
 }
