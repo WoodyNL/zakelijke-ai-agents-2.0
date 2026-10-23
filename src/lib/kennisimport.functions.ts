@@ -216,28 +216,30 @@ const MAX_TEKEN = 120_000;
 
 /** Haalt de leesbare tekst uit een pagina; ruw, maar goed genoeg om te lezen. */
 function alleenTekst(html: string): string {
-  return html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
-    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<\/(p|div|li|h[1-6]|tr|section|article)>/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    // Genummerde entiteiten in één keer, niet per teken. WordPress zet er
-    // tientallen in — aanhalingstekens, gedachtestreepjes, beletseltekens — en
-    // een lijstje bijhouden betekent dat er altijd eentje doorheen glipt.
-    .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16)))
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n\s*\n\s*\n+/g, "\n\n")
-    .trim()
-    .slice(0, MAX_TEKEN);
+  return (
+    html
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/<\/(p|div|li|h[1-6]|tr|section|article)>/gi, "\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      // Genummerde entiteiten in één keer, niet per teken. WordPress zet er
+      // tientallen in — aanhalingstekens, gedachtestreepjes, beletseltekens — en
+      // een lijstje bijhouden betekent dat er altijd eentje doorheen glipt.
+      .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16)))
+      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n\s*\n\s*\n+/g, "\n\n")
+      .trim()
+      .slice(0, MAX_TEKEN)
+  );
 }
 
 /**
@@ -289,6 +291,27 @@ function zelfdeSite(a: URL, b: URL): boolean {
   return a.hostname.replace(/^www\./, "") === b.hostname.replace(/^www\./, "");
 }
 
+/**
+ * De koppen van een gewone browser die een pagina opent.
+ *
+ * Shopify-winkels (en andere sites achter botbescherming) weigeren verzoeken
+ * zonder deze koppen met een 429 "local_rate_limited", ook al vragen we maar
+ * één pagina. De eigen naam zit nog in de user-agent, zodat een beheerder in
+ * zijn logboek kan zien wie er langskwam.
+ */
+const BROWSERKOPPEN: Record<string, string> = {
+  "user-agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) " +
+    "Chrome/130.0.0.0 Safari/537.36 ZakelijkeAIAgents/1.0 (kennisbank-import)",
+  accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "accept-language": "nl-NL,nl;q=0.9,en;q=0.8",
+  "upgrade-insecure-requests": "1",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-dest": "document",
+  "sec-fetch-site": "none",
+  "sec-fetch-user": "?1",
+};
+
 async function haalPagina(url: string): Promise<string> {
   const u = new URL(url);
   if (!["http:", "https:"].includes(u.protocol) || isInternAdres(u.hostname)) {
@@ -298,7 +321,7 @@ async function haalPagina(url: string): Promise<string> {
   const klok = setTimeout(() => stop.abort(), 10_000);
   try {
     const res = await fetch(u.toString(), {
-      headers: { "user-agent": "ZakelijkeAIAgents/1.0 (kennisbank-import)" },
+      headers: BROWSERKOPPEN,
       redirect: "follow",
       signal: stop.signal,
     });
@@ -440,7 +463,9 @@ export const importeerVanWebsite = createServerFn({ method: "POST" })
 
       const delen: string[] = [];
       if (startTekst.length >= 200) {
-        delen.push(`### Pagina: ${basis.pathname || "/"}\n${startTekst.slice(0, TEKEN_PER_PAGINA)}`);
+        delen.push(
+          `### Pagina: ${basis.pathname || "/"}\n${startTekst.slice(0, TEKEN_PER_PAGINA)}`,
+        );
         gelezen.push({ url: data.url, gelukt: true });
       } else {
         gelezen.push({ url: data.url, gelukt: false, reden: "nauwelijks tekst" });
